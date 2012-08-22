@@ -23,6 +23,10 @@ class FsBitmap {
 public:
 };
 
+class FsSuperblock {
+public:
+};
+
 class ReiserFs {
 public:
     ReiserFs();
@@ -34,9 +38,13 @@ public:
     int beginTransaction();
     int commitTransaction();
 
+    void dumpSuperblock();
+
 private:
     FsBitmap bitmap;
     FsJournal journal;
+    FsSuperblock sb;
     std::string fname;
 
+    void readSuperblock(FsSuperblock &sb);
 };

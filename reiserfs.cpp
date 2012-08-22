@@ -16,6 +16,14 @@ ReiserFs::open(std::string name)
 {
     std::cout << "open " << name << std::endl;
     this->fname = name;
+
+    this->readSuperblock(this->sb);
+}
+
+void
+ReiserFs::readSuperblock(FsSuperblock &sb)
+{
+    std::cout << "readSuperblock" << std::endl;
 }
 
 int
