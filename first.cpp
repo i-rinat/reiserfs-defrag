@@ -5,7 +5,7 @@ main (int argc, char *argv[])
 {
     ReiserFs fs;
 
-    fs.open("fs.image");
+    fs.open("../image/reiserfs.image");
     fs.beginTransaction();
     fs.moveBlock(1234, 5678);
     fs.commitTransaction();
