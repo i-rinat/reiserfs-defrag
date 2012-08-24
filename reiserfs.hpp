@@ -1,3 +1,4 @@
+#pragma once
 #define _FILE_OFFSET_BITS 64
 #include <stdint.h>
 #include <string>
@@ -9,10 +10,7 @@
 #define RFSD_OK     0
 #define RFSD_FAIL   -1
 
-class FsJournal {
-public:
-
-};
+#define BLOCKSIZE   4096
 
 struct FsSuperblock {
     uint32_t s_block_count;
@@ -56,6 +54,10 @@ struct FsSuperblock {
 
 class Block {
 public:
+    Block();
+    char *ptr() { return &buf[0]; }
+private:
+    char buf[BLOCKSIZE];
 };
 
 class FormattedBlock : public Block {
@@ -64,6 +66,16 @@ public:
 
 class UnformattedBlock : public Block {
 public:
+};
+
+class FsJournal {
+public:
+    FsJournal(int fd_);
+    Block* readBlock(uint32_t block);
+
+private:
+    int fd;
+
 };
 
 class FsBitmap {
@@ -85,7 +97,7 @@ public:
 
 private:
     FsBitmap bitmap;
-    FsJournal journal;
+    FsJournal *journal;
     FsSuperblock sb;
     std::string fname;
     int fd;

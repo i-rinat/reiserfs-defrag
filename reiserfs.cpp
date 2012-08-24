@@ -28,6 +28,8 @@ ReiserFs::open(std::string name)
 
     this->readSuperblock();
     this->dumpSuperblock();
+    this->journal = new FsJournal(this->fd);
+
     return RFSD_OK;
 }
 
