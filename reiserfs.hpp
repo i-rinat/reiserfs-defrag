@@ -55,7 +55,9 @@ struct FsSuperblock {
 class Block {
 public:
     Block();
+    const char *ptr() const { return &buf[0]; }
     char *ptr() { return &buf[0]; }
+    uint32_t block;
 private:
     char buf[BLOCKSIZE];
 };
@@ -72,6 +74,10 @@ class FsJournal {
 public:
     FsJournal(int fd_);
     Block* readBlock(uint32_t block);
+    void dumpBlock(const Block *block) const;
+    void releaseBlock(Block *block);
+    void beginTransaction();
+    void commitTransaction();
 
 private:
     int fd;
@@ -87,13 +93,17 @@ public:
     ReiserFs();
     ~ReiserFs();
     int open(std::string name);
-    int close();
-    int moveBlock(uint32_t from, uint32_t to);
-    int moveMultipleBlocks(std::map<uint32_t, uint32_t> movemap);
-    int beginTransaction();
-    int commitTransaction();
-
+    void close();
+    void moveBlock(uint32_t from, uint32_t to);
+    void moveMultipleBlocks(std::map<uint32_t, uint32_t> movemap);
     void dumpSuperblock();
+
+    // proxies for FsJournal methods
+    Block* readBlock(uint32_t block);
+    void dumpBlock(const Block *block) const;
+    void releaseBlock(Block *block);
+
+
 
 private:
     FsBitmap bitmap;
@@ -101,6 +111,8 @@ private:
     FsSuperblock sb;
     std::string fname;
     int fd;
+
+    bool closed;
 
     void readSuperblock();
 };

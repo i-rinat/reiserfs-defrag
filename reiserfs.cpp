@@ -3,16 +3,16 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
-
+#include <assert.h>
 
 ReiserFs::ReiserFs()
 {
-
+    this->closed = true;
 }
 
 ReiserFs::~ReiserFs()
 {
-
+    if (! this->closed) this->close();
 }
 
 int
@@ -29,6 +29,7 @@ ReiserFs::open(std::string name)
     this->readSuperblock();
     this->dumpSuperblock();
     this->journal = new FsJournal(this->fd);
+    this->closed = true;
 
     return RFSD_OK;
 }
@@ -47,7 +48,8 @@ ReiserFs::readSuperblock()
     char buf[4096];
     ssize_t bytes_read = ::read (this->fd, buf, sizeof(buf));
     if (bytes_read == -1) {
-        std::cerr << "error: can't read, errno = " << errno << ", " << strerror(errno) << std::endl;
+        std::cerr << "error: can't read, errno = " << errno << ", " <<
+            strerror(errno) << std::endl;
         std::cout << sizeof(buf) << std::endl;
         std::cout << this->fd << std::endl;
         return;
@@ -59,21 +61,25 @@ ReiserFs::readSuperblock()
 void
 ReiserFs::dumpSuperblock()
 {
-    std::cout << "dumpSuperblock() --------------------------------------" << std::endl;
+    std::cout << "dumpSuperblock() --------------------------------------" <<
+        std::endl;
     std::cout << "block count = " << sb.s_block_count << std::endl;
     std::cout << "free block count = " << sb.s_free_blocks << std::endl;
     std::cout << "root block at = " << sb.s_root_block << std::endl;
     std::cout << "journal start = " << sb.jp_journal_1st_block << std::endl;
     std::cout << "journal dev = " << sb.jp_journal_dev << std::endl;
     std::cout << "journal size = " << sb.jp_journal_size << std::endl;
-    std::cout << "journal max transactions = " << sb.jp_journal_trans_max << std::endl;
+    std::cout << "journal max transactions = " << sb.jp_journal_trans_max <<
+        std::endl;
     std::cout << "journal magic = " << sb.jp_journal_magic << std::endl;
-    std::cout << "journal max batch = " << sb.jp_journal_max_batch << std::endl;
-    std::cout << "journal max commit age = " << sb.jp_journal_max_commit_age << std::endl;
-    std::cout << "journal max transaction age = " << sb.jp_journal_max_trans_age << std::endl;
+    std::cout << "journal max batch = " << sb.jp_journal_max_batch <<std::endl;
+    std::cout << "journal max commit age = " << sb.jp_journal_max_commit_age <<
+        std::endl;
+    std::cout << "journal max transaction age = " <<
+        sb.jp_journal_max_trans_age << std::endl;
     std::cout << "block size = " << sb.s_blocksize << std::endl;
-    std::cout << "max object id array size = " << sb.s_oid_maxsize << std::endl;
-    std::cout << "cur object id array size = " << sb.s_oid_cursize << std::endl;
+    std::cout << "max object id array size = " << sb.s_oid_maxsize <<std::endl;
+    std::cout << "cur object id array size = " << sb.s_oid_cursize <<std::endl;
     std::cout << "unmount state = " << sb.s_umount_state << std::endl;
     std::cout << "magic = not implemeted" << std::endl;
     std::cout << "fsck state = " << sb.s_fs_state << std::endl;
@@ -81,7 +87,8 @@ ReiserFs::dumpSuperblock()
     std::cout << "tree height = " << sb.s_tree_height << std::endl;
     std::cout << "bitmap blocks count = " << sb.s_bmap_nr << std::endl;
     std::cout << "version = " << sb.s_version << std::endl;
-    std::cout << "size of journal area = " << sb.s_reserved_for_journal << std::endl;
+    std::cout << "size of journal area = " << sb.s_reserved_for_journal <<
+        std::endl;
     std::cout << "inode generation = " << sb.s_inode_generation << std::endl;
     std::cout << "flags = " << sb.s_flags << std::endl;
     std::cout << "uuid = not implemented" << std::endl;
@@ -92,29 +99,43 @@ ReiserFs::dumpSuperblock()
     std::cout << "check interval = " << sb.s_check_interval << std::endl;
     std::cout << "unused fields dump = not implemented" << std::endl;
 
-    std::cout << "=======================================================" << std::endl;
+    std::cout << "=======================================================" <<
+        std::endl;
 }
 
-int
+void
 ReiserFs::close()
 {
-    std::cout << "close " << this->fname << std::endl;
+    std::cout << "ReiserFs::close, " << this->fname << std::endl;
+    ::close(this->fd);
+    this->closed = true;
 }
 
-int
+void
 ReiserFs::moveBlock(uint32_t from, uint32_t to)
 {
-    std::cout << "from: " << from << ", to: " << to << std::endl;
+    std::cout << "ReiserFs::moveBlock, from: " << from << ", to: " << to <<
+        std::endl;
+    std::cout << "stub" << std::endl;
 }
 
-int
-ReiserFs::beginTransaction()
+Block*
+ReiserFs::readBlock(uint32_t block)
 {
-    std::cout << "beginTransaction" << std::endl;
+    assert(this->journal != NULL);
+    return this->journal->readBlock(block);
 }
 
-int
-ReiserFs::commitTransaction()
+void
+ReiserFs::dumpBlock(const Block *block) const
 {
-    std::cout << "commitTransaction" << std::endl;
+    assert(this->journal != NULL);
+    this->journal->dumpBlock(block);
+}
+
+void
+ReiserFs::releaseBlock(Block *block)
+{
+    assert(this->journal != NULL);
+    journal->releaseBlock(block);
 }

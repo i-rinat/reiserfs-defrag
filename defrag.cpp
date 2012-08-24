@@ -6,9 +6,10 @@ main (int argc, char *argv[])
     ReiserFs fs;
 
     fs.open("../image/reiserfs.image");
-    fs.beginTransaction();
-    fs.moveBlock(1234, 5678);
-    fs.commitTransaction();
+    // fs.moveBlock(1234, 5678);
+    Block *block = fs.readBlock(18);
+    fs.dumpBlock(block);
+    fs.releaseBlock(block);
     fs.close();
 
     return 0;
