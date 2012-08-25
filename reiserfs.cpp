@@ -28,7 +28,7 @@ ReiserFs::open(std::string name)
     }
 
     this->readSuperblock();
-    this->dumpSuperblock();
+    // this->dumpSuperblock();
     this->journal = new FsJournal(this->fd);
     this->closed = true;
 
@@ -136,7 +136,8 @@ ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
     std::cout << "root block: " << this->sb.s_root_block << std::endl;
 
     Block *root_block = this->readBlock(this->sb.s_root_block);
-    // root_block->rawDump();
+    root_block->setType(BLOCKTYPE_INTERNAL);
+    root_block->rawDump();
     this->releaseBlock(root_block);
 }
 

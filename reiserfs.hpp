@@ -63,9 +63,15 @@ public:
     const char *ptr() const { return &buf[0]; }
     char *ptr() { return &buf[0]; }
     void rawDump() const;
+    void formattedDump() const;
+    void setType(int type_);
     uint32_t block;
 private:
     char buf[BLOCKSIZE];
+    int type;
+
+    void dumpInternalNodeBlock() const;
+    void dumpLeafNodeBlock() const;
 };
 
 class FormattedBlock : public Block {

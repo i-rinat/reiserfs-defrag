@@ -6,6 +6,7 @@
 Block::Block()
 {
     memset(this->buf, 0, BLOCKSIZE);
+    this->type = BLOCKTYPE_UNKNOWN;
 }
 
 void
@@ -25,6 +26,45 @@ Block::rawDump() const
         }
         printf ("|\n");
     }
+}
+
+void
+Block::formattedDump() const
+{
+    switch (this->type) {
+        case BLOCKTYPE_UNKNOWN:
+            std::cout << "unknown block" << std::endl;
+            break;
+        case BLOCKTYPE_INTERNAL:
+            this->dumpInternalNodeBlock();
+            break;
+        case BLOCKTYPE_LEAF:
+            this->dumpLeafNodeBlock();
+            break;
+        case BLOCKTYPE_UNFORMATTED:
+            this->rawDump();
+            break;
+        default:
+            std::cout << "block type error" << std::endl;
+    }
+}
+
+void
+Block::dumpInternalNodeBlock() const
+{
+    std::cout << "Block::dumpInternalNodeBlock() stub" << std::endl;
+}
+
+void
+Block::dumpLeafNodeBlock() const
+{
+    std::cout << "Block::dumpLeafNodeBlock() stub" << std::endl;
+}
+
+void
+Block::setType(int type_)
+{
+    this->type = type_;
 }
 
 FsJournal::FsJournal(int fd_)
