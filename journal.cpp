@@ -8,6 +8,25 @@ Block::Block()
     memset(this->buf, 0, BLOCKSIZE);
 }
 
+void
+Block::rawDump() const
+{
+    for (int row = 0; row < BLOCKSIZE/16; row ++) {
+        printf ("%08X  ", row*16 + this->block*BLOCKSIZE);
+
+        int k;
+        for (k = 0; k < 8; k ++) printf("%02X ", (unsigned char)buf[row*16+k]);
+        printf ("|");
+        for (k = 8; k < 16; k ++) printf(" %02X",(unsigned char)buf[row*16+k]);
+        printf ("  |");
+        for (k = 0; k < 16; k ++) {
+            char c = buf[row*16+k];
+            if (32 <= c && c < 128) printf("%c", c); else printf(".");
+        }
+        printf ("|\n");
+    }
+}
+
 FsJournal::FsJournal(int fd_)
 {
     this->fd = fd_;
@@ -38,27 +57,6 @@ FsJournal::readBlock(uint32_t block)
     }
     block_obj->block = block;
     return block_obj;
-}
-
-void
-FsJournal::dumpBlock(const Block *block) const
-{
-    std::cout << "dumpBlock stub" << std::endl;
-    const char *buf = block->ptr();
-    for (int row = 0; row < BLOCKSIZE/16; row ++) {
-        printf ("%08X  ", row*16 + block->block*BLOCKSIZE);
-
-        int k;
-        for (k = 0; k < 8; k ++) printf("%02X ", (unsigned char)buf[row*16+k]);
-        printf ("|");
-        for (k = 8; k < 16; k ++) printf(" %02X", (unsigned char)buf[row*16+k]);
-        printf (" | ");
-        for (k = 0; k < 16; k ++) {
-            char c = buf[row*16+k];
-            if (32 <= c && c < 128) printf("%c", c); else printf(".");
-        }
-        printf (" |\n");
-    }
 }
 
 void

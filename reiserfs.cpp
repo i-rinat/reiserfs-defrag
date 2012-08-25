@@ -1,5 +1,6 @@
 #include "reiserfs.hpp"
 #include <iostream>
+#include <map>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
@@ -27,7 +28,7 @@ ReiserFs::open(std::string name)
     }
 
     this->readSuperblock();
-    this->dumpSuperblock();
+    // this->dumpSuperblock();
     this->journal = new FsJournal(this->fd);
     this->closed = true;
 
@@ -114,23 +115,37 @@ ReiserFs::close()
 void
 ReiserFs::moveBlock(uint32_t from, uint32_t to)
 {
-    std::cout << "ReiserFs::moveBlock, from: " << from << ", to: " << to <<
-        std::endl;
-    std::cout << "stub" << std::endl;
+    std::map<uint32_t, uint32_t> movemap;
+    movemap[from] = to;
+    this->moveMultipleBlocks (movemap);
 }
+
+void
+ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
+{
+    std::cout << "ReiserFs::moveMultipleBlocks stub" << std::endl;
+
+    std::map<uint32_t, uint32_t>::iterator iter;
+    for(iter = movemap.begin(); iter != movemap.end(); ++ iter) {
+        std::cout << "from: " << iter->first << ", to: ";
+        std::cout << iter->second << std::endl;
+    }
+
+    // do walk tree
+
+    std::cout << "root block: " << this->sb.s_root_block << std::endl;
+
+    Block *root_block = this->readBlock(this->sb.s_root_block);
+    root_block->rawDump();
+    this->releaseBlock(root_block);
+}
+
 
 Block*
 ReiserFs::readBlock(uint32_t block)
 {
     assert(this->journal != NULL);
     return this->journal->readBlock(block);
-}
-
-void
-ReiserFs::dumpBlock(const Block *block) const
-{
-    assert(this->journal != NULL);
-    this->journal->dumpBlock(block);
 }
 
 void

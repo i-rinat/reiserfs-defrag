@@ -57,6 +57,7 @@ public:
     Block();
     const char *ptr() const { return &buf[0]; }
     char *ptr() { return &buf[0]; }
+    void rawDump() const;
     uint32_t block;
 private:
     char buf[BLOCKSIZE];
@@ -95,12 +96,11 @@ public:
     int open(std::string name);
     void close();
     void moveBlock(uint32_t from, uint32_t to);
-    void moveMultipleBlocks(std::map<uint32_t, uint32_t> movemap);
+    void moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap);
     void dumpSuperblock();
 
     // proxies for FsJournal methods
     Block* readBlock(uint32_t block);
-    void dumpBlock(const Block *block) const;
     void releaseBlock(Block *block);
 
 
