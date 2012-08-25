@@ -10,6 +10,11 @@
 #define RFSD_OK     0
 #define RFSD_FAIL   -1
 
+#define BLOCKTYPE_UNKNOWN 0
+#define BLOCKTYPE_INTERNAL 1
+#define BLOCKTYPE_LEAF 2
+#define BLOCKTYPE_UNFORMATTED 3
+
 #define BLOCKSIZE   4096
 
 struct FsSuperblock {
