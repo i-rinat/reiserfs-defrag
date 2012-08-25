@@ -33,7 +33,7 @@ struct FsSuperblock {
     uint16_t s_umount_state;
     char s_magic[10];
     uint16_t s_fs_state;
-    uint16_t s_hash_function_code;
+    uint32_t s_hash_function_code;
     uint16_t s_tree_height;
     uint16_t s_bmap_nr;
     uint16_t s_version;
