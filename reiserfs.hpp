@@ -72,6 +72,14 @@ private:
 
     void dumpInternalNodeBlock() const;
     void dumpLeafNodeBlock() const;
+
+    struct blockheader {
+        uint16_t bh_level;
+        uint16_t bh_nr_items;
+        uint16_t bh_free_space;
+        uint16_t bh_reserved1;
+        uint8_t bh_right_key[16];
+    } __attribute__ ((__packed__));
 };
 
 class FormattedBlock : public Block {

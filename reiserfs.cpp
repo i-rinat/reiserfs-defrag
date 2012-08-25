@@ -137,7 +137,7 @@ ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
 
     Block *root_block = this->readBlock(this->sb.s_root_block);
     root_block->setType(BLOCKTYPE_INTERNAL);
-    root_block->rawDump();
+    root_block->formattedDump();
     this->releaseBlock(root_block);
 }
 
