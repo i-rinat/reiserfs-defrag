@@ -87,6 +87,8 @@ public:
     void rawDump() const;
     void formattedDump() const;
     void setType(int type_);
+    void walk_tree();
+
     uint32_t block;
 protected:
     char buf[BLOCKSIZE];
@@ -94,6 +96,7 @@ protected:
 
     void dumpInternalNodeBlock() const;
     void dumpLeafNodeBlock() const;
+
 
     int keyCount() const;
     int ptrCount() const;

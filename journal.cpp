@@ -78,6 +78,13 @@ Block::dumpLeafNodeBlock() const
 }
 
 void
+Block::walk_tree()
+{
+    std::cout << "Block::walk_tree()" << std::endl;
+
+}
+
+void
 Block::setType(int type_)
 {
     this->type = type_;
