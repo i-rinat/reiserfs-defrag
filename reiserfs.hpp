@@ -57,6 +57,23 @@ struct FsSuperblock {
 
 } __attribute__ ((__packed__));
 
+struct key {
+    uint32_t dir_id;
+    uint32_t obj_id;
+    uint32_t offset_type_1;
+    uint32_t offset_type_2;
+    uint64_t offset() {
+        return ((uint64_t)(offset_type_2 & 0x0FFFFFFF) << 32) + offset_type_1;
+    }
+    uint32_t type() { return (offset_type_2 & 0xF0000000) >> 28; }
+} __attribute__ ((__packed__));
+
+struct ptr {
+    uint32_t block;
+    uint16_t size;
+    uint16_t reserved;
+} __attribute__ ((__packed__));
+
 class Block {
 public:
     Block();
