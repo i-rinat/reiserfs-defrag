@@ -94,7 +94,6 @@ class FsJournal {
 public:
     FsJournal(int fd_);
     Block* readBlock(uint32_t block);
-    void dumpBlock(const Block *block) const;
     void releaseBlock(Block *block);
     void beginTransaction();
     void commitTransaction();
