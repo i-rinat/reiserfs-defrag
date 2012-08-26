@@ -82,14 +82,6 @@ private:
     } __attribute__ ((__packed__));
 };
 
-class FormattedBlock : public Block {
-public:
-};
-
-class UnformattedBlock : public Block {
-public:
-};
-
 class FsJournal {
 public:
     FsJournal(int fd_);
