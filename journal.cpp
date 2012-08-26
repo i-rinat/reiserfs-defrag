@@ -2,6 +2,8 @@
 #include <string.h>
 #include <iostream>
 #include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 Block::Block()
 {
@@ -52,28 +54,19 @@ Block::formattedDump() const
 void
 Block::dumpInternalNodeBlock() const
 {
-    std::cout << "Block::dumpInternalNodeBlock() stub" << std::endl;
-    struct blockheader *bh = (struct blockheader *)buf;
     std::cout << "-- dumpInternalNodeBlock()  ------------" << std::endl;
-    std::cout << "level = " << bh->bh_level << std::endl;
-    std::cout << "Nr. items = " << bh->bh_nr_items << std::endl;
-    std::cout << "free space = " << bh->bh_free_space << std::endl;
-    for (int k = 0; k < bh->bh_nr_items; k ++) {
-        const uint32_t &dirid = reinterpret_cast<const uint32_t&>(buf[24 + 16*k]);
-        const uint16_t &objid = reinterpret_cast<const uint32_t&>(buf[24 + 16*k + 4]);
-        const uint32_t &part1 = reinterpret_cast<const uint32_t&>(buf[24 + 16*k + 8]);
-        const uint32_t &part2 = reinterpret_cast<const uint32_t&>(buf[24 + 16*k + 12]);
-        const uint64_t offset = ((uint64_t)(part2 & 0x0FFFFFFF) << 32) + part1;
-        const uint32_t type = (part2 & 0xF0000000) >> 28;
-
-        std::cout << dirid << ", " << objid << ", " << offset << ", " << type << std::endl;
+    std::cout << "level = " << this->level() << std::endl;
+    std::cout << "key count = " << this->keyCount() << std::endl;
+    std::cout << "free space = " << this->freeSpace() << std::endl;
+    for (int k = 0; k < this->keyCount(); k ++) {
+        const struct ptr ptr = this->getPtr(k);
+        std::cout << "<" << ptr.block << ", " << ptr.size << "> ";
+        const struct key key = this->getKey(k);
+        std::cout << "{" << key.dir_id << ", " << key.obj_id << ", ";
+        std::cout << key.offset() << ", " << key.type() << "} ";
     }
-    const int ofs = 24 + 16 * bh->bh_nr_items;
-    for (int k = 0; k < bh->bh_nr_items + 1; k ++) {
-        const uint32_t &blocknumber = reinterpret_cast<const uint32_t&>(buf[ofs + 8*k]);
-        const uint16_t &size = reinterpret_cast<const uint16_t&>(buf[ofs + 8*k + 4]);
-        std::cout << blocknumber << ", " << size << std::endl;
-    }
+    const struct ptr ptr = this->getPtr(this->keyCount());
+    std::cout << "<" << ptr.block << ", " << ptr.size << ">" << std::endl;
 
     std::cout << "========================================" << std::endl;
 }
@@ -88,6 +81,46 @@ void
 Block::setType(int type_)
 {
     this->type = type_;
+}
+
+int
+Block::keyCount() const
+{
+    const struct blockheader &bh = reinterpret_cast<const struct blockheader &>(buf);
+    return bh.bh_nr_items;
+}
+
+int
+Block::ptrCount() const
+{
+    const struct blockheader &bh = reinterpret_cast<const struct blockheader &>(buf);
+    return bh.bh_nr_items + 1;
+}
+
+int
+Block::level() const
+{
+    const struct blockheader &bh = reinterpret_cast<const struct blockheader &>(buf);
+    return bh.bh_level;
+}
+
+int
+Block::freeSpace() const
+{
+    const struct blockheader &bh = reinterpret_cast<const struct blockheader &>(buf);
+    return bh.bh_free_space;
+}
+
+const struct key &
+Block::getKey(int index) const
+{
+    return reinterpret_cast<const struct key&>(buf[24 + 16*index]);
+}
+
+const struct ptr &
+Block::getPtr(int index) const
+{
+    return reinterpret_cast<const struct ptr&>(buf[24+16*keyCount()+8*index]);
 }
 
 FsJournal::FsJournal(int fd_)

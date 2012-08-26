@@ -63,9 +63,13 @@ struct key {
     uint32_t offset_type_1;
     uint32_t offset_type_2;
     uint64_t offset() {
-        return ((uint64_t)(offset_type_2 & 0x0FFFFFFF) << 32) + offset_type_1;
+        return (static_cast<uint64_t>(offset_type_2 & 0x0FFFFFFF) << 32) + offset_type_1;
+    }
+    uint64_t offset() const {
+        return (static_cast<uint64_t>(offset_type_2 & 0x0FFFFFFF) << 32) + offset_type_1;
     }
     uint32_t type() { return (offset_type_2 & 0xF0000000) >> 28; }
+    uint32_t type() const { return (offset_type_2 & 0xF0000000) >> 28; }
 } __attribute__ ((__packed__));
 
 struct ptr {
@@ -77,18 +81,26 @@ struct ptr {
 class Block {
 public:
     Block();
+    virtual ~Block() {}
     const char *ptr() const { return &buf[0]; }
     char *ptr() { return &buf[0]; }
     void rawDump() const;
     void formattedDump() const;
     void setType(int type_);
     uint32_t block;
-private:
+protected:
     char buf[BLOCKSIZE];
     int type;
 
     void dumpInternalNodeBlock() const;
     void dumpLeafNodeBlock() const;
+
+    int keyCount() const;
+    int ptrCount() const;
+    int level() const;
+    int freeSpace() const;
+    const struct key &getKey(int index) const;
+    const struct ptr &getPtr(int index) const;
 
     struct blockheader {
         uint16_t bh_level;
