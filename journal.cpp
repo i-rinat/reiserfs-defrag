@@ -89,7 +89,20 @@ Block::walk_tree()
                 block_obj->walk_tree();
             } else if (block_obj->level() == TREE_LEVEL_LEAF) {
                 block_obj->setType(BLOCKTYPE_LEAF);
-                std::cout << "Leaf Node, " << block_obj->block << std::endl;
+                std::cout << "Leaf Node, " << block_obj->block << ": ";
+                // process leaf contents
+                for (int j = 0; j < block_obj->itemCount(); j ++) {
+                    const struct item_header &ih = this->itemHeader(j);
+                    switch (ih.key.type()) {
+                    case 0: std::cout << "stat "; break;
+                    case 1: std::cout << "indirect "; break;
+                    case 2: std::cout << "direct "; break;
+                    case 3: std::cout << "directory "; break;
+                    case 15: std::cout << "any "; break;
+                    default: std::cerr << "wrong item";
+                    }
+                }
+                std::cout << std::endl;
             } else {
                 std::cerr << "error: unknown block in tree" << std::endl;
             }
@@ -149,6 +162,12 @@ const struct Block::tree_ptr &
 Block::getPtr(int index) const
 {
     return reinterpret_cast<const struct tree_ptr&>(buf[24+16*keyCount()+8*index]);
+}
+
+const struct Block::item_header &
+Block::itemHeader(int index) const
+{
+    return reinterpret_cast<const struct item_header&>(buf[24+24*index]);
 }
 
 FsJournal::FsJournal(int fd_)

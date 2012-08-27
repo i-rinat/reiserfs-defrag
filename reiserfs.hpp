@@ -131,6 +131,7 @@ protected:
 
     const struct key &getKey(int index) const;
     const struct tree_ptr &getPtr(int index) const;
+    const struct item_header &itemHeader(int index) const;
 };
 
 class FsJournal {
