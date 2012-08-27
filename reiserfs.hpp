@@ -15,6 +15,8 @@
 #define BLOCKTYPE_LEAF 2
 #define BLOCKTYPE_UNFORMATTED 3
 
+#define TREE_LEVEL_LEAF 1
+
 #define BLOCKSIZE   4096
 
 struct FsSuperblock {
@@ -78,12 +80,14 @@ struct ptr {
     uint16_t reserved;
 } __attribute__ ((__packed__));
 
+class FsJournal;
+
 class Block {
 public:
-    Block();
+    Block(FsJournal *journal_);
     virtual ~Block() {}
-    const char *ptr() const { return &buf[0]; }
-    char *ptr() { return &buf[0]; }
+    const char *bufPtr() const { return &buf[0]; }
+    char *bufPtr() { return &buf[0]; }
     void rawDump() const;
     void formattedDump() const;
     void setType(int type_);
@@ -93,6 +97,7 @@ public:
 protected:
     char buf[BLOCKSIZE];
     int type;
+    FsJournal *journal;
 
     void dumpInternalNodeBlock() const;
     void dumpLeafNodeBlock() const;

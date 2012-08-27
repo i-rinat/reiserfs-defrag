@@ -5,10 +5,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-Block::Block()
+Block::Block(FsJournal *journal_)
 {
     memset(this->buf, 0, BLOCKSIZE);
     this->type = BLOCKTYPE_UNKNOWN;
+    this->journal = journal_;
 }
 
 void
@@ -80,8 +81,20 @@ Block::dumpLeafNodeBlock() const
 void
 Block::walk_tree()
 {
-    std::cout << "Block::walk_tree()" << std::endl;
-
+    if (this->type == BLOCKTYPE_INTERNAL) {
+        for (int k = 0; k < this->ptrCount(); k ++) {
+            Block *block_obj = this->journal->readBlock(this->getPtr(k).block);
+            if (block_obj->level() > TREE_LEVEL_LEAF) {
+                block_obj->setType(BLOCKTYPE_INTERNAL);
+                block_obj->walk_tree();
+            } else if (block_obj->level() == TREE_LEVEL_LEAF) {
+                block_obj->setType(BLOCKTYPE_LEAF);
+                std::cout << "Leaf Node, " << block_obj->block << std::endl;
+            } else {
+                std::cerr << "error: unknown block in tree" << std::endl;
+            }
+        }
+    }
 }
 
 void
@@ -152,8 +165,8 @@ Block*
 FsJournal::readBlock(uint32_t block)
 {
     off_t new_ofs = ::lseek (this->fd, (off_t)block * BLOCKSIZE, SEEK_SET);
-    Block *block_obj = new Block();
-    ssize_t bytes_read = ::read (this->fd, block_obj->ptr(), BLOCKSIZE);
+    Block *block_obj = new Block(this);
+    ssize_t bytes_read = ::read (this->fd, block_obj->bufPtr(), BLOCKSIZE);
     if (BLOCKSIZE != bytes_read) {
         std::cerr << "error: readBlock("<<block << ")" << std::endl;
         return 0;
