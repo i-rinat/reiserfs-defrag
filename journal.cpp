@@ -93,6 +93,7 @@ Block::walk_tree()
             } else {
                 std::cerr << "error: unknown block in tree" << std::endl;
             }
+            delete block_obj;
         }
     }
 }
