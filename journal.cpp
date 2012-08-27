@@ -60,13 +60,13 @@ Block::dumpInternalNodeBlock() const
     std::cout << "key count = " << this->keyCount() << std::endl;
     std::cout << "free space = " << this->freeSpace() << std::endl;
     for (int k = 0; k < this->keyCount(); k ++) {
-        const struct ptr ptr = this->getPtr(k);
+        const struct tree_ptr ptr = this->getPtr(k);
         std::cout << "<" << ptr.block << ", " << ptr.size << "> ";
         const struct key key = this->getKey(k);
         std::cout << "{" << key.dir_id << ", " << key.obj_id << ", ";
         std::cout << key.offset() << ", " << key.type() << "} ";
     }
-    const struct ptr ptr = this->getPtr(this->keyCount());
+    const struct tree_ptr ptr = this->getPtr(this->keyCount());
     std::cout << "<" << ptr.block << ", " << ptr.size << ">" << std::endl;
 
     std::cout << "========================================" << std::endl;
@@ -131,16 +131,23 @@ Block::freeSpace() const
     return bh.bh_free_space;
 }
 
-const struct key &
+int
+Block::itemCount() const
+{
+    const struct blockheader &bh = reinterpret_cast<const struct blockheader &>(buf);
+    return bh.bh_nr_items;
+}
+
+const struct Block::key &
 Block::getKey(int index) const
 {
     return reinterpret_cast<const struct key&>(buf[24 + 16*index]);
 }
 
-const struct ptr &
+const struct Block::tree_ptr &
 Block::getPtr(int index) const
 {
-    return reinterpret_cast<const struct ptr&>(buf[24+16*keyCount()+8*index]);
+    return reinterpret_cast<const struct tree_ptr&>(buf[24+16*keyCount()+8*index]);
 }
 
 FsJournal::FsJournal(int fd_)
