@@ -101,6 +101,12 @@ Block::walk_tree()
                     case 15: std::cout << "any "; break;
                     default: std::cerr << "wrong item";
                     }
+                    std::cout << "\n---------------------------";
+                    std::cout << "\ncount: " << ih.count;
+                    std::cout << "\nlength: " << ih.length;
+                    std::cout << "\noffset: " << ih.offset;
+                    std::cout << "\nversion: " << ih.version;
+                    std::cout << "\n===========================\n";
                 }
                 std::cout << std::endl;
             } else {
