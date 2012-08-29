@@ -18,6 +18,9 @@
 
 #define TREE_LEVEL_LEAF 1
 
+#define KEY_V0      0
+#define KEY_V1      1
+
 #define BLOCKSIZE   4096
 
 struct FsSuperblock {
@@ -99,24 +102,27 @@ protected:
         uint8_t bh_right_key[16];
     } __attribute__ ((__packed__));
 
+    // reiserfs key, 3.5 (v0) and 3.6 (v1) formats
     struct key {
         uint32_t dir_id;
         uint32_t obj_id;
         uint32_t offset_type_1;
         uint32_t offset_type_2;
-        uint64_t offset() {
-            return (static_cast<uint64_t>(offset_type_2 & 0x0FFFFFFF) << 32) +
-                offset_type_1;
+
+        uint32_t offset_v0() const { return offset_type_1; }
+        uint64_t offset_v1() const {
+            return (static_cast<uint64_t>(offset_type_2 & 0x0FFFFFFF) << 32) + offset_type_1;
         }
-        uint64_t offset() const {
-            return (static_cast<uint64_t>(offset_type_2 & 0x0FFFFFFF) << 32) +
-                offset_type_1;
-        }
-        uint32_t type() { return (offset_type_2 & 0xF0000000) >> 28; }
-        uint32_t type() const { return (offset_type_2 & 0xF0000000) >> 28; }
-        void dump_v2(std::ostream &stream, bool need_endl = false) const {
+        uint32_t type_v0() const { return offset_type_2; }
+        uint32_t type_v1() const { return (offset_type_2 & 0xF0000000) >> 28; }
+        void dump_v0(std::ostream &stream, bool need_endl = false) const {
             stream << "{" << this->dir_id << ", " << this->obj_id << ", ";
-            stream << this->offset() << ", " << this->type() << "}";
+            stream << this->offset_v0() << ", " << this->type_v0() << "}";
+            if (need_endl) stream << std::endl;
+        }
+        void dump_v1(std::ostream &stream, bool need_endl = false) const {
+            stream << "{" << this->dir_id << ", " << this->obj_id << ", ";
+            stream << this->offset_v1() << ", " << this->type_v1() << "}";
             if (need_endl) stream << std::endl;
         }
     } __attribute__ ((__packed__));

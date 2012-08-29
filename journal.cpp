@@ -62,9 +62,7 @@ Block::dumpInternalNodeBlock() const
     for (int k = 0; k < this->keyCount(); k ++) {
         const struct tree_ptr ptr = this->getPtr(k);
         std::cout << "<" << ptr.block << ", " << ptr.size << "> ";
-        const struct key key = this->getKey(k);
-        std::cout << "{" << key.dir_id << ", " << key.obj_id << ", ";
-        std::cout << key.offset() << ", " << key.type() << "} ";
+        this->getKey(k).dump_v1(std::cout, true);
     }
     const struct tree_ptr ptr = this->getPtr(this->keyCount());
     std::cout << "<" << ptr.block << ", " << ptr.size << ">" << std::endl;
@@ -93,7 +91,7 @@ Block::walk_tree()
                 // process leaf contents
                 for (int j = 0; j < block_obj->itemCount(); j ++) {
                     const struct item_header &ih = block_obj->itemHeader(j);
-                    switch (ih.key.type()) {
+                    switch (ih.key.type_v1()) {
                     case 0: std::cout << "stat "; break;
                     case 1: std::cout << "indirect "; break;
                     case 2: std::cout << "direct "; break;
