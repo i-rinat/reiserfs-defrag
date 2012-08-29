@@ -92,7 +92,7 @@ Block::walk_tree()
                 std::cout << "Leaf Node, " << block_obj->block << ": ";
                 // process leaf contents
                 for (int j = 0; j < block_obj->itemCount(); j ++) {
-                    const struct item_header &ih = this->itemHeader(j);
+                    const struct item_header &ih = block_obj->itemHeader(j);
                     switch (ih.key.type()) {
                     case 0: std::cout << "stat "; break;
                     case 1: std::cout << "indirect "; break;
