@@ -108,6 +108,7 @@ void
 ReiserFs::close()
 {
     std::cout << "ReiserFs::close, " << this->fname << std::endl;
+    delete this->journal;
     ::close(this->fd);
     this->closed = true;
 }
