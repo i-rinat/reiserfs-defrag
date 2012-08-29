@@ -21,6 +21,12 @@
 #define KEY_V0      0
 #define KEY_V1      1
 
+#define KEY_TYPE_STAT       0
+#define KEY_TYPE_INDIRECT   1
+#define KEY_TYPE_DIRECT     2
+#define KEY_TYPE_DIRECTORY  3
+#define KEY_TYPE_ANY        15
+
 #define BLOCKSIZE   4096
 
 struct FsSuperblock {
@@ -124,6 +130,34 @@ protected:
             stream << "{" << this->dir_id << ", " << this->obj_id << ", ";
             stream << this->offset_v1() << ", " << this->type_v1() << "}";
             if (need_endl) stream << std::endl;
+        }
+        static const char *type_name(int type) {
+            switch (type) {
+            case KEY_TYPE_STAT: return "stat"; break;
+            case KEY_TYPE_INDIRECT: return "indirect"; break;
+            case KEY_TYPE_DIRECT: return "direct"; break;
+            case KEY_TYPE_DIRECTORY: return "directory"; break;
+            case KEY_TYPE_ANY: return "any"; break;
+            default: return "wrong item";
+            }
+        }
+        uint32_t type(int key_version) const {
+            switch (key_version) {
+            case KEY_V0: {
+                switch (this->type_v0()) {
+                case 0:          return KEY_TYPE_STAT; break; // stat
+                case 0xfffffffe: return KEY_TYPE_INDIRECT; break; // indirect
+                case 0xffffffff: return KEY_TYPE_DIRECT; break; // direct
+                case 500:        return KEY_TYPE_DIRECTORY; break; // directory
+                case 555:        return KEY_TYPE_DIRECTORY; break; // any
+                default: return 16; break; // TODO: add code for this case
+                }
+            }
+            case KEY_V1: return this->type_v1(); break;
+            default: // TODO: add code for this case
+                return 16;
+            }
+
         }
     } __attribute__ ((__packed__));
 

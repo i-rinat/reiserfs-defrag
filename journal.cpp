@@ -91,14 +91,7 @@ Block::walk_tree()
                 // process leaf contents
                 for (int j = 0; j < block_obj->itemCount(); j ++) {
                     const struct item_header &ih = block_obj->itemHeader(j);
-                    switch (ih.key.type_v1()) {
-                    case 0: std::cout << "stat "; break;
-                    case 1: std::cout << "indirect "; break;
-                    case 2: std::cout << "direct "; break;
-                    case 3: std::cout << "directory "; break;
-                    case 15: std::cout << "any "; break;
-                    default: std::cerr << "wrong item";
-                    }
+                    std::cout << key::type_name(ih.key.type(ih.version)) << " ";
                     std::cout << "\n---------------------------";
                     std::cout << "\ncount: " << ih.count;
                     std::cout << "\nlength: " << ih.length;
