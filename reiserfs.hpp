@@ -2,6 +2,7 @@
 #define _FILE_OFFSET_BITS 64
 #include <stdint.h>
 #include <string>
+#include <ostream>
 #include <map>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -113,6 +114,11 @@ protected:
         }
         uint32_t type() { return (offset_type_2 & 0xF0000000) >> 28; }
         uint32_t type() const { return (offset_type_2 & 0xF0000000) >> 28; }
+        void dump_v2(std::ostream &stream, bool need_endl = false) const {
+            stream << "{" << this->dir_id << ", " << this->obj_id << ", ";
+            stream << this->offset() << ", " << this->type() << "}";
+            if (need_endl) stream << std::endl;
+        }
     } __attribute__ ((__packed__));
 
     struct tree_ptr {
