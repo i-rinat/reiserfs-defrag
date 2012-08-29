@@ -124,6 +124,7 @@ ReiserFs::moveBlock(uint32_t from, uint32_t to)
 void
 ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
 {
+    // TODO: check movemap for consistency
     std::map<uint32_t, uint32_t>::iterator iter;
     for(iter = movemap.begin(); iter != movemap.end(); ++ iter) {
         std::cout << "from: " << iter->first << ", to: ";
