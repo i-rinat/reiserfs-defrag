@@ -25,7 +25,7 @@ Block::rawDump() const
         printf ("  |");
         for (k = 0; k < 16; k ++) {
             char c = buf[row*16+k];
-            if (32 <= c && c < 128) printf("%c", c); else printf(".");
+            if (32 <= c && c < 127) printf("%c", c); else printf(".");
         }
         printf ("|\n");
     }
