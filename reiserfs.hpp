@@ -82,7 +82,8 @@ public:
     void rawDump() const;
     void formattedDump() const;
     void setType(int type_);
-    void walk_tree();
+
+    void do_move(std::map<uint32_t, uint32_t> &movemap);
 
     uint32_t block;
 protected:
@@ -92,7 +93,7 @@ protected:
 
     void dumpInternalNodeBlock() const;
     void dumpLeafNodeBlock() const;
-
+    void walk_tree(std::map<uint32_t, uint32_t> & movemap);
 
     int keyCount() const;
     int ptrCount() const;
@@ -178,6 +179,10 @@ protected:
     const struct key &getKey(int index) const;
     const struct tree_ptr &getPtr(int index) const;
     const struct item_header &itemHeader(int index) const;
+    uint32_t indirect_item_ref(uint16_t offset, uint32_t idx) const {
+        uint32_t ref = reinterpret_cast<const uint32_t&>(buf[offset + 4*idx]);
+        return ref;
+    }
 };
 
 class FsJournal {
@@ -201,7 +206,7 @@ class ReiserFs {
 public:
     ReiserFs();
     ~ReiserFs();
-    int open(std::string name);
+    int open(const std::string &name);
     void close();
     void moveBlock(uint32_t from, uint32_t to);
     void moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap);

@@ -17,7 +17,7 @@ ReiserFs::~ReiserFs()
 }
 
 int
-ReiserFs::open(std::string name)
+ReiserFs::open(const std::string &name)
 {
     std::cout << "open " << name << std::endl;
     this->fname = name;
@@ -139,7 +139,7 @@ ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
     Block *root_block = this->readBlock(this->sb.s_root_block);
     root_block->setType(BLOCKTYPE_INTERNAL);
     // root_block->formattedDump();
-    root_block->walk_tree();
+    root_block->do_move(movemap);
     this->releaseBlock(root_block);
 }
 

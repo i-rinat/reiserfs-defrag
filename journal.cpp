@@ -77,32 +77,53 @@ Block::dumpLeafNodeBlock() const
 }
 
 void
-Block::walk_tree()
+Block::do_move(std::map<uint32_t, uint32_t> &movemap)
+{
+    this->walk_tree(movemap);
+}
+
+void
+Block::walk_tree(std::map<uint32_t, uint32_t> &movemap)
 {
     if (this->type == BLOCKTYPE_INTERNAL) {
         for (int k = 0; k < this->ptrCount(); k ++) {
             Block *block_obj = this->journal->readBlock(this->getPtr(k).block);
             if (block_obj->level() > TREE_LEVEL_LEAF) {
                 block_obj->setType(BLOCKTYPE_INTERNAL);
-                block_obj->walk_tree();
+                block_obj->walk_tree(movemap);
             } else if (block_obj->level() == TREE_LEVEL_LEAF) {
                 block_obj->setType(BLOCKTYPE_LEAF);
                 std::cout << "Leaf Node, " << block_obj->block << std::endl;
                 // process leaf contents
                 for (int j = 0; j < block_obj->itemCount(); j ++) {
                     const struct item_header &ih = block_obj->itemHeader(j);
-                    std::cout << key::type_name(ih.key.type(ih.version)) << " ";
-                    std::cout << "\n---------------------------";
-                    std::cout << "\ncount: " << ih.count;
-                    std::cout << "\nlength: " << ih.length;
-                    std::cout << "\noffset: " << ih.offset;
-                    std::cout << "\nversion: " << ih.version;
-                    std::cout << "\n===========================\n";
+                    /* std::cout << key::type_name(ih.key.type(ih.version));
+                    std::cout << ", count: " << ih.count;
+                    std::cout << ", length: " << ih.length;
+                    std::cout << ", offset: " << ih.offset;
+                    std::cout << ", version: " << ih.version;
+                    std::cout << std::endl; */
+
+                    uint32_t key_version = ih.version;
+                    uint32_t item_type = ih.key.type(ih.version);
+
+                    // indirect items contain links to unformatted (data) blocks
+                    if (KEY_TYPE_INDIRECT == item_type) {
+                        for (int idx = 0; idx < ih.length/4; idx ++) {
+                            uint32_t ref = block_obj->indirect_item_ref(ih.offset, idx);
+                            if (movemap.count(ref) == 0) continue;
+                            // we have something to move
+                            std::cout << "we have something to move";
+                        }
+                    }
                 }
                 std::cout << std::endl;
             } else {
                 std::cerr << "error: unknown block in tree" << std::endl;
             }
+
+            // do move
+
             delete block_obj;
         }
     }
