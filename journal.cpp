@@ -89,7 +89,7 @@ Block::walk_tree()
                 block_obj->walk_tree();
             } else if (block_obj->level() == TREE_LEVEL_LEAF) {
                 block_obj->setType(BLOCKTYPE_LEAF);
-                std::cout << "Leaf Node, " << block_obj->block << ": ";
+                std::cout << "Leaf Node, " << block_obj->block << std::endl;
                 // process leaf contents
                 for (int j = 0; j < block_obj->itemCount(); j ++) {
                     const struct item_header &ih = block_obj->itemHeader(j);
