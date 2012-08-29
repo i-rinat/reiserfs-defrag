@@ -10,6 +10,21 @@ Block::Block(FsJournal *journal_)
     memset(this->buf, 0, BLOCKSIZE);
     this->type = BLOCKTYPE_UNKNOWN;
     this->journal = journal_;
+    this->dirty = false;
+}
+
+Block::~Block()
+{
+    if (this->dirty) this->write();
+}
+
+void
+Block::write()
+{
+    if (this->dirty) {
+        this->journal->writeBlock(this);
+        this->dirty = false;
+    }
 }
 
 void
@@ -110,10 +125,12 @@ Block::walk_tree(std::map<uint32_t, uint32_t> &movemap)
                     // indirect items contain links to unformatted (data) blocks
                     if (KEY_TYPE_INDIRECT == item_type) {
                         for (int idx = 0; idx < ih.length/4; idx ++) {
-                            uint32_t ref = block_obj->indirect_item_ref(ih.offset, idx);
+                            uint32_t ref = block_obj->indirectItemRef(ih.offset, idx);
                             if (movemap.count(ref) == 0) continue;
                             // we have something to move
                             std::cout << "we have something to move";
+                            // update indirect block
+                            block_obj->setIndirectItemRef(ih.offset, idx, movemap[ref]);
                         }
                     }
                 }
@@ -218,6 +235,17 @@ FsJournal::readBlock(uint32_t block)
     }
     block_obj->block = block;
     return block_obj;
+}
+
+void
+FsJournal::writeBlock(Block *block)
+{
+    off_t new_ofs = ::lseek (this->fd, (off_t)block->block * BLOCKSIZE, SEEK_SET);
+    ssize_t bytes_written = ::write (this->fd, block->bufPtr(), BLOCKSIZE);
+    if (BLOCKSIZE != bytes_written) {
+        std::cerr << "error: writeBlock(" << block->block << ")" << std::endl;
+        return;
+    }
 }
 
 void

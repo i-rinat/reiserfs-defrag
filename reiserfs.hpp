@@ -76,19 +76,20 @@ class FsJournal;
 class Block {
 public:
     Block(FsJournal *journal_);
-    virtual ~Block() {}
+    ~Block();
     const char *bufPtr() const { return &buf[0]; }
     char *bufPtr() { return &buf[0]; }
     void rawDump() const;
     void formattedDump() const;
     void setType(int type_);
-
+    void write();
     void do_move(std::map<uint32_t, uint32_t> &movemap);
 
     uint32_t block;
 protected:
     char buf[BLOCKSIZE];
     int type;
+    bool dirty;
     FsJournal *journal;
 
     void dumpInternalNodeBlock() const;
@@ -179,9 +180,14 @@ protected:
     const struct key &getKey(int index) const;
     const struct tree_ptr &getPtr(int index) const;
     const struct item_header &itemHeader(int index) const;
-    uint32_t indirect_item_ref(uint16_t offset, uint32_t idx) const {
+    uint32_t indirectItemRef(uint16_t offset, uint32_t idx) const {
         uint32_t ref = reinterpret_cast<const uint32_t&>(buf[offset + 4*idx]);
         return ref;
+    }
+    void setIndirectItemRef(uint16_t offset, uint32_t idx, uint32_t value) {
+        uint32_t ref = reinterpret_cast<const uint32_t&>(buf[offset + 4*idx]);
+        ref = value;
+        this->dirty = true;
     }
 };
 
@@ -189,6 +195,7 @@ class FsJournal {
 public:
     FsJournal(int fd_);
     Block* readBlock(uint32_t block);
+    void writeBlock(Block *block);
     void releaseBlock(Block *block);
     void beginTransaction();
     void commitTransaction();
