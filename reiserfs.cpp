@@ -124,21 +124,15 @@ ReiserFs::moveBlock(uint32_t from, uint32_t to)
 void
 ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
 {
-    std::cout << "ReiserFs::moveMultipleBlocks stub" << std::endl;
-
     std::map<uint32_t, uint32_t>::iterator iter;
     for(iter = movemap.begin(); iter != movemap.end(); ++ iter) {
         std::cout << "from: " << iter->first << ", to: ";
         std::cout << iter->second << std::endl;
     }
-
-    // do walk tree
-
     std::cout << "root block: " << this->sb.s_root_block << std::endl;
 
     Block *root_block = this->readBlock(this->sb.s_root_block);
     root_block->setType(BLOCKTYPE_INTERNAL);
-    // root_block->formattedDump();
     root_block->do_move(movemap);
     this->releaseBlock(root_block);
 }
