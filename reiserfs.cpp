@@ -29,7 +29,7 @@ ReiserFs::open(const std::string &name)
 
     this->readSuperblock();
     this->journal = new FsJournal(this->fd);
-    this->bitmap = new FsBitmap(this->journal);
+    this->bitmap = new FsBitmap(this->journal, &this->sb);
     this->closed = true;
 
     return RFSD_OK;

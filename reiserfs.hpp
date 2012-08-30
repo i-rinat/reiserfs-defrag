@@ -28,6 +28,8 @@
 #define KEY_TYPE_ANY        15
 
 #define BLOCKSIZE   4096
+#define BLOCKS_PER_BITMAP   (BLOCKSIZE*8)
+#define FIRST_BITMAP_BLOCK  (65536/BLOCKSIZE + 1)
 
 struct FsSuperblock {
     uint32_t s_block_count;
@@ -72,6 +74,7 @@ struct FsSuperblock {
 
 
 class FsJournal;
+class FsBitmap;
 
 class Block {
 public:
@@ -81,7 +84,7 @@ public:
     char *bufPtr() { return &buf[0]; }
     void rawDump() const;
     void formattedDump() const;
-    void setType(int type_);
+    void setType(int type);
     void write();
     void attachJournal(FsJournal *journal);
     void do_move(std::map<uint32_t, uint32_t> &movemap);
@@ -92,6 +95,8 @@ protected:
     int type;
     bool dirty;
     FsJournal *journal;
+
+    friend class FsBitmap;
 
     void dumpInternalNodeBlock() const;
     void dumpLeafNodeBlock() const;
@@ -208,11 +213,18 @@ private:
 
 class FsBitmap {
 public:
-    FsBitmap(FsJournal *journal_);
+    FsBitmap(FsJournal *journal, const FsSuperblock *sb);
     ~FsBitmap();
+    bool blockUsed(uint32_t block_idx);
+    void markBlockUsed(uint32_t block_idx);
+    void markBlockUnused(uint32_t block_idx);
+    void markBlock(uint32_t block_idx, bool used);
 
 private:
     FsJournal *journal;
+    const FsSuperblock *sb;
+    uint32_t bitmap_block_count;
+    Block *bitmap_blocks;
 };
 
 class ReiserFs {
