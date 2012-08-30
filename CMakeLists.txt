@@ -6,4 +6,5 @@ add_executable (rfsd
 	defrag.cpp
 	reiserfs.cpp
 	journal.cpp
+	block.cpp
 )
