@@ -202,7 +202,9 @@ public:
     Block* readBlock(uint32_t block_idx);
     void readBlock(Block &block_obj, uint32_t block_idx);
     void writeBlock(Block *block_obj);
+    void writeBlockAt(Block *block_obj, uint32_t block_idx);
     void releaseBlock(Block *block_obj);
+    void moveRawBlock(uint32_t from, uint32_t to);
     void beginTransaction();
     void commitTransaction();
 

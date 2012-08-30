@@ -56,9 +56,27 @@ FsJournal::writeBlock(Block *block_obj)
     off_t new_ofs = ::lseek (this->fd, static_cast<off_t>(block_obj->block) * BLOCKSIZE, SEEK_SET);
     ssize_t bytes_written = ::write (this->fd, block_obj->buf, BLOCKSIZE);
     if (BLOCKSIZE != bytes_written) {
-        std::cerr << "error: writeBlock(" << block_obj->block << ")" << std::endl;
+        std::cerr << "error: writeBlock(" << &block_obj << ")" << std::endl;
         return;
     }
+}
+
+void
+FsJournal::writeBlockAt(Block *block_obj, uint32_t block_idx)
+{
+    off_t new_ofs = ::lseek (this->fd, static_cast<off_t>(block_idx) * BLOCKSIZE, SEEK_SET);
+    ssize_t bytes_written = ::write (this->fd, block_obj->buf, BLOCKSIZE);
+    if (BLOCKSIZE != bytes_written) {
+        std::cerr << "error: writeBlockAt(" << block_obj << ", " << block_idx << ")" << std::endl;
+        return;
+    }
+}
+
+void
+FsJournal::moveRawBlock(uint32_t from, uint32_t to)
+{
+    Block *block_obj = this->readBlock(from);
+    this->writeBlockAt(block_obj, to);
 }
 
 void
