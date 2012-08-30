@@ -6,7 +6,8 @@ main (int argc, char *argv[])
     ReiserFs fs;
 
     fs.open("../image/reiserfs.image");
-    fs.moveBlock(250000, 5678);
+    fs.printFirstFreeBlock();
+    fs.moveBlock(250000, 8211);
     fs.close();
 
     return 0;
