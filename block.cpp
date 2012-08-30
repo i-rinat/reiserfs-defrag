@@ -113,7 +113,7 @@ Block::walk_tree(std::map<uint32_t, uint32_t> &movemap)
                 block_obj->walk_tree(movemap);
             } else if (block_obj->level() == TREE_LEVEL_LEAF) {
                 block_obj->setType(BLOCKTYPE_LEAF);
-                std::cout << "Leaf Node, " << block_obj->block << std::endl;
+                // std::cout << "Leaf Node, " << block_obj->block << std::endl;
                 // process leaf contents
                 for (int j = 0; j < block_obj->itemCount(); j ++) {
                     const struct item_header &ih = block_obj->itemHeader(j);
@@ -133,13 +133,17 @@ Block::walk_tree(std::map<uint32_t, uint32_t> &movemap)
                             uint32_t ref = block_obj->indirectItemRef(ih.offset, idx);
                             if (movemap.count(ref) == 0) continue;
                             // we have something to move
-                            std::cout << "we have something to move";
+                            std::cout << "we have something to move" << std::endl;
                             // update indirect block
                             block_obj->setIndirectItemRef(ih.offset, idx, movemap[ref]);
+                            // actually move block
+                            this->journal->moveRawBlock(ref, movemap[ref]);
+                            // update bitmap
+                            // TODO: add bitmap update code
                         }
                     }
                 }
-                std::cout << std::endl;
+                // std::cout << std::endl;
             } else {
                 std::cerr << "error: unknown block in tree" << std::endl;
             }
