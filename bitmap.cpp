@@ -42,6 +42,7 @@ FsBitmap::markBlockUsed(uint32_t block_idx)
     uint8_t &c = reinterpret_cast<uint8_t&>(bb.buf[inblock_byte_idx]);
 
     c = c | (static_cast<uint8_t>(1) << inbyte_idx);
+    bb.markDirty();
 }
 
 void
@@ -55,6 +56,7 @@ FsBitmap::markBlockUnused(uint32_t block_idx)
     uint8_t &c = reinterpret_cast<uint8_t&>(bb.buf[inblock_byte_idx]);
 
     c = c & ~(static_cast<uint8_t>(1) << inbyte_idx);
+    bb.markDirty();
 }
 
 void

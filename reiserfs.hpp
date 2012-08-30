@@ -86,7 +86,7 @@ public:
     void write();
     void attachJournal(FsJournal *journal);
     void do_move(std::map<uint32_t, uint32_t> &movemap);
-
+    void markDirty() { this->dirty = true; }
     uint32_t block;
 protected:
     char buf[BLOCKSIZE];
