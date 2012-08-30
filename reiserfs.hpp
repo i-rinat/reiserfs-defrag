@@ -207,6 +207,11 @@ private:
 
 class FsBitmap {
 public:
+    FsBitmap(FsJournal *journal_);
+    ~FsBitmap();
+
+private:
+    FsJournal *journal;
 };
 
 class ReiserFs {
@@ -223,10 +228,8 @@ public:
     Block* readBlock(uint32_t block);
     void releaseBlock(Block *block);
 
-
-
 private:
-    FsBitmap bitmap;
+    FsBitmap *bitmap;
     FsJournal *journal;
     FsSuperblock sb;
     std::string fname;

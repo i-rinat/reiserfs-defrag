@@ -28,8 +28,8 @@ ReiserFs::open(const std::string &name)
     }
 
     this->readSuperblock();
-    // this->dumpSuperblock();
     this->journal = new FsJournal(this->fd);
+    this->bitmap = new FsBitmap(this->journal);
     this->closed = true;
 
     return RFSD_OK;
@@ -108,6 +108,7 @@ void
 ReiserFs::close()
 {
     std::cout << "ReiserFs::close, " << this->fname << std::endl;
+    delete this->bitmap;
     delete this->journal;
     ::close(this->fd);
     this->closed = true;
