@@ -88,20 +88,26 @@ public:
     void markDirty() { this->dirty = true; }
     int keyCount() const;
     int ptrCount() const;
+    int level() const;
+    int freeSpace() const;
+    int itemCount() const;
+    void dumpInternalNodeBlock() const;
+    void dumpLeafNodeBlock() const;
+    uint32_t indirectItemRef(uint16_t offset, uint32_t idx) const {
+        uint32_t ref = reinterpret_cast<const uint32_t&>(buf[offset + 4*idx]);
+        return ref;
+    }
+    void setIndirectItemRef(uint16_t offset, uint32_t idx, uint32_t value) {
+        uint32_t ref = reinterpret_cast<const uint32_t&>(buf[offset + 4*idx]);
+        ref = value;
+        this->dirty = true;
+    }
 
     uint32_t block;
     int type;
     char buf[BLOCKSIZE];
     bool dirty;
     FsJournal *journal;
-
-    void dumpInternalNodeBlock() const;
-    void dumpLeafNodeBlock() const;
-
-
-    int level() const;
-    int freeSpace() const;
-    int itemCount() const;
 
     struct blockheader {
         uint16_t bh_level;
@@ -181,15 +187,6 @@ public:
     const struct key &getKey(int index) const;
     const struct tree_ptr &getPtr(int index) const;
     const struct item_header &itemHeader(int index) const;
-    uint32_t indirectItemRef(uint16_t offset, uint32_t idx) const {
-        uint32_t ref = reinterpret_cast<const uint32_t&>(buf[offset + 4*idx]);
-        return ref;
-    }
-    void setIndirectItemRef(uint16_t offset, uint32_t idx, uint32_t value) {
-        uint32_t ref = reinterpret_cast<const uint32_t&>(buf[offset + 4*idx]);
-        ref = value;
-        this->dirty = true;
-    }
 };
 
 class FsJournal {
