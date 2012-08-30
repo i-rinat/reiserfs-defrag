@@ -25,26 +25,38 @@ FsJournal::commitTransaction()
 }
 
 Block*
-FsJournal::readBlock(uint32_t block)
+FsJournal::readBlock(uint32_t block_idx)
 {
-    off_t new_ofs = ::lseek (this->fd, (off_t)block * BLOCKSIZE, SEEK_SET);
+    off_t new_ofs = ::lseek (this->fd, static_cast<off_t>(block_idx) * BLOCKSIZE, SEEK_SET);
     Block *block_obj = new Block(this);
     ssize_t bytes_read = ::read (this->fd, block_obj->bufPtr(), BLOCKSIZE);
     if (BLOCKSIZE != bytes_read) {
-        std::cerr << "error: readBlock("<<block << ")" << std::endl;
+        std::cerr << "error: readBlock(" << block_idx << ")" << std::endl;
         return 0;
     }
-    block_obj->block = block;
+    block_obj->block = block_idx;
     return block_obj;
 }
 
 void
-FsJournal::writeBlock(Block *block)
+FsJournal::readBlock(Block &block_obj, uint32_t block_idx)
 {
-    off_t new_ofs = ::lseek (this->fd, (off_t)block->block * BLOCKSIZE, SEEK_SET);
-    ssize_t bytes_written = ::write (this->fd, block->bufPtr(), BLOCKSIZE);
+    off_t new_ofs = ::lseek (this->fd, (off_t)block_idx * BLOCKSIZE, SEEK_SET);
+    ssize_t bytes_read = ::read (this->fd, block_obj.buf, BLOCKSIZE);
+    if (BLOCKSIZE != bytes_read) {
+        std::cerr << "error: readBlock(" << &block_obj << ", " << block_idx << ")" << std::endl;
+        return;
+    }
+    block_obj.block = block_idx;
+}
+
+void
+FsJournal::writeBlock(Block *block_obj)
+{
+    off_t new_ofs = ::lseek (this->fd, static_cast<off_t>(block_obj->block) * BLOCKSIZE, SEEK_SET);
+    ssize_t bytes_written = ::write (this->fd, block_obj->buf, BLOCKSIZE);
     if (BLOCKSIZE != bytes_written) {
-        std::cerr << "error: writeBlock(" << block->block << ")" << std::endl;
+        std::cerr << "error: writeBlock(" << block_obj->block << ")" << std::endl;
         return;
     }
 }

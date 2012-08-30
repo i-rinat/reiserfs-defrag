@@ -97,6 +97,7 @@ protected:
     FsJournal *journal;
 
     friend class FsBitmap;
+    friend class FsJournal;
 
     void dumpInternalNodeBlock() const;
     void dumpLeafNodeBlock() const;
@@ -200,9 +201,10 @@ protected:
 class FsJournal {
 public:
     FsJournal(int fd_);
-    Block* readBlock(uint32_t block);
-    void writeBlock(Block *block);
-    void releaseBlock(Block *block);
+    Block* readBlock(uint32_t block_idx);
+    void readBlock(Block &block_obj, uint32_t block_idx);
+    void writeBlock(Block *block_obj);
+    void releaseBlock(Block *block_obj);
     void beginTransaction();
     void commitTransaction();
 
