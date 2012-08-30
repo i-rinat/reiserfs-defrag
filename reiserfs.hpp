@@ -98,7 +98,7 @@ public:
         return ref;
     }
     void setIndirectItemRef(uint16_t offset, uint32_t idx, uint32_t value) {
-        uint32_t ref = reinterpret_cast<uint32_t&>(buf[offset + 4*idx]);
+        uint32_t &ref = reinterpret_cast<uint32_t&>(buf[offset + 4*idx]);
         ref = value;
         this->dirty = true;
     }
