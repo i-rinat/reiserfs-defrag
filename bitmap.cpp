@@ -20,7 +20,6 @@ FsBitmap::FsBitmap(FsJournal *journal_, const FsSuperblock *sb_)
     for (int bitmap_idx = 0; bitmap_idx < this->bitmap_block_count; bitmap_idx ++) {
         uint32_t actual_block_idx = bitmap_idx * BLOCKS_PER_BITMAP;
         if (0 == actual_block_idx) actual_block_idx = FIRST_BITMAP_BLOCK;
-        std::cout << "actual block " << actual_block_idx << std::endl;
         this->journal->readBlock(this->bitmap_blocks[bitmap_idx], actual_block_idx);
     }
 }
