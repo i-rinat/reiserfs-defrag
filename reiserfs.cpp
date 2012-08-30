@@ -122,10 +122,41 @@ ReiserFs::moveBlock(uint32_t from, uint32_t to)
     this->moveMultipleBlocks (movemap);
 }
 
+bool
+ReiserFs::movemap_consistent(const std::map<uint32_t, uint32_t> &movemap)
+{
+    std::map<uint32_t, uint32_t> revmap;
+    std::map<uint32_t, uint32_t>::const_iterator mapiter;
+
+    for (mapiter = movemap.begin(); mapiter != movemap.end(); ++ mapiter) {
+        // check if all 'from' blocks are occupied
+        if (! this->bitmap->blockUsed(mapiter->first)) {
+            err_string = "some 'from' block are not occupied";
+            return false;
+        }
+        // check if all 'to' blocks are free
+        if (this->bitmap->blockUsed(mapiter->second)) {
+            err_string = "some 'to' block are not free";
+            return false;
+        }
+        revmap[mapiter->second] = mapiter->first;
+    }
+    // check for singularity
+    if (revmap.size() != movemap.size()) {
+        err_string = "movemap degenerate";
+        return false;
+    }
+    return true;
+}
+
 void
 ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
 {
-    // TODO: check movemap for consistency
+    if (! this->movemap_consistent(movemap)) {
+        std::cerr << "error: movemap not consistent, " << this->err_string << std::endl;
+        return;
+    }
+
     std::map<uint32_t, uint32_t>::iterator iter;
     for(iter = movemap.begin(); iter != movemap.end(); ++ iter) {
         std::cout << "from: " << iter->first << ", to: ";

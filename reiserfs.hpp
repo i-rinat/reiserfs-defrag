@@ -243,7 +243,9 @@ private:
     std::string fname;
     int fd;
     bool closed;
+    std::string err_string;
 
     void readSuperblock();
     void walk_tree(Block *block_obj, std::map<uint32_t, uint32_t> & movemap);
+    bool movemap_consistent(const std::map<uint32_t, uint32_t> &movemap);
 };
