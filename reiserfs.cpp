@@ -230,3 +230,15 @@ ReiserFs::walk_tree(Block *block_obj, std::map<uint32_t, uint32_t> &movemap)
         }
     }
 }
+
+void
+ReiserFs::printFirstFreeBlock()
+{
+    for (uint32_t k = 0; k < this->sb.s_block_count; k ++) {
+        if (! this->bitmap->blockUsed(k)) {
+            std::cout << "free block: " << k << std::endl;
+            return;
+        }
+    }
+    std::cout << "no free block found" << std::endl;
+}

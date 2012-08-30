@@ -235,6 +235,7 @@ public:
     // proxies for FsJournal methods
     Block* readBlock(uint32_t block);
     void releaseBlock(Block *block);
+    void printFirstFreeBlock();
 
 private:
     FsBitmap *bitmap;
