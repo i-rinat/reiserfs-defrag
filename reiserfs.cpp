@@ -135,7 +135,7 @@ ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
 
     Block *root_block = this->readBlock(this->sb.s_root_block);
     root_block->setType(BLOCKTYPE_INTERNAL);
-    root_block->do_move(movemap);
+    this->walk_tree(root_block, movemap);
     this->releaseBlock(root_block);
 }
 
@@ -152,4 +152,49 @@ ReiserFs::releaseBlock(Block *block)
 {
     assert(this->journal != NULL);
     journal->releaseBlock(block);
+}
+
+void
+ReiserFs::walk_tree(Block *block_obj, std::map<uint32_t, uint32_t> &movemap)
+{
+    if (block_obj->type == BLOCKTYPE_INTERNAL) {
+        for (int k = 0; k < block_obj->ptrCount(); k ++) {
+            Block *child_block = this->journal->readBlock(block_obj->getPtr(k).block);
+            if (child_block->level() > TREE_LEVEL_LEAF) {
+                child_block->setType(BLOCKTYPE_INTERNAL);
+                this->walk_tree(child_block, movemap);
+            } else if (child_block->level() == TREE_LEVEL_LEAF) {
+                child_block->setType(BLOCKTYPE_LEAF);
+                // process leaf contents
+                for (int j = 0; j < child_block->itemCount(); j ++) {
+                    const struct Block::item_header &ih = child_block->itemHeader(j);
+
+                    uint32_t key_version = ih.version;
+                    uint32_t item_type = ih.key.type(ih.version);
+
+                    // indirect items contain links to unformatted (data) blocks
+                    if (KEY_TYPE_INDIRECT == item_type) {
+                        for (int idx = 0; idx < ih.length/4; idx ++) {
+                            uint32_t ref = child_block->indirectItemRef(ih.offset, idx);
+                            if (movemap.count(ref) == 0) continue;
+                            // we have something to move
+                            std::cout << "we have something to move" << std::endl;
+                            // update indirect block
+                            child_block->setIndirectItemRef(ih.offset, idx, movemap[ref]);
+                            // actually move block
+                            this->journal->moveRawBlock(ref, movemap[ref]);
+                            // update bitmap
+                            // TODO: add bitmap update code
+                        }
+                    }
+                }
+            } else {
+                std::cerr << "error: unknown block in tree" << std::endl;
+            }
+
+            // TODO: do move internal block
+
+            delete child_block;
+        }
+    }
 }

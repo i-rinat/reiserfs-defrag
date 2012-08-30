@@ -85,24 +85,20 @@ public:
     void setType(int type);
     void write();
     void attachJournal(FsJournal *journal);
-    void do_move(std::map<uint32_t, uint32_t> &movemap);
     void markDirty() { this->dirty = true; }
+    int keyCount() const;
+    int ptrCount() const;
+
     uint32_t block;
-protected:
-    char buf[BLOCKSIZE];
     int type;
+    char buf[BLOCKSIZE];
     bool dirty;
     FsJournal *journal;
 
-    friend class FsBitmap;
-    friend class FsJournal;
-
     void dumpInternalNodeBlock() const;
     void dumpLeafNodeBlock() const;
-    void walk_tree(std::map<uint32_t, uint32_t> & movemap);
 
-    int keyCount() const;
-    int ptrCount() const;
+
     int level() const;
     int freeSpace() const;
     int itemCount() const;
@@ -249,8 +245,8 @@ private:
     FsSuperblock sb;
     std::string fname;
     int fd;
-
     bool closed;
 
     void readSuperblock();
+    void walk_tree(Block *block_obj, std::map<uint32_t, uint32_t> & movemap);
 };
