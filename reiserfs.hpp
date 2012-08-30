@@ -80,8 +80,6 @@ class Block {
 public:
     Block(FsJournal *journal = NULL);
     ~Block();
-    const char *bufPtr() const { return &buf[0]; }
-    char *bufPtr() { return &buf[0]; }
     void rawDump() const;
     void formattedDump() const;
     void setType(int type);

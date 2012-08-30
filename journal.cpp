@@ -29,7 +29,7 @@ FsJournal::readBlock(uint32_t block_idx)
 {
     off_t new_ofs = ::lseek (this->fd, static_cast<off_t>(block_idx) * BLOCKSIZE, SEEK_SET);
     Block *block_obj = new Block(this);
-    ssize_t bytes_read = ::read (this->fd, block_obj->bufPtr(), BLOCKSIZE);
+    ssize_t bytes_read = ::read (this->fd, block_obj->buf, BLOCKSIZE);
     if (BLOCKSIZE != bytes_read) {
         std::cerr << "error: readBlock(" << block_idx << ")" << std::endl;
         return 0;
