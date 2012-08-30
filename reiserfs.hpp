@@ -75,7 +75,7 @@ class FsJournal;
 
 class Block {
 public:
-    Block(FsJournal *journal_);
+    Block(FsJournal *journal = NULL);
     ~Block();
     const char *bufPtr() const { return &buf[0]; }
     char *bufPtr() { return &buf[0]; }
@@ -83,6 +83,7 @@ public:
     void formattedDump() const;
     void setType(int type_);
     void write();
+    void attachJournal(FsJournal *journal);
     void do_move(std::map<uint32_t, uint32_t> &movemap);
 
     uint32_t block;

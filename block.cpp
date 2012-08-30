@@ -18,6 +18,12 @@ Block::~Block()
 }
 
 void
+Block::attachJournal(FsJournal *journal_)
+{
+    this->journal = journal_;
+}
+
+void
 Block::write()
 {
     if (this->dirty) {
