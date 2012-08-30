@@ -184,7 +184,8 @@ ReiserFs::walk_tree(Block *block_obj, std::map<uint32_t, uint32_t> &movemap)
                             // actually move block
                             this->journal->moveRawBlock(ref, movemap[ref]);
                             // update bitmap
-                            // TODO: add bitmap update code
+                            this->bitmap->markBlockUnused(ref);
+                            this->bitmap->markBlockUsed(movemap[ref]);
                         }
                     }
                 }
