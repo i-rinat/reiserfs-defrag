@@ -237,6 +237,8 @@ public:
     Block* readBlock(uint32_t block);
     void releaseBlock(Block *block);
     void printFirstFreeBlock();
+    uint32_t findFreeBlockBefore(uint32_t block_idx);
+    uint32_t findFreeBlockAfter(uint32_t block_idx);
 
 private:
     FsBitmap *bitmap;
