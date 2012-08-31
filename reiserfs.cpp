@@ -139,6 +139,32 @@ ReiserFs::movemap_consistent(const std::map<uint32_t, uint32_t> &movemap)
             err_string = "some 'to' block are not free";
             return false;
         }
+        // check if any 'from' block are in reserved locations
+        if (mapiter->first == SUPERBLOCK_BLOCK) {
+            err_string = "some 'from' blocks map to superblock";
+            return false;
+        }
+        if (mapiter->first == FIRST_BITMAP_BLOCK
+            || (mapiter->first/BLOCKS_PER_BITMAP)*BLOCKS_PER_BITMAP == mapiter->first)
+        {
+            err_string = "some 'from' blocks map to bitmap blocks";
+            return false;
+        }
+        // first 64 kiB are reserved
+        if (mapiter->first < 65536/BLOCKSIZE) {
+            err_string = "some 'from' blocks map to first 64 kiB";
+            return false;
+        }
+        // last journal block is journal header block, its length is no
+        uint32_t journal_last_block = this->sb.jp_journal_1st_block
+                                      + (this->sb.jp_journal_size - 1) + 1;
+        if (mapiter->first >= this->sb.jp_journal_1st_block
+            && mapiter->first <= journal_last_block)
+        {
+            err_string = "some 'from' blocks map to journal";
+            return false;
+        }
+        // build inverse transform
         revmap[mapiter->second] = mapiter->first;
     }
     // check for singularity

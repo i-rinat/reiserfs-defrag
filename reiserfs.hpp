@@ -29,6 +29,7 @@
 
 #define BLOCKSIZE   4096
 #define BLOCKS_PER_BITMAP   (BLOCKSIZE*8)
+#define SUPERBLOCK_BLOCK    (65536/BLOCKSIZE)
 #define FIRST_BITMAP_BLOCK  (65536/BLOCKSIZE + 1)
 
 struct FsSuperblock {
