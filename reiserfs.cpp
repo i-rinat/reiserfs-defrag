@@ -17,11 +17,16 @@ ReiserFs::~ReiserFs()
 }
 
 int
-ReiserFs::open(const std::string &name)
+ReiserFs::open(const std::string &name, bool o_sync)
 {
     std::cout << "open " << name << std::endl;
     this->fname = name;
-    fd = ::open(name.c_str(), O_RDWR | O_SYNC | O_LARGEFILE);
+    if (o_sync) {
+        fd = ::open(name.c_str(), O_RDWR | O_SYNC | O_LARGEFILE);
+    } else {
+        fd = ::open(name.c_str(), O_RDWR | O_LARGEFILE);
+    }
+
     if (-1 == fd) {
         std::cerr << "error: can't open file `" << name << "', errno = " << errno << std::endl;
         return RFSD_FAIL;

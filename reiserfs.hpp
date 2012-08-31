@@ -227,7 +227,7 @@ class ReiserFs {
 public:
     ReiserFs();
     ~ReiserFs();
-    int open(const std::string &name);
+    int open(const std::string &name, bool o_sync = true);
     void close();
     void moveBlock(uint32_t from, uint32_t to);
     void moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap);
