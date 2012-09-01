@@ -239,7 +239,7 @@ public:
     void printFirstFreeBlock();
     uint32_t findFreeBlockBefore(uint32_t block_idx);
     uint32_t findFreeBlockAfter(uint32_t block_idx);
-    bool blockUsed(uint32_t block_idx) { this->bitmap->blockUsed(block_idx); }
+    bool blockUsed(uint32_t block_idx) { return this->bitmap->blockUsed(block_idx); }
 
 private:
     FsBitmap *bitmap;
