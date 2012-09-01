@@ -68,14 +68,15 @@ FsBitmap::markBlock(uint32_t block_idx, bool used)
 }
 
 bool
-FsBitmap::blockUsed(uint32_t block_idx)
+FsBitmap::blockUsed(uint32_t block_idx) const
 {
     uint32_t bitmap_block_idx = block_idx / BLOCKS_PER_BITMAP;
     uint32_t inblock_bit_idx = block_idx % BLOCKS_PER_BITMAP;
     uint32_t inblock_byte_idx = inblock_bit_idx / 8;
     uint32_t inbyte_idx = inblock_bit_idx % 8;
-    Block &bb = this->bitmap_blocks[bitmap_block_idx];
-    uint8_t &c = reinterpret_cast<uint8_t&>(bb.buf[inblock_byte_idx]);
+
+    const Block &bb = this->bitmap_blocks[bitmap_block_idx];
+    const uint8_t &c = reinterpret_cast<const uint8_t&>(bb.buf[inblock_byte_idx]);
 
     // result will be converted to bool automatically
     return c & (static_cast<uint8_t>(1) << inbyte_idx);

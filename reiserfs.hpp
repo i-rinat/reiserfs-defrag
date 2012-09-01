@@ -211,7 +211,7 @@ class FsBitmap {
 public:
     FsBitmap(FsJournal *journal, const FsSuperblock *sb);
     ~FsBitmap();
-    bool blockUsed(uint32_t block_idx);
+    bool blockUsed(uint32_t block_idx) const;
     void markBlockUsed(uint32_t block_idx);
     void markBlockUnused(uint32_t block_idx);
     void markBlock(uint32_t block_idx, bool used);
@@ -239,7 +239,7 @@ public:
     void printFirstFreeBlock();
     uint32_t findFreeBlockBefore(uint32_t block_idx);
     uint32_t findFreeBlockAfter(uint32_t block_idx);
-    bool blockUsed(uint32_t block_idx) { return this->bitmap->blockUsed(block_idx); }
+    bool blockUsed(uint32_t block_idx) const { return this->bitmap->blockUsed(block_idx); }
 
 private:
     FsBitmap *bitmap;
