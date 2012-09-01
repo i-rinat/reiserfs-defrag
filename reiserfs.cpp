@@ -231,7 +231,6 @@ ReiserFs::walk_tree(Block *block_obj, std::map<uint32_t, uint32_t> &movemap)
                 for (int j = 0; j < child_block->itemCount(); j ++) {
                     const struct Block::item_header &ih = child_block->itemHeader(j);
 
-                    uint32_t key_version = ih.version;
                     uint32_t item_type = ih.key.type(ih.version);
 
                     // indirect items contain links to unformatted (data) blocks

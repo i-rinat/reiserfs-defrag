@@ -13,11 +13,11 @@ FsBitmap::FsBitmap(FsJournal *journal_, const FsSuperblock *sb_)
     }
 
     bitmap_blocks = new Block[this->bitmap_block_count];
-    for (int k = 0; k < this->bitmap_block_count; k ++) {
+    for (unsigned int k = 0; k < this->bitmap_block_count; k ++) {
         this->bitmap_blocks[k].attachJournal(this->journal);
     }
 
-    for (int bitmap_idx = 0; bitmap_idx < this->bitmap_block_count; bitmap_idx ++) {
+    for (unsigned int bitmap_idx = 0; bitmap_idx < this->bitmap_block_count; bitmap_idx ++) {
         uint32_t actual_block_idx = bitmap_idx * BLOCKS_PER_BITMAP;
         if (0 == actual_block_idx) actual_block_idx = FIRST_BITMAP_BLOCK;
         this->journal->readBlock(this->bitmap_blocks[bitmap_idx], actual_block_idx);
