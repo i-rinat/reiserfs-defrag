@@ -1,6 +1,8 @@
 #include "reiserfs.hpp"
 #include <iostream>
 #include <map>
+#include <vector>
+#include <algorithm>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
@@ -258,6 +260,36 @@ ReiserFs::walk_tree(Block *block_obj, std::map<uint32_t, uint32_t> &movemap)
 
             delete child_block;
         }
+    }
+}
+
+void
+ReiserFs::collectLeafNodeIndices(uint32_t block_idx, std::vector<uint32_t> &lni)
+{
+    Block *block_obj = this->journal->readBlock(block_idx);
+    if (block_obj->level() == TREE_LEVEL_LEAF + 1) {
+        // this is pre-leaves layer, collect pointers
+        for (int k = 0; k < block_obj->ptrCount(); k ++)
+            lni.push_back(block_obj->getPtr(k).block);
+    } else {
+        // visit lower levels
+        for (int k = 0; k < block_obj->ptrCount(); k ++)
+            this->collectLeafNodeIndices(block_obj->getPtr(k).block, lni);
+    }
+    this->journal->releaseBlock(block_obj);
+}
+
+void
+ReiserFs::looseWalkTree()
+{
+    std::vector<uint32_t> leaf_nodes;
+    this->collectLeafNodeIndices(this->sb.s_root_block, leaf_nodes);
+    std::sort(leaf_nodes.begin(), leaf_nodes.end());
+    for (std::vector<uint32_t>::const_iterator iter = leaf_nodes.begin();
+        iter != leaf_nodes.end(); ++ iter)
+    {
+        Block *block_obj = this->journal->readBlock(*iter);
+        this->journal->releaseBlock(block_obj);
     }
 }
 

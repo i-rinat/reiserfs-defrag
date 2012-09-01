@@ -4,6 +4,7 @@
 #include <string>
 #include <ostream>
 #include <map>
+#include <vector>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -242,6 +243,7 @@ public:
     uint32_t findFreeBlockAfter(uint32_t block_idx);
     bool blockUsed(uint32_t block_idx) const { return this->bitmap->blockUsed(block_idx); }
     uint32_t sizeInBlocks() { return this->sb.s_block_count; }
+    void looseWalkTree();
 
 private:
     FsBitmap *bitmap;
@@ -255,4 +257,5 @@ private:
     void readSuperblock();
     void walk_tree(Block *block_obj, std::map<uint32_t, uint32_t> & movemap);
     bool movemap_consistent(const std::map<uint32_t, uint32_t> &movemap);
+    void collectLeafNodeIndices(uint32_t block_idx, std::vector<uint32_t> &lni);
 };
