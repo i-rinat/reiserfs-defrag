@@ -213,7 +213,7 @@ public:
         const struct tree_ptr &tpr = tp[0];
         return tpr;
     }
-    struct tree_ptr &getPtr(uint32_t index) {
+    struct tree_ptr &getPtr2(uint32_t index) {
         struct tree_ptr *tp =
             reinterpret_cast<struct tree_ptr *>(&buf[0] + 24 + 16*keyCount() + 8*index);
         struct tree_ptr &tpr = tp[0];
