@@ -318,7 +318,7 @@ ReiserFs::recursivelyMoveInternalNodes(uint32_t block_idx, std::map<uint32_t, ui
                 this->bitmap->markBlockUnused(child_idx);
                 this->bitmap->markBlockUsed(movemap[child_idx]);
                 // update pointer
-                block_obj->getPtr(k).block = movemap[child_idx];
+                block_obj->getPtr2(k).block = movemap[child_idx];
             }
         }
         this->journal->releaseBlock(block_obj);
