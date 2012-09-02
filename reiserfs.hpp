@@ -263,4 +263,7 @@ private:
     void walk_tree(Block *block_obj, std::map<uint32_t, uint32_t> & movemap);
     bool movemap_consistent(const std::map<uint32_t, uint32_t> &movemap);
     void collectLeafNodeIndices(uint32_t block_idx, std::vector<uint32_t> &lni);
+    void recursivelyMoveInternalNodes(uint32_t block_idx, std::map<uint32_t, uint32_t> &movemap,
+        uint32_t target_level);
+    void recursivelyMoveUnformatted(uint32_t block_idx, std::map<uint32_t, uint32_t> &movemap);
 };

@@ -263,6 +263,87 @@ ReiserFs::walk_tree(Block *block_obj, std::map<uint32_t, uint32_t> &movemap)
     }
 }
 
+/// \brief moves internal nodes and leaves
+void
+ReiserFs::recursivelyMoveInternalNodes(uint32_t block_idx, std::map<uint32_t, uint32_t> &movemap,
+    uint32_t target_level)
+{
+    /* we reach node on target_level (>=2), move nodes which it refers (as
+    raw data),  and update  pointers in that node.  That form  a complete
+    transaction. No internal node could have move than (4096-24-8)/(16+8)+1 =
+    = 170 pointers, so transaction will have at most 170+1 blocks plus affected
+    bitmap blocks. In worst case every block can change one bitmap, thus
+    resulting in 171 bitmap blocks. So upper bound on transaction size is
+    342 blocks, which is smaller than default 1024-block max transaction size.
+    */
+    Block *block_obj = this->journal->readBlock(block_idx);
+    uint32_t level = block_obj->level();
+
+    if (level > target_level) {
+        // if we are not on target_level, go deeper
+        for (int k = 0; k < block_obj->ptrCount(); k ++ ) {
+            uint32_t child_idx = block_obj->getPtr(k).block;
+            this->recursivelyMoveInternalNodes(child_idx, movemap, target_level);
+        }
+        this->journal->releaseBlock(block_obj);
+    } else {
+        assert (level == target_level); // we reached targer_level
+        this->journal->beginTransaction();
+        for (int k = 0; k < block_obj->ptrCount(); k ++ ) {
+            uint32_t child_idx = block_obj->getPtr(k).block;
+            if (movemap.count(child_idx) > 0) {
+                // move pointed block
+                this->journal->moveRawBlock(child_idx, movemap[child_idx]);
+                // update bitmap
+                this->bitmap->markBlockUnused(child_idx);
+                this->bitmap->markBlockUsed(movemap[child_idx]);
+                // update pointer
+                block_obj->getPtr(k).block = movemap[child_idx];
+            }
+        }
+        this->journal->releaseBlock(block_obj);
+        this->journal->commitTransaction();
+    }
+}
+
+void
+ReiserFs::recursivelyMoveUnformatted(uint32_t block_idx, std::map<uint32_t, uint32_t> &movemap)
+{
+    Block *block_obj = this->journal->readBlock(block_idx);
+    uint32_t level = block_obj->level();
+    if (level > TREE_LEVEL_LEAF) {
+        for (int k = 0; k < block_obj->ptrCount(); k ++) {
+            uint32_t child_idx = block_obj->getPtr(k).block;
+            this->recursivelyMoveUnformatted(child_idx, movemap);
+        }
+        this->journal->releaseBlock(block_obj);
+    } else {
+        // leaf level
+        this->journal->beginTransaction();
+        for (int k = 0; k < block_obj->itemCount(); k ++) {
+            const struct Block::item_header &ih = block_obj->itemHeader(k);
+            // indirect items contain links to unformatted (data) blocks
+            if (KEY_TYPE_INDIRECT != ih.key.type(ih.version))
+                continue;
+            for (int idx = 0; idx < ih.length/4; idx ++) {
+                uint32_t child_idx = block_obj->indirectItemRef(ih.offset, idx);
+                if (movemap.count(child_idx) == 0) continue;
+                std::cout << "move unformatted block " << child_idx << " to " <<
+                    movemap[child_idx] << std::endl;
+                // update pointers in indirect item
+                block_obj->setIndirectItemRef(ih.offset, idx, movemap[child_idx]);
+                // actually move block
+                this->journal->moveRawBlock(child_idx, movemap[child_idx]);
+                // update bitmap
+                this->bitmap->markBlockUnused(child_idx);
+                this->bitmap->markBlockUsed(movemap[child_idx]);
+            }
+        }
+        this->journal->releaseBlock(block_obj);
+        this->journal->commitTransaction();
+    }
+}
+
 void
 ReiserFs::collectLeafNodeIndices(uint32_t block_idx, std::vector<uint32_t> &lni)
 {
