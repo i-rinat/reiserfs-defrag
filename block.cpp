@@ -18,12 +18,6 @@ Block::~Block()
 }
 
 void
-Block::attachJournal(FsJournal *journal_)
-{
-    this->journal = journal_;
-}
-
-void
 Block::write()
 {
     if (this->dirty) {
@@ -94,57 +88,4 @@ void
 Block::dumpLeafNodeBlock() const
 {
     std::cout << "Block::dumpLeafNodeBlock() stub" << std::endl;
-}
-
-void
-Block::setType(int type_)
-{
-    this->type = type_;
-}
-
-int
-Block::keyCount() const
-{
-    const struct blockheader &bh = reinterpret_cast<const struct blockheader &>(buf);
-    return bh.bh_nr_items;
-}
-
-int
-Block::ptrCount() const
-{
-    const struct blockheader &bh = reinterpret_cast<const struct blockheader &>(buf);
-    return bh.bh_nr_items + 1;
-}
-
-int
-Block::level() const
-{
-    const struct blockheader &bh = reinterpret_cast<const struct blockheader &>(buf);
-    return bh.bh_level;
-}
-
-int
-Block::freeSpace() const
-{
-    const struct blockheader &bh = reinterpret_cast<const struct blockheader &>(buf);
-    return bh.bh_free_space;
-}
-
-int
-Block::itemCount() const
-{
-    const struct blockheader &bh = reinterpret_cast<const struct blockheader &>(buf);
-    return bh.bh_nr_items;
-}
-
-const struct Block::key &
-Block::getKey(int index) const
-{
-    return reinterpret_cast<const struct key&>(buf[24 + 16*index]);
-}
-
-const struct Block::item_header &
-Block::itemHeader(int index) const
-{
-    return reinterpret_cast<const struct item_header&>(buf[24+24*index]);
 }

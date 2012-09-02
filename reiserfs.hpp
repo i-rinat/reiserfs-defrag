@@ -84,15 +84,31 @@ public:
     ~Block();
     void rawDump() const;
     void formattedDump() const;
-    void setType(int type);
+    void setType(int type) { this->type = type; }
     void write();
-    void attachJournal(FsJournal *journal);
+    void attachJournal(FsJournal *journal) { this->journal = journal; }
     void markDirty() { this->dirty = true; }
-    int keyCount() const;
-    int ptrCount() const;
-    int level() const;
-    int freeSpace() const;
-    int itemCount() const;
+    int keyCount() const {
+        const struct blockheader &bh = reinterpret_cast<const struct blockheader &>(buf);
+        return bh.bh_nr_items;
+    }
+    int ptrCount() const {
+        const struct blockheader &bh = reinterpret_cast<const struct blockheader &>(buf);
+        return bh.bh_nr_items + 1;
+    }
+    int level() const {
+        const struct blockheader &bh = reinterpret_cast<const struct blockheader &>(buf);
+        return bh.bh_level;
+    }
+    int freeSpace() const {
+        const struct blockheader &bh = reinterpret_cast<const struct blockheader &>(buf);
+        return bh.bh_free_space;
+    }
+    int itemCount() const {
+        const struct blockheader &bh = reinterpret_cast<const struct blockheader &>(buf);
+        return bh.bh_nr_items;
+
+    }
     void dumpInternalNodeBlock() const;
     void dumpLeafNodeBlock() const;
     const uint32_t &indirectItemRef(uint16_t offset, uint32_t idx) const {
@@ -187,7 +203,9 @@ public:
         uint16_t version;
     } __attribute__ ((__packed__));
 
-    const struct key &getKey(int index) const;
+    const struct key &getKey(int index) const {
+        return reinterpret_cast<const struct key&>(buf[24 + 16*index]);
+    }
     const struct tree_ptr &getPtr(int index) const {
         const struct tree_ptr *tp =
             reinterpret_cast<const struct tree_ptr *>(&buf[0] + 24 + 16*keyCount() + 8*index);
@@ -200,7 +218,9 @@ public:
         struct tree_ptr &tpr = tp[0];
         return tpr;
     }
-    const struct item_header &itemHeader(int index) const;
+    const struct item_header &itemHeader(int index) const {
+        return reinterpret_cast<const struct item_header&>(buf[24+24*index]);
+    }
 };
 
 class FsJournal {
