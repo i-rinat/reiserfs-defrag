@@ -15,13 +15,13 @@ FsJournal::FsJournal(int fd_)
 void
 FsJournal::beginTransaction()
 {
-    std::cout << "FsJournal::beginTransaction stub" << std::endl;
+    // std::cout << "FsJournal::beginTransaction stub" << std::endl;
 }
 
 void
 FsJournal::commitTransaction()
 {
-    std::cout << "FsJournal::commitTransaction stub" << std::endl;
+    // std::cout << "FsJournal::commitTransaction stub" << std::endl;
 }
 
 Block*
