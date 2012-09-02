@@ -197,10 +197,21 @@ ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
     }
     std::cout << "root block: " << this->sb.s_root_block << std::endl;
 
-    Block *root_block = this->readBlock(this->sb.s_root_block);
-    root_block->setType(BLOCKTYPE_INTERNAL);
-    this->walk_tree(root_block, movemap);
-    this->releaseBlock(root_block);
+    uint32_t tree_height = this->estimateTreeHeight();
+
+    // first, move unformatted blocks
+    this->recursivelyMoveUnformatted(this->sb.s_root_block, movemap);
+    // then move internal nodes, from layer 2 to sb.s_tree_height
+    for (uint32_t t_level = TREE_LEVEL_LEAF + 1; t_level <= tree_height; t_level ++)
+    {
+        this->recursivelyMoveInternalNodes(this->sb.s_root_block, movemap, t_level);
+    }
+
+    // previous call moves all but root_block, move it if necessary
+    if (movemap.count(this->sb.s_root_block)) {
+        std::cout << "need to move root block" << std::endl;
+        // this->journal->beginTransaction();
+    }
 }
 
 
