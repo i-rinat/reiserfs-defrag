@@ -307,7 +307,7 @@ ReiserFs::recursivelyMoveInternalNodes(uint32_t block_idx, std::map<uint32_t, ui
         }
         this->journal->releaseBlock(block_obj);
     } else {
-        assert (level == target_level); // we reached targer_level
+        assert (level == target_level); // we reached target_level
         this->journal->beginTransaction();
         for (uint32_t k = 0; k < block_obj->ptrCount(); k ++ ) {
             uint32_t child_idx = block_obj->getPtr(k).block;
