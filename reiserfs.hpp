@@ -95,13 +95,14 @@ public:
     int itemCount() const;
     void dumpInternalNodeBlock() const;
     void dumpLeafNodeBlock() const;
-    uint32_t indirectItemRef(uint16_t offset, uint32_t idx) const {
-        uint32_t ref = reinterpret_cast<const uint32_t&>(buf[offset + 4*idx]);
+    const uint32_t &indirectItemRef(uint16_t offset, uint32_t idx) const {
+        const uint32_t *ci = reinterpret_cast<uint32_t const *>(&buf[0] + offset + 4*idx);
+        const uint32_t &ref = ci[0];
         return ref;
     }
     void setIndirectItemRef(uint16_t offset, uint32_t idx, uint32_t value) {
-        uint32_t &ref = reinterpret_cast<uint32_t&>(buf[offset + 4*idx]);
-        ref = value;
+        uint32_t *ci = reinterpret_cast<uint32_t *>(&buf[0] + offset + 4*idx);
+        ci[0] = value;
         this->dirty = true;
     }
 
@@ -188,10 +189,16 @@ public:
 
     const struct key &getKey(int index) const;
     const struct tree_ptr &getPtr(int index) const {
-        return reinterpret_cast<const struct tree_ptr&>(buf[24+16*keyCount()+8*index]);
+        const struct tree_ptr *tp =
+            reinterpret_cast<const struct tree_ptr *>(&buf[0] + 24 + 16*keyCount() + 8*index);
+        const struct tree_ptr &tpr = tp[0];
+        return tpr;
     }
     struct tree_ptr &getPtr(int index) {
-        return reinterpret_cast<struct tree_ptr&>(buf[24+16*keyCount()+8*index]);
+        struct tree_ptr *tp =
+            reinterpret_cast<struct tree_ptr *>(&buf[0] + 24 + 16*keyCount() + 8*index);
+        struct tree_ptr &tpr = tp[0];
+        return tpr;
     }
     const struct item_header &itemHeader(int index) const;
 };
