@@ -187,7 +187,12 @@ public:
     } __attribute__ ((__packed__));
 
     const struct key &getKey(int index) const;
-    const struct tree_ptr &getPtr(int index) const;
+    const struct tree_ptr &getPtr(int index) const {
+        return reinterpret_cast<const struct tree_ptr&>(buf[24+16*keyCount()+8*index]);
+    }
+    struct tree_ptr &getPtr(int index) {
+        return reinterpret_cast<struct tree_ptr&>(buf[24+16*keyCount()+8*index]);
+    }
     const struct item_header &itemHeader(int index) const;
 };
 

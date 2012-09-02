@@ -143,12 +143,6 @@ Block::getKey(int index) const
     return reinterpret_cast<const struct key&>(buf[24 + 16*index]);
 }
 
-const struct Block::tree_ptr &
-Block::getPtr(int index) const
-{
-    return reinterpret_cast<const struct tree_ptr&>(buf[24+16*keyCount()+8*index]);
-}
-
 const struct Block::item_header &
 Block::itemHeader(int index) const
 {
