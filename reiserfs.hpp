@@ -160,7 +160,7 @@ public:
                 case 0xfffffffe: return KEY_TYPE_INDIRECT; break; // indirect
                 case 0xffffffff: return KEY_TYPE_DIRECT; break; // direct
                 case 500:        return KEY_TYPE_DIRECTORY; break; // directory
-                case 555:        return KEY_TYPE_DIRECTORY; break; // any
+                case 555:        return KEY_TYPE_ANY; break; // any
                 default: return 16; break; // TODO: add code for this case
                 }
             }
