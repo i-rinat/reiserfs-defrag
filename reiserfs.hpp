@@ -88,23 +88,23 @@ public:
     void write();
     void attachJournal(FsJournal *journal) { this->journal = journal; }
     void markDirty() { this->dirty = true; }
-    int keyCount() const {
+    uint32_t keyCount() const {
         const struct blockheader *bh = reinterpret_cast<const struct blockheader *>(&buf[0]);
         return bh->bh_nr_items;
     }
-    int ptrCount() const {
+    uint32_t ptrCount() const {
         const struct blockheader *bh = reinterpret_cast<const struct blockheader *>(&buf[0]);
         return bh->bh_nr_items + 1;
     }
-    int level() const {
+    uint32_t level() const {
         const struct blockheader *bh = reinterpret_cast<const struct blockheader *>(&buf[0]);
         return bh->bh_level;
     }
-    int freeSpace() const {
+    uint32_t freeSpace() const {
         const struct blockheader *bh = reinterpret_cast<const struct blockheader *>(&buf[0]);
         return bh->bh_free_space;
     }
-    int itemCount() const {
+    uint32_t itemCount() const {
         const struct blockheader *bh = reinterpret_cast<const struct blockheader *>(&buf[0]);
         return bh->bh_nr_items;
     }
@@ -168,7 +168,7 @@ public:
             default: return "wrong item";
             }
         }
-        uint32_t type(int key_version) const {
+        int type(int key_version) const {
             switch (key_version) {
             case KEY_V0: {
                 switch (this->type_v0()) {
@@ -202,24 +202,24 @@ public:
         uint16_t version;
     } __attribute__ ((__packed__));
 
-    const struct key &getKey(int index) const {
+    const struct key &getKey(uint32_t index) const {
         const struct key *kp = reinterpret_cast<const struct key *>(&buf[0] + 24 + 16*index);
         const struct key &kpr = kp[0];
         return kpr;
     }
-    const struct tree_ptr &getPtr(int index) const {
+    const struct tree_ptr &getPtr(uint32_t index) const {
         const struct tree_ptr *tp =
             reinterpret_cast<const struct tree_ptr *>(&buf[0] + 24 + 16*keyCount() + 8*index);
         const struct tree_ptr &tpr = tp[0];
         return tpr;
     }
-    struct tree_ptr &getPtr(int index) {
+    struct tree_ptr &getPtr(uint32_t index) {
         struct tree_ptr *tp =
             reinterpret_cast<struct tree_ptr *>(&buf[0] + 24 + 16*keyCount() + 8*index);
         struct tree_ptr &tpr = tp[0];
         return tpr;
     }
-    const struct item_header &itemHeader(int index) const {
+    const struct item_header &itemHeader(uint32_t index) const {
         const struct item_header *ihp =
             reinterpret_cast<const struct item_header*>(&buf[0] + 24 + 24*index);
         const struct item_header &ihpr = ihp[0];
