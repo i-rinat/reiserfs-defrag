@@ -89,25 +89,24 @@ public:
     void attachJournal(FsJournal *journal) { this->journal = journal; }
     void markDirty() { this->dirty = true; }
     int keyCount() const {
-        const struct blockheader &bh = reinterpret_cast<const struct blockheader &>(buf);
-        return bh.bh_nr_items;
+        const struct blockheader *bh = reinterpret_cast<const struct blockheader *>(&buf[0]);
+        return bh->bh_nr_items;
     }
     int ptrCount() const {
-        const struct blockheader &bh = reinterpret_cast<const struct blockheader &>(buf);
-        return bh.bh_nr_items + 1;
+        const struct blockheader *bh = reinterpret_cast<const struct blockheader *>(&buf[0]);
+        return bh->bh_nr_items + 1;
     }
     int level() const {
-        const struct blockheader &bh = reinterpret_cast<const struct blockheader &>(buf);
-        return bh.bh_level;
+        const struct blockheader *bh = reinterpret_cast<const struct blockheader *>(&buf[0]);
+        return bh->bh_level;
     }
     int freeSpace() const {
-        const struct blockheader &bh = reinterpret_cast<const struct blockheader &>(buf);
-        return bh.bh_free_space;
+        const struct blockheader *bh = reinterpret_cast<const struct blockheader *>(&buf[0]);
+        return bh->bh_free_space;
     }
     int itemCount() const {
-        const struct blockheader &bh = reinterpret_cast<const struct blockheader &>(buf);
-        return bh.bh_nr_items;
-
+        const struct blockheader *bh = reinterpret_cast<const struct blockheader *>(&buf[0]);
+        return bh->bh_nr_items;
     }
     void dumpInternalNodeBlock() const;
     void dumpLeafNodeBlock() const;
@@ -204,7 +203,9 @@ public:
     } __attribute__ ((__packed__));
 
     const struct key &getKey(int index) const {
-        return reinterpret_cast<const struct key&>(buf[24 + 16*index]);
+        const struct key *kp = reinterpret_cast<const struct key *>(&buf[0] + 24 + 16*index);
+        const struct key &kpr = kp[0];
+        return kpr;
     }
     const struct tree_ptr &getPtr(int index) const {
         const struct tree_ptr *tp =
@@ -219,7 +220,10 @@ public:
         return tpr;
     }
     const struct item_header &itemHeader(int index) const {
-        return reinterpret_cast<const struct item_header&>(buf[24+24*index]);
+        const struct item_header *ihp =
+            reinterpret_cast<const struct item_header*>(&buf[0] + 24 + 24*index);
+        const struct item_header &ihpr = ihp[0];
+        return ihpr;
     }
 };
 
