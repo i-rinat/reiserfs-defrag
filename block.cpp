@@ -73,7 +73,7 @@ Block::dumpInternalNodeBlock() const
     std::cout << "level = " << this->level() << std::endl;
     std::cout << "key count = " << this->keyCount() << std::endl;
     std::cout << "free space = " << this->freeSpace() << std::endl;
-    for (int k = 0; k < this->keyCount(); k ++) {
+    for (uint32_t k = 0; k < this->keyCount(); k ++) {
         const struct tree_ptr ptr = this->getPtr(k);
         std::cout << "<" << ptr.block << ", " << ptr.size << "> ";
         this->getKey(k).dump_v1(std::cout, true);

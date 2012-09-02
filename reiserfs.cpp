@@ -222,7 +222,7 @@ void
 ReiserFs::walk_tree(Block *block_obj, std::map<uint32_t, uint32_t> &movemap)
 {
     if (block_obj->type == BLOCKTYPE_INTERNAL) {
-        for (int k = 0; k < block_obj->ptrCount(); k ++) {
+        for (uint32_t k = 0; k < block_obj->ptrCount(); k ++) {
             Block *child_block = this->journal->readBlock(block_obj->getPtr(k).block);
             if (child_block->level() > TREE_LEVEL_LEAF) {
                 child_block->setType(BLOCKTYPE_INTERNAL);
@@ -230,7 +230,7 @@ ReiserFs::walk_tree(Block *block_obj, std::map<uint32_t, uint32_t> &movemap)
             } else if (child_block->level() == TREE_LEVEL_LEAF) {
                 child_block->setType(BLOCKTYPE_LEAF);
                 // process leaf contents
-                for (int j = 0; j < child_block->itemCount(); j ++) {
+                for (uint32_t j = 0; j < child_block->itemCount(); j ++) {
                     const struct Block::item_header &ih = child_block->itemHeader(j);
 
                     uint32_t item_type = ih.key.type(ih.version);
@@ -281,7 +281,7 @@ ReiserFs::recursivelyMoveInternalNodes(uint32_t block_idx, std::map<uint32_t, ui
 
     if (level > target_level) {
         // if we are not on target_level, go deeper
-        for (int k = 0; k < block_obj->ptrCount(); k ++ ) {
+        for (uint32_t k = 0; k < block_obj->ptrCount(); k ++ ) {
             uint32_t child_idx = block_obj->getPtr(k).block;
             this->recursivelyMoveInternalNodes(child_idx, movemap, target_level);
         }
@@ -289,7 +289,7 @@ ReiserFs::recursivelyMoveInternalNodes(uint32_t block_idx, std::map<uint32_t, ui
     } else {
         assert (level == target_level); // we reached targer_level
         this->journal->beginTransaction();
-        for (int k = 0; k < block_obj->ptrCount(); k ++ ) {
+        for (uint32_t k = 0; k < block_obj->ptrCount(); k ++ ) {
             uint32_t child_idx = block_obj->getPtr(k).block;
             if (movemap.count(child_idx) > 0) {
                 // move pointed block
@@ -312,7 +312,7 @@ ReiserFs::recursivelyMoveUnformatted(uint32_t block_idx, std::map<uint32_t, uint
     Block *block_obj = this->journal->readBlock(block_idx);
     uint32_t level = block_obj->level();
     if (level > TREE_LEVEL_LEAF) {
-        for (int k = 0; k < block_obj->ptrCount(); k ++) {
+        for (uint32_t k = 0; k < block_obj->ptrCount(); k ++) {
             uint32_t child_idx = block_obj->getPtr(k).block;
             this->recursivelyMoveUnformatted(child_idx, movemap);
         }
@@ -320,7 +320,7 @@ ReiserFs::recursivelyMoveUnformatted(uint32_t block_idx, std::map<uint32_t, uint
     } else {
         // leaf level
         this->journal->beginTransaction();
-        for (int k = 0; k < block_obj->itemCount(); k ++) {
+        for (uint32_t k = 0; k < block_obj->itemCount(); k ++) {
             const struct Block::item_header &ih = block_obj->itemHeader(k);
             // indirect items contain links to unformatted (data) blocks
             if (KEY_TYPE_INDIRECT != ih.key.type(ih.version))
@@ -350,11 +350,11 @@ ReiserFs::collectLeafNodeIndices(uint32_t block_idx, std::vector<uint32_t> &lni)
     Block *block_obj = this->journal->readBlock(block_idx);
     if (block_obj->level() == TREE_LEVEL_LEAF + 1) {
         // this is pre-leaves layer, collect pointers
-        for (int k = 0; k < block_obj->ptrCount(); k ++)
+        for (uint32_t k = 0; k < block_obj->ptrCount(); k ++)
             lni.push_back(block_obj->getPtr(k).block);
     } else {
         // visit lower levels
-        for (int k = 0; k < block_obj->ptrCount(); k ++)
+        for (uint32_t k = 0; k < block_obj->ptrCount(); k ++)
             this->collectLeafNodeIndices(block_obj->getPtr(k).block, lni);
     }
     this->journal->releaseBlock(block_obj);
