@@ -218,6 +218,15 @@ ReiserFs::releaseBlock(Block *block)
     journal->releaseBlock(block);
 }
 
+uint32_t
+ReiserFs::estimateTreeHeight()
+{
+    Block *block_obj = this->journal->readBlock(this->sb.s_root_block);
+    uint32_t root_block_level = block_obj->level();
+    this->journal->releaseBlock(block_obj);
+    return root_block_level;
+}
+
 void
 ReiserFs::walk_tree(Block *block_obj, std::map<uint32_t, uint32_t> &movemap)
 {

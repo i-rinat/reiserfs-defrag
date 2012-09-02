@@ -297,4 +297,5 @@ private:
     void recursivelyMoveInternalNodes(uint32_t block_idx, std::map<uint32_t, uint32_t> &movemap,
         uint32_t target_level);
     void recursivelyMoveUnformatted(uint32_t block_idx, std::map<uint32_t, uint32_t> &movemap);
+    uint32_t estimateTreeHeight();
 };
