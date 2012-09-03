@@ -69,22 +69,18 @@ ReiserFs::readSuperblock()
 void
 ReiserFs::dumpSuperblock()
 {
-    std::cout << "dumpSuperblock() --------------------------------------" <<
-        std::endl;
+    std::cout << "dumpSuperblock() --------------------------------------" << std::endl;
     std::cout << "block count = " << sb.s_block_count << std::endl;
     std::cout << "free block count = " << sb.s_free_blocks << std::endl;
     std::cout << "root block at = " << sb.s_root_block << std::endl;
     std::cout << "journal start = " << sb.jp_journal_1st_block << std::endl;
     std::cout << "journal dev = " << sb.jp_journal_dev << std::endl;
     std::cout << "journal size = " << sb.jp_journal_size << std::endl;
-    std::cout << "journal max transactions = " << sb.jp_journal_trans_max <<
-        std::endl;
+    std::cout << "journal max transactions = " << sb.jp_journal_trans_max << std::endl;
     std::cout << "journal magic = " << sb.jp_journal_magic << std::endl;
     std::cout << "journal max batch = " << sb.jp_journal_max_batch <<std::endl;
-    std::cout << "journal max commit age = " << sb.jp_journal_max_commit_age <<
-        std::endl;
-    std::cout << "journal max transaction age = " <<
-        sb.jp_journal_max_trans_age << std::endl;
+    std::cout << "journal max commit age = " << sb.jp_journal_max_commit_age << std::endl;
+    std::cout << "journal max transaction age = " << sb.jp_journal_max_trans_age << std::endl;
     std::cout << "block size = " << sb.s_blocksize << std::endl;
     std::cout << "max object id array size = " << sb.s_oid_maxsize <<std::endl;
     std::cout << "cur object id array size = " << sb.s_oid_cursize <<std::endl;
@@ -95,8 +91,7 @@ ReiserFs::dumpSuperblock()
     std::cout << "tree height = " << sb.s_tree_height << std::endl;
     std::cout << "bitmap blocks count = " << sb.s_bmap_nr << std::endl;
     std::cout << "version = " << sb.s_version << std::endl;
-    std::cout << "size of journal area = " << sb.s_reserved_for_journal <<
-        std::endl;
+    std::cout << "size of journal area = " << sb.s_reserved_for_journal << std::endl;
     std::cout << "inode generation = " << sb.s_inode_generation << std::endl;
     std::cout << "flags = " << sb.s_flags << std::endl;
     std::cout << "uuid = not implemented" << std::endl;
@@ -106,9 +101,7 @@ ReiserFs::dumpSuperblock()
     std::cout << "last check = " << sb.s_lastcheck << std::endl;
     std::cout << "check interval = " << sb.s_check_interval << std::endl;
     std::cout << "unused fields dump = not implemented" << std::endl;
-
-    std::cout << "=======================================================" <<
-        std::endl;
+    std::cout << "=======================================================" << std::endl;
 }
 
 void
