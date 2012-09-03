@@ -289,6 +289,8 @@ private:
     int fd;
     bool closed;
     std::string err_string;
+    uint32_t blocks_moved_formatted;    //< counter used for moveMultipleBlocks
+    uint32_t blocks_moved_unformatted;  //< counter used for moveMultipleBlocks
 
     void readSuperblock();
     bool movemap_consistent(const std::map<uint32_t, uint32_t> &movemap);

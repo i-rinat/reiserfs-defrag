@@ -178,6 +178,7 @@ ReiserFs::movemap_consistent(const std::map<uint32_t, uint32_t> &movemap)
 void
 ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
 {
+    std::cout << "Moving blocks" << std::endl;
     if (! this->movemap_consistent(movemap)) {
         std::cerr << "error: movemap not consistent, " << this->err_string << std::endl;
         return;
@@ -193,6 +194,9 @@ ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
     std::cout << "root block: " << this->sb.s_root_block << std::endl;
 
     uint32_t tree_height = this->estimateTreeHeight();
+    // reset statistics
+    this->blocks_moved_formatted = 0;
+    this->blocks_moved_unformatted = 0;
 
     // first, move unformatted blocks
     this->recursivelyMoveUnformatted(this->sb.s_root_block, movemap);
@@ -209,6 +213,9 @@ ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
         // TODO: write root block moving. This should update superblock, as it contains
         // link to root block
     }
+
+    std::cout << "Blocks moved: " << this->blocks_moved_formatted << " formatted, "
+        << this->blocks_moved_unformatted << " unformatted" << std::endl;
 }
 
 
@@ -266,6 +273,7 @@ ReiserFs::recursivelyMoveInternalNodes(uint32_t block_idx, std::map<uint32_t, ui
             if (movemap.count(child_idx) > 0) {
                 // move pointed block
                 this->journal->moveRawBlock(child_idx, movemap[child_idx]);
+                this->blocks_moved_formatted ++;
                 // update bitmap
                 this->bitmap->markBlockUnused(child_idx);
                 this->bitmap->markBlockUsed(movemap[child_idx]);
@@ -307,6 +315,7 @@ ReiserFs::recursivelyMoveUnformatted(uint32_t block_idx, std::map<uint32_t, uint
                 block_obj->setIndirectItemRef(ih.offset, idx, movemap[child_idx]);
                 // actually move block
                 this->journal->moveRawBlock(child_idx, movemap[child_idx]);
+                this->blocks_moved_unformatted ++;
                 // update bitmap
                 this->bitmap->markBlockUnused(child_idx);
                 this->bitmap->markBlockUsed(movemap[child_idx]);
