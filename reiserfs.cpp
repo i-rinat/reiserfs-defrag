@@ -238,51 +238,6 @@ ReiserFs::estimateTreeHeight()
     return root_block_level;
 }
 
-void
-ReiserFs::walk_tree(Block *block_obj, std::map<uint32_t, uint32_t> &movemap)
-{
-    if (block_obj->type == BLOCKTYPE_INTERNAL) {
-        for (uint32_t k = 0; k < block_obj->ptrCount(); k ++) {
-            Block *child_block = this->journal->readBlock(block_obj->getPtr(k).block);
-            if (child_block->level() > TREE_LEVEL_LEAF) {
-                child_block->setType(BLOCKTYPE_INTERNAL);
-                this->walk_tree(child_block, movemap);
-            } else if (child_block->level() == TREE_LEVEL_LEAF) {
-                child_block->setType(BLOCKTYPE_LEAF);
-                // process leaf contents
-                for (uint32_t j = 0; j < child_block->itemCount(); j ++) {
-                    const struct Block::item_header &ih = child_block->itemHeader(j);
-
-                    uint32_t item_type = ih.key.type(ih.version);
-
-                    // indirect items contain links to unformatted (data) blocks
-                    if (KEY_TYPE_INDIRECT == item_type) {
-                        for (int idx = 0; idx < ih.length/4; idx ++) {
-                            uint32_t ref = child_block->indirectItemRef(ih.offset, idx);
-                            if (movemap.count(ref) == 0) continue;
-                            // we have something to move
-                            std::cout << "we have something to move" << std::endl;
-                            // update indirect block
-                            child_block->setIndirectItemRef(ih.offset, idx, movemap[ref]);
-                            // actually move block
-                            this->journal->moveRawBlock(ref, movemap[ref]);
-                            // update bitmap
-                            this->bitmap->markBlockUnused(ref);
-                            this->bitmap->markBlockUsed(movemap[ref]);
-                        }
-                    }
-                }
-            } else {
-                std::cerr << "error: unknown block in tree" << std::endl;
-            }
-
-            // TODO: do move internal block
-
-            delete child_block;
-        }
-    }
-}
-
 /// \brief moves internal nodes and leaves
 void
 ReiserFs::recursivelyMoveInternalNodes(uint32_t block_idx, std::map<uint32_t, uint32_t> &movemap,
