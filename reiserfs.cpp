@@ -206,6 +206,8 @@ ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
     if (movemap.count(this->sb.s_root_block)) {
         std::cout << "need to move root block" << std::endl;
         // this->journal->beginTransaction();
+        // TODO: write root block moving. This should update superblock, as it contains
+        // link to root block
     }
 }
 
