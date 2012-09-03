@@ -9,3 +9,11 @@ add_executable (tuxonizer
 	../bitmap.cpp
 	../block.cpp
 )
+
+add_executable (moveback
+	moveback.cpp
+	../reiserfs.cpp
+	../journal.cpp
+	../bitmap.cpp
+	../block.cpp
+)
