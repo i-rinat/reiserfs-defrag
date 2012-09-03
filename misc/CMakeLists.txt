@@ -14,3 +14,6 @@ target_link_libraries(tuxonizer mrfsu)
 
 add_executable (moveback moveback.cpp)
 target_link_libraries(moveback mrfsu)
+
+add_executable (shuffler shuffler.cpp)
+target_link_libraries(shuffler mrfsu)
