@@ -309,8 +309,6 @@ ReiserFs::recursivelyMoveUnformatted(uint32_t block_idx, std::map<uint32_t, uint
             for (int idx = 0; idx < ih.length/4; idx ++) {
                 uint32_t child_idx = block_obj->indirectItemRef(ih.offset, idx);
                 if (movemap.count(child_idx) == 0) continue;
-                std::cout << "move unformatted block " << child_idx << " to " <<
-                    movemap[child_idx] << std::endl;
                 // update pointers in indirect item
                 block_obj->setIndirectItemRef(ih.offset, idx, movemap[child_idx]);
                 // actually move block
