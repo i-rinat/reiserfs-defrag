@@ -5,10 +5,8 @@
 #include "../reiserfs.hpp"
 #include <stdlib.h>
 #include <iostream>
-
-uint32_t bigrandom() {
-    return rand()<<15 | rand();
-}
+#include <set>
+#include <algorithm>
 
 int
 main (int argc, char *argv[])
@@ -18,26 +16,30 @@ main (int argc, char *argv[])
     srand(time(NULL));
     uint32_t fs_size = fs.sizeInBlocks();
 
+    std::vector<uint32_t> free_blocks;
+    std::vector<uint32_t> occupied_blocks;
+
+    for (uint32_t k = 0; k < fs_size; k ++) {
+        if (fs.blockIsReserved(k)) continue;
+        if (fs.blockUsed(k)) occupied_blocks.push_back(k);
+        else free_blocks.push_back(k);
+    }
+    std::random_shuffle (free_blocks.begin(), free_blocks.end());
+    std::random_shuffle (occupied_blocks.begin(), occupied_blocks.end());
 
     std::map<uint32_t, uint32_t> movemap;
-    for (int k = 0; k < 5; k ++) {
-        uint32_t bfrom = bigrandom()%fs_size;
-        uint32_t bto = bigrandom()%fs_size;
-        std::cout << bfrom << " " << bto << "!" << std::endl;
-        while (bfrom < fs_size && !fs.blockUsed(bfrom)) bfrom ++;
-        if (bfrom < fs_size) {
-            bto = fs.findFreeBlockBefore(bto);
-            if (bto != 0) {
-                movemap[bfrom] = bto;
-                std::cout << bfrom << " " << bto << ">" << std::endl;
-            }
-        }
+
+    for(std::vector<uint32_t>::const_iterator
+            from = occupied_blocks.begin(), to = free_blocks.begin();
+        (from != occupied_blocks.end()) && (to != free_blocks.end());
+        ++from, ++to)
+    {
+        movemap[*from] = *to;
     }
 
     if (movemap.size() > 0) {
         fs.moveMultipleBlocks(movemap);
     }
-
 
     fs.close();
 
