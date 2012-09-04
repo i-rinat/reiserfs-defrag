@@ -22,7 +22,7 @@ void
 FsJournal::commitTransaction()
 {
     // std::cout << "FsJournal::commitTransaction stub" << std::endl;
-    ::fsync(this->fd);
+    // ::fsync(this->fd);
 }
 
 Block*
