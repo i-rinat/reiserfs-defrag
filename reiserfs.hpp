@@ -281,6 +281,14 @@ public:
     uint32_t sizeInBlocks() { return this->sb.s_block_count; }
     void looseWalkTree();
 
+    /// checks if block is bitmap
+    bool blockIsBitmap(uint32_t block_idx);
+    bool blockIsJournal(uint32_t block_idx);
+    bool blockIsFirst64k(uint32_t block_idx);
+    bool blockIsSuperblock(uint32_t block_idx);
+    /// checks if block is in reserved area, such as journal, sb, bitmap of first 64kiB
+    bool blockIsReserved(uint32_t block_idx);
+
 private:
     FsBitmap *bitmap;
     FsJournal *journal;
