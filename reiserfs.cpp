@@ -419,3 +419,34 @@ ReiserFs::blockIsReserved(uint32_t block_idx)
     return blockIsBitmap(block_idx) || blockIsJournal(block_idx) || blockIsFirst64k(block_idx)
         || blockIsSuperblock(block_idx);
 }
+
+void
+ReiserFs::recursivelyEnumerateNodes(uint32_t block_idx, std::vector<ReiserFs::tree_element> &tree)
+{
+    Block *block_obj = this->journal->readBlock(block_idx);
+    uint32_t level = block_obj->level();
+    ReiserFs::tree_element te;
+    te.idx = block_idx;
+    if (level > TREE_LEVEL_LEAF) {
+        te.type = BLOCKTYPE_INTERNAL;
+        tree.push_back(te);
+        for (uint32_t k = 0; k < block_obj->ptrCount(); k ++) {
+            uint32_t child_idx = block_obj->getPtr(k).block;
+            this->recursivelyEnumerateNodes(child_idx, tree);
+        }
+    } else {
+        // leaf level
+        te.type = BLOCKTYPE_LEAF;
+        tree.push_back(te);
+    }
+    this->journal->releaseBlock(block_obj);
+}
+
+std::vector<ReiserFs::tree_element> *
+ReiserFs::enumerateTree()
+{
+    std::vector<ReiserFs::tree_element> *tree = new std::vector<ReiserFs::tree_element>;
+
+    this->recursivelyEnumerateNodes(this->sb.s_root_block, *tree);
+    return tree;
+}

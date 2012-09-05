@@ -262,6 +262,11 @@ private:
 
 class ReiserFs {
 public:
+    typedef struct {
+        uint32_t type;
+        uint32_t idx;
+    } tree_element;
+
     ReiserFs();
     ~ReiserFs();
     int open(const std::string &name, bool o_sync = true);
@@ -280,6 +285,7 @@ public:
     bool blockUsed(uint32_t block_idx) const { return this->bitmap->blockUsed(block_idx); }
     uint32_t sizeInBlocks() { return this->sb.s_block_count; }
     void looseWalkTree();
+    std::vector<tree_element> *enumerateTree();
 
     /// checks if block is bitmap
     bool blockIsBitmap(uint32_t block_idx);
@@ -307,4 +313,5 @@ private:
         uint32_t target_level);
     void recursivelyMoveUnformatted(uint32_t block_idx, std::map<uint32_t, uint32_t> &movemap);
     uint32_t estimateTreeHeight();
+    void recursivelyEnumerateNodes(uint32_t block_idx, std::vector<ReiserFs::tree_element> &tree);
 };
