@@ -104,7 +104,6 @@ main (int argc, char *argv[])
     uint32_t cnt = removeDegenerateEntries(*movemap);
     std::cout << "degenerate moves removed = " << cnt << std::endl;
     std::cout << "movemap size = " << movemap->size() << std::endl;
-    movemap->erase(229422);
 
     movemap_t clean_moves;
     extractCleanMoves(fs, *movemap, clean_moves);
