@@ -7,7 +7,7 @@ typedef std::map<uint32_t, uint32_t> movemap_t;
 
 uint32_t nextTargetBlock(const ReiserFs &fs, uint32_t previous) {
     uint32_t fs_size = fs.sizeInBlocks();
-    uint32_t next = previous;
+    uint32_t next = previous + 1;
     while ((next < fs_size) && fs.blockIsReserved(next)) { next ++; }
     if (next < fs_size) return next;
     else return 0; // no one found
