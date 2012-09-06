@@ -58,6 +58,24 @@ createLargeScaleMovemap(const ReiserFs &fs)
     return movemap_ptr;
 }
 
+uint32_t
+removeDegenerateEntries(movemap_t &movemap)
+{
+    movemap_t::iterator iter;
+    movemap_t::iterator del_iter;
+    uint32_t degenerate_count = 0;
+
+    iter = movemap.begin();
+    while (iter != movemap.end()) {
+        del_iter = iter ++;
+        if (del_iter->first == del_iter->second) {
+            movemap.erase(del_iter);
+            degenerate_count ++;
+        }
+    }
+    return degenerate_count;
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -66,6 +84,8 @@ main (int argc, char *argv[])
 
     std::map<uint32_t, uint32_t> *movemap = createLargeScaleMovemap(fs);
 
+    uint32_t cnt = removeDegenerateEntries(*movemap);
+    std::cout << "degenerate moves removed = " << cnt << std::endl;
     std::cout << "movemap size = " << movemap->size() << std::endl;
     delete movemap;
 
