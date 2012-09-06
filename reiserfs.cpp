@@ -185,8 +185,6 @@ ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
     }
 
     std::cout << "root block: " << this->sb.s_root_block << std::endl;
-    // TODO: remove check below once root block moving is implemented
-    assert (movemap.count(this->sb.s_root_block) == 0);
 
     uint32_t tree_height = this->estimateTreeHeight();
     // reset statistics
@@ -203,10 +201,17 @@ ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
 
     // previous call moves all but root_block, move it if necessary
     if (movemap.count(this->sb.s_root_block)) {
-        std::cout << "need to move root block" << std::endl;
-        // this->journal->beginTransaction();
-        // TODO: write root block moving. This should update superblock, as it contains
-        // link to root block
+        this->journal->beginTransaction();
+        // move root block itself
+        this->journal->moveRawBlock(this->sb.s_root_block, movemap[this->sb.s_root_block]);
+        // update s_root_block field in superblock and write it down through journal
+        this->sb.s_root_block = movemap[this->sb.s_root_block];
+        Block *sb_obj = this->journal->readBlock(SUPERBLOCK_BLOCK);
+        ::memcpy (sb_obj->buf, &this->sb, sizeof(this->sb));
+        sb_obj->markDirty(); // crucial, as without markDirty journal will skip block
+        this->journal->releaseBlock(sb_obj);
+
+        this->journal->commitTransaction();
     }
 
     std::cout << "Blocks moved: " << this->blocks_moved_formatted << " formatted, "
