@@ -185,6 +185,8 @@ ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
     }
 
     std::cout << "root block: " << this->sb.s_root_block << std::endl;
+    // TODO: remove check below once root block moving is implemented
+    assert (movemap.count(this->sb.s_root_block) == 0);
 
     uint32_t tree_height = this->estimateTreeHeight();
     // reset statistics
