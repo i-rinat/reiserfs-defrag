@@ -99,20 +99,22 @@ main (int argc, char *argv[])
     ReiserFs fs;
     fs.open("../image/reiserfs.image", false);
 
-    std::map<uint32_t, uint32_t> *movemap = createLargeScaleMovemap(fs);
+    uint32_t blocks_moved = 0;
+    do {
+        std::map<uint32_t, uint32_t> *movemap = createLargeScaleMovemap(fs);
 
-    uint32_t cnt = removeDegenerateEntries(*movemap);
-    std::cout << "degenerate moves removed = " << cnt << std::endl;
-    std::cout << "movemap size = " << movemap->size() << std::endl;
+        uint32_t cnt = removeDegenerateEntries(*movemap);
+        std::cout << "degenerate moves removed = " << cnt << std::endl;
+        std::cout << "movemap size = " << movemap->size() << std::endl;
 
-    movemap_t clean_moves;
-    extractCleanMoves(fs, *movemap, clean_moves);
-    std::cout << "clean_moves size = " << clean_moves.size() << std::endl;
+        movemap_t clean_moves;
+        extractCleanMoves(fs, *movemap, clean_moves);
+        std::cout << "clean_moves size = " << clean_moves.size() << std::endl;
 
-    fs.moveMultipleBlocks(clean_moves);
+        blocks_moved = fs.moveMultipleBlocks(clean_moves);
+        delete movemap;
+    } while (blocks_moved > 0);
 
-
-    delete movemap;
     fs.close();
     return 0;
 }
