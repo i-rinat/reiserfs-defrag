@@ -76,6 +76,23 @@ removeDegenerateEntries(movemap_t &movemap)
     return degenerate_count;
 }
 
+void
+extractCleanMoves(const ReiserFs &fs, movemap_t &movemap, movemap_t &clean_moves)
+{
+    movemap_t::iterator iter;
+    movemap_t::iterator wi;
+
+    clean_moves.clear();
+    iter = movemap.begin();
+    while (iter != movemap.end()) {
+        wi = iter ++;
+        if (fs.blockUsed(wi->first) && !fs.blockIsReserved(wi->first) && !fs.blockUsed(wi->second)) {
+            clean_moves[wi->first] = wi->second;
+            movemap.erase(wi);
+        }
+    }
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -87,8 +104,16 @@ main (int argc, char *argv[])
     uint32_t cnt = removeDegenerateEntries(*movemap);
     std::cout << "degenerate moves removed = " << cnt << std::endl;
     std::cout << "movemap size = " << movemap->size() << std::endl;
-    delete movemap;
+    movemap->erase(229422);
 
+    movemap_t clean_moves;
+    extractCleanMoves(fs, *movemap, clean_moves);
+    std::cout << "clean_moves size = " << clean_moves.size() << std::endl;
+
+    fs.moveMultipleBlocks(clean_moves);
+
+
+    delete movemap;
     fs.close();
     return 0;
 }
