@@ -220,14 +220,14 @@ ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
 
 
 Block*
-ReiserFs::readBlock(uint32_t block)
+ReiserFs::readBlock(uint32_t block) const
 {
     assert(this->journal != NULL);
     return this->journal->readBlock(block);
 }
 
 void
-ReiserFs::releaseBlock(Block *block)
+ReiserFs::releaseBlock(Block *block) const
 {
     assert(this->journal != NULL);
     journal->releaseBlock(block);
@@ -384,7 +384,7 @@ ReiserFs::findFreeBlockBefore(uint32_t block_idx)
 }
 
 bool
-ReiserFs::blockIsBitmap(uint32_t block_idx)
+ReiserFs::blockIsBitmap(uint32_t block_idx) const
 {
     if (block_idx == FIRST_BITMAP_BLOCK)
         return true;
@@ -393,7 +393,7 @@ ReiserFs::blockIsBitmap(uint32_t block_idx)
 }
 
 bool
-ReiserFs::blockIsJournal(uint32_t block_idx)
+ReiserFs::blockIsJournal(uint32_t block_idx) const
 {
     uint32_t journal_start = this->sb.jp_journal_1st_block;
     // journal has one additional block for its 'header'
@@ -402,26 +402,26 @@ ReiserFs::blockIsJournal(uint32_t block_idx)
 }
 
 bool
-ReiserFs::blockIsFirst64k(uint32_t block_idx)
+ReiserFs::blockIsFirst64k(uint32_t block_idx) const
 {
     return block_idx < 65536/BLOCKSIZE;
 }
 
 bool
-ReiserFs::blockIsSuperblock(uint32_t block_idx)
+ReiserFs::blockIsSuperblock(uint32_t block_idx) const
 {
     return block_idx == SUPERBLOCK_BLOCK;
 }
 
 bool
-ReiserFs::blockIsReserved(uint32_t block_idx)
+ReiserFs::blockIsReserved(uint32_t block_idx) const
 {
     return blockIsBitmap(block_idx) || blockIsJournal(block_idx) || blockIsFirst64k(block_idx)
         || blockIsSuperblock(block_idx);
 }
 
 void
-ReiserFs::recursivelyEnumerateNodes(uint32_t block_idx, std::vector<ReiserFs::tree_element> &tree)
+ReiserFs::recursivelyEnumerateNodes(uint32_t block_idx, std::vector<ReiserFs::tree_element> &tree) const
 {
     Block *block_obj = this->journal->readBlock(block_idx);
     uint32_t level = block_obj->level();
@@ -443,7 +443,7 @@ ReiserFs::recursivelyEnumerateNodes(uint32_t block_idx, std::vector<ReiserFs::tr
 }
 
 std::vector<ReiserFs::tree_element> *
-ReiserFs::enumerateTree()
+ReiserFs::enumerateTree() const
 {
     std::vector<ReiserFs::tree_element> *tree = new std::vector<ReiserFs::tree_element>;
 

@@ -276,24 +276,24 @@ public:
     void dumpSuperblock();
 
     // proxies for FsJournal methods
-    Block* readBlock(uint32_t block);
-    void releaseBlock(Block *block);
+    Block* readBlock(uint32_t block) const;
+    void releaseBlock(Block *block) const;
 
     void printFirstFreeBlock();
     uint32_t findFreeBlockBefore(uint32_t block_idx);
     uint32_t findFreeBlockAfter(uint32_t block_idx);
     bool blockUsed(uint32_t block_idx) const { return this->bitmap->blockUsed(block_idx); }
-    uint32_t sizeInBlocks() { return this->sb.s_block_count; }
+    uint32_t sizeInBlocks() const { return this->sb.s_block_count; }
     void looseWalkTree();
-    std::vector<tree_element> *enumerateTree();
+    std::vector<tree_element> *enumerateTree() const;
 
     /// checks if block is bitmap
-    bool blockIsBitmap(uint32_t block_idx);
-    bool blockIsJournal(uint32_t block_idx);
-    bool blockIsFirst64k(uint32_t block_idx);
-    bool blockIsSuperblock(uint32_t block_idx);
+    bool blockIsBitmap(uint32_t block_idx) const;
+    bool blockIsJournal(uint32_t block_idx) const;
+    bool blockIsFirst64k(uint32_t block_idx) const;
+    bool blockIsSuperblock(uint32_t block_idx) const;
     /// checks if block is in reserved area, such as journal, sb, bitmap of first 64kiB
-    bool blockIsReserved(uint32_t block_idx);
+    bool blockIsReserved(uint32_t block_idx) const;
 
 private:
     FsBitmap *bitmap;
@@ -313,5 +313,5 @@ private:
         uint32_t target_level);
     void recursivelyMoveUnformatted(uint32_t block_idx, std::map<uint32_t, uint32_t> &movemap);
     uint32_t estimateTreeHeight();
-    void recursivelyEnumerateNodes(uint32_t block_idx, std::vector<ReiserFs::tree_element> &tree);
+    void recursivelyEnumerateNodes(uint32_t block_idx, std::vector<ReiserFs::tree_element> &tree) const;
 };
