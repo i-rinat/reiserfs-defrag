@@ -390,6 +390,7 @@ ReiserFs::blockIsBitmap(uint32_t block_idx) const
         return true;
     if ((block_idx/BLOCKS_PER_BITMAP)*BLOCKS_PER_BITMAP == block_idx)
         return true;
+    return false;
 }
 
 bool
