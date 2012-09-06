@@ -184,13 +184,6 @@ ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
         return;
     }
 
-    /*
-    std::map<uint32_t, uint32_t>::const_iterator iter;
-    for(iter = movemap.begin(); iter != movemap.end(); ++ iter) {
-        std::cout << "from: " << iter->first << ", to: ";
-        std::cout << iter->second << std::endl;
-    }
-    */
     std::cout << "root block: " << this->sb.s_root_block << std::endl;
 
     uint32_t tree_height = this->estimateTreeHeight();
