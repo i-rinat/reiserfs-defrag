@@ -175,13 +175,16 @@ ReiserFs::movemap_consistent(const std::map<uint32_t, uint32_t> &movemap)
     return true;
 }
 
-void
+/// moves multiple blocks
+///
+/// \return number of blocks moved
+uint32_t
 ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
 {
     std::cout << "Moving blocks" << std::endl;
     if (! this->movemap_consistent(movemap)) {
         std::cerr << "error: movemap not consistent, " << this->err_string << std::endl;
-        return;
+        return 0;
     }
 
     std::cout << "root block: " << this->sb.s_root_block << std::endl;
@@ -216,6 +219,7 @@ ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
 
     std::cout << "Blocks moved: " << this->blocks_moved_formatted << " formatted, "
         << this->blocks_moved_unformatted << " unformatted" << std::endl;
+    return (this->blocks_moved_unformatted + this->blocks_moved_formatted);
 }
 
 

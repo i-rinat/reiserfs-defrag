@@ -272,7 +272,7 @@ public:
     int open(const std::string &name, bool o_sync = true);
     void close();
     void moveBlock(uint32_t from, uint32_t to);
-    void moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap);
+    uint32_t moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap);
     void dumpSuperblock();
 
     // proxies for FsJournal methods
