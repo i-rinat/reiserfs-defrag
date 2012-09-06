@@ -97,7 +97,7 @@ int
 main (int argc, char *argv[])
 {
     ReiserFs fs;
-    fs.open("../image/reiserfs.image.shuffled");
+    fs.open("../image/reiserfs.image", false);
 
     std::map<uint32_t, uint32_t> *movemap = createLargeScaleMovemap(fs);
 
