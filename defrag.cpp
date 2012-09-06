@@ -13,13 +13,13 @@ uint32_t nextTargetBlock(const ReiserFs &fs, uint32_t previous) {
     else return 0; // no one found
 }
 
-std::map<uint32_t, uint32_t> *
+movemap_t *
 createLargeScaleMovemap(const ReiserFs &fs)
 {
     std::vector<ReiserFs::tree_element> *tree = fs.enumerateTree();
     std::vector<ReiserFs::tree_element>::const_iterator iter;
-    std::map<uint32_t, uint32_t> *movemap_ptr = new std::map<uint32_t, uint32_t>;
-    std::map<uint32_t, uint32_t> &movemap = *movemap_ptr;
+    movemap_t *movemap_ptr = new std::map<uint32_t, uint32_t>;
+    movemap_t &movemap = *movemap_ptr;
 
     uint32_t free_idx = 0;
 
