@@ -3,6 +3,8 @@
 #include <iostream>
 #include <vector>
 
+typedef std::map<uint32_t, uint32_t> movemap_t;
+
 uint32_t nextTargetBlock(const ReiserFs &fs, uint32_t previous) {
     uint32_t fs_size = fs.sizeInBlocks();
     uint32_t next = previous;
