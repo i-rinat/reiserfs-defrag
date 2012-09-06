@@ -207,6 +207,9 @@ ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
         this->journal->beginTransaction();
         // move root block itself
         this->journal->moveRawBlock(this->sb.s_root_block, movemap[this->sb.s_root_block]);
+        // update bitmap
+        this->bitmap->markBlockUnused(this->sb.s_root_block);
+        this->bitmap->markBlockUsed(movemap[this->sb.s_root_block]);
         // update s_root_block field in superblock and write it down through journal
         this->sb.s_root_block = movemap[this->sb.s_root_block];
         Block *sb_obj = this->journal->readBlock(SUPERBLOCK_BLOCK);
