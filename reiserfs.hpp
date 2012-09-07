@@ -280,8 +280,8 @@ public:
     void releaseBlock(Block *block) const;
 
     void printFirstFreeBlock();
-    uint32_t findFreeBlockBefore(uint32_t block_idx);
-    uint32_t findFreeBlockAfter(uint32_t block_idx);
+    uint32_t findFreeBlockBefore(uint32_t block_idx) const;
+    uint32_t findFreeBlockAfter(uint32_t block_idx) const;
     bool blockUsed(uint32_t block_idx) const { return this->bitmap->blockUsed(block_idx); }
     uint32_t sizeInBlocks() const { return this->sb.s_block_count; }
     void looseWalkTree();

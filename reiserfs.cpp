@@ -374,7 +374,7 @@ ReiserFs::printFirstFreeBlock()
 }
 
 uint32_t
-ReiserFs::findFreeBlockAfter(uint32_t block_idx)
+ReiserFs::findFreeBlockAfter(uint32_t block_idx) const
 {
     for (uint32_t k = block_idx + 1; k < this->sb.s_block_count; k ++)
         if (! this->bitmap->blockUsed(k)) return k;
@@ -382,7 +382,7 @@ ReiserFs::findFreeBlockAfter(uint32_t block_idx)
 }
 
 uint32_t
-ReiserFs::findFreeBlockBefore(uint32_t block_idx)
+ReiserFs::findFreeBlockBefore(uint32_t block_idx) const
 {
     // lost 0th block, but it's reserved anyway
     for (uint32_t k = block_idx - 1; k > 0; k --)
