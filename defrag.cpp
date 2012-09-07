@@ -93,6 +93,28 @@ extractCleanMoves(const ReiserFs &fs, movemap_t &movemap, movemap_t &clean_moves
     }
 }
 
+uint32_t
+cleanupRegion(ReiserFs &fs, uint32_t from) {
+    uint32_t to = (from/BLOCKS_PER_BITMAP + 1)*BLOCKS_PER_BITMAP;
+    if (to > fs.sizeInBlocks()) to = fs.sizeInBlocks();
+    uint32_t next_free = to;
+    movemap_t movemap;
+
+    uint32_t cur = from;
+    while (cur < to) {
+        if (!fs.blockIsReserved(cur) && fs.blockUsed(cur)) {
+            next_free = fs.findFreeBlockAfter(next_free);
+            assert (next_free != 0);
+            movemap[cur] = next_free;
+        }
+        cur++;
+    }
+    std::cout << "cleanupRegion [" << from << ":" << to << "], " << movemap.size()
+        << " elements" << std::endl;
+    fs.moveMultipleBlocks(movemap);
+    return to;
+}
+
 int
 main (int argc, char *argv[])
 {
