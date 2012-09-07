@@ -97,7 +97,14 @@ int
 main (int argc, char *argv[])
 {
     ReiserFs fs;
-    fs.open("../image/reiserfs.image", false);
+
+    if (argc > 1) {
+        if (RFSD_OK != fs.open(argv[1], false))
+            return 1;
+    } else {
+        if (RFSD_OK != fs.open("../image/reiserfs.image", false))
+            return 1;
+    }
 
     uint32_t blocks_moved = 0;
     do {
