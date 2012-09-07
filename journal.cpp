@@ -98,6 +98,7 @@ FsJournal::moveRawBlock(uint32_t from, uint32_t to)
 {
     Block *block_obj = this->readBlock(from);
     this->writeBlockAt(block_obj, to);
+    this->releaseBlock(block_obj);
 }
 
 void
