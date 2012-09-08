@@ -422,7 +422,7 @@ ReiserFs::blockIsSuperblock(uint32_t block_idx) const
 }
 
 bool
-ReiserFs::blockIsReserved(uint32_t block_idx) const
+ReiserFs::blockReserved(uint32_t block_idx) const
 {
     return blockIsBitmap(block_idx) || blockIsJournal(block_idx) || blockIsFirst64k(block_idx)
         || blockIsSuperblock(block_idx);

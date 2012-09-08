@@ -9,7 +9,7 @@ typedef std::map<uint32_t, uint32_t> movemap_t;
 uint32_t nextTargetBlock(const ReiserFs &fs, uint32_t previous) {
     uint32_t fs_size = fs.sizeInBlocks();
     uint32_t next = previous + 1;
-    while ((next < fs_size) && fs.blockIsReserved(next)) { next ++; }
+    while ((next < fs_size) && fs.blockReserved(next)) { next ++; }
     if (next < fs_size) return next;
     else return 0; // no one found
 }
@@ -84,7 +84,7 @@ extractCleanMoves(const ReiserFs &fs, movemap_t &movemap, movemap_t &clean_moves
     iter = movemap.begin();
     while (iter != movemap.end()) {
         wi = iter ++;
-        if (fs.blockUsed(wi->first) && !fs.blockIsReserved(wi->first) && !fs.blockUsed(wi->second)) {
+        if (fs.blockUsed(wi->first) && !fs.blockReserved(wi->first) && !fs.blockUsed(wi->second)) {
             clean_moves[wi->first] = wi->second;
             movemap.erase(wi);
         }
@@ -100,7 +100,7 @@ cleanupRegion(ReiserFs &fs, uint32_t from) {
 
     uint32_t cur = from;
     while (cur < to) {
-        if (!fs.blockIsReserved(cur) && fs.blockUsed(cur)) {
+        if (!fs.blockReserved(cur) && fs.blockUsed(cur)) {
             next_free = fs.findFreeBlockAfter(next_free);
             assert (next_free != 0);
             movemap[cur] = next_free;
@@ -159,7 +159,7 @@ simpleDefragWithPreclean(ReiserFs &fs)
             do {
                 free_idx = fs.findFreeBlockAfter(free_idx);
                 if (free_idx == 0) break;
-            } while (fs.blockIsReserved(free_idx) || (occup.count(free_idx) > 0));
+            } while (fs.blockReserved(free_idx) || (occup.count(free_idx) > 0));
             if (free_idx == 0) break;
             preclean[it->second] = free_idx;
         }

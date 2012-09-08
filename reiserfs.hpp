@@ -293,7 +293,7 @@ public:
     bool blockIsFirst64k(uint32_t block_idx) const;
     bool blockIsSuperblock(uint32_t block_idx) const;
     /// checks if block is in reserved area, such as journal, sb, bitmap of first 64kiB
-    bool blockIsReserved(uint32_t block_idx) const;
+    bool blockReserved(uint32_t block_idx) const;
 
 private:
     FsBitmap *bitmap;
