@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <iostream>
 #include <vector>
+#include <set>
 
 typedef std::map<uint32_t, uint32_t> movemap_t;
 
@@ -130,15 +131,39 @@ main (int argc, char *argv[])
 
     uint32_t blocks_moved = 0;
     do {
+        std::cout << "-------------------------------------------------------------" << std::endl;
         std::map<uint32_t, uint32_t> *movemap = createLargeScaleMovemap(fs);
 
         uint32_t cnt = removeDegenerateEntries(*movemap);
-        std::cout << "degenerate moves removed = " << cnt << std::endl;
         std::cout << "movemap size = " << movemap->size() << std::endl;
 
+        std::set<uint32_t> occup;
+        std::cout << "occup initial size = " << occup.size() << std::endl;
+        for (movemap_t::iterator it = movemap->begin(); it != movemap->end(); ++ it) {
+            occup.insert(it->first); occup.insert(it->second);
+        }
         movemap_t clean_moves;
         extractCleanMoves(fs, *movemap, clean_moves);
-        std::cout << "clean_moves size = " << clean_moves.size() << std::endl;
+        std::cout << "clean_moves size 1 = " << clean_moves.size() << std::endl;
+
+        uint32_t free_idx = 0;
+        movemap_t preclean;
+        for (movemap_t::iterator it = movemap->begin(); it != movemap->end(); ++ it) {
+            do {
+                free_idx = fs.findFreeBlockAfter(free_idx);
+                if (free_idx == 0) break;
+            } while (fs.blockIsReserved(free_idx) || (occup.count(free_idx) > 0));
+            if (free_idx == 0) break;
+            preclean[it->second] = free_idx;
+        }
+        std::cout << "preclean size = " << preclean.size() << std::endl;
+        fs.moveMultipleBlocks(preclean);
+        movemap->clear();
+        clean_moves.clear();
+        movemap = createLargeScaleMovemap(fs);
+        removeDegenerateEntries(*movemap);
+        extractCleanMoves(fs, *movemap, clean_moves);
+        std::cout << "clean_moves size 2 = " << clean_moves.size() << std::endl;
 
         blocks_moved = fs.moveMultipleBlocks(clean_moves);
         delete movemap;
