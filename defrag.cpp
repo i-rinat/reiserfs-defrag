@@ -142,9 +142,7 @@ simpleDefragWithPreclean(ReiserFs &fs)
     do {
         std::cout << "-------------------------------------------------------------" << std::endl;
         createLargeScaleMovemap(fs, movemap);
-
         removeDegenerateEntries(movemap);
-        std::cout << "movemap size = " << movemap.size() << std::endl;
 
         std::set<uint32_t> occup;
         std::cout << "occup initial size = " << occup.size() << std::endl;
@@ -171,6 +169,7 @@ simpleDefragWithPreclean(ReiserFs &fs)
         clean_moves.clear();
         createLargeScaleMovemap(fs, movemap);
         removeDegenerateEntries(movemap);
+        std::cout << "movemap size = " << movemap.size() << std::endl;
         extractCleanMoves(fs, movemap, clean_moves);
         std::cout << "clean_moves size 2 = " << clean_moves.size() << std::endl;
 
