@@ -116,25 +116,15 @@ cleanupRegion(ReiserFs &fs, uint32_t from) {
     return to;
 }
 
-int
-main (int argc, char *argv[])
+void
+simpleDefragWithPreclean(ReiserFs &fs)
 {
-    ReiserFs fs;
-
-    if (argc > 1) {
-        if (RFSD_OK != fs.open(argv[1], false))
-            return 1;
-    } else {
-        if (RFSD_OK != fs.open("../image/reiserfs.image", false))
-            return 1;
-    }
-
     uint32_t blocks_moved = 0;
     do {
         std::cout << "-------------------------------------------------------------" << std::endl;
         std::map<uint32_t, uint32_t> *movemap = createLargeScaleMovemap(fs);
 
-        uint32_t cnt = removeDegenerateEntries(*movemap);
+        removeDegenerateEntries(*movemap);
         std::cout << "movemap size = " << movemap->size() << std::endl;
 
         std::set<uint32_t> occup;
@@ -158,7 +148,7 @@ main (int argc, char *argv[])
         }
         std::cout << "preclean size = " << preclean.size() << std::endl;
         fs.moveMultipleBlocks(preclean);
-        movemap->clear();
+        delete movemap;
         clean_moves.clear();
         movemap = createLargeScaleMovemap(fs);
         removeDegenerateEntries(*movemap);
@@ -168,6 +158,24 @@ main (int argc, char *argv[])
         blocks_moved = fs.moveMultipleBlocks(clean_moves);
         delete movemap;
     } while (blocks_moved > 0);
+}
+
+int
+main (int argc, char *argv[])
+{
+    ReiserFs fs;
+
+    if (argc > 1) {
+        if (RFSD_OK != fs.open(argv[1], false))
+            return 1;
+    } else {
+        if (RFSD_OK != fs.open("../image/reiserfs.image", false))
+            return 1;
+    }
+
+    // simpleDefrag(fs);
+    simpleDefragWithPreclean(fs);
+
 
     fs.close();
     return 0;
