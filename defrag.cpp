@@ -40,7 +40,7 @@ createLargeScaleMovemap(const ReiserFs &fs, movemap_t &movemap)
             Block *block_obj = fs.readBlock(iter->idx);
             for (uint32_t k = 0; k < block_obj->itemCount(); k ++) {
                 const Block::item_header &ih = block_obj->itemHeader(k);
-                if (ih.key.type(ih.version) != KEY_TYPE_INDIRECT) continue;
+                if (ih.type() != KEY_TYPE_INDIRECT) continue;
 
                 for (uint32_t idx = 0; idx < ih.length/4; idx ++) {
                     uint32_t child_idx = block_obj->indirectItemRef(ih.offset, idx);

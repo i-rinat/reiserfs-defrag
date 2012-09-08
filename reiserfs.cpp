@@ -311,7 +311,7 @@ ReiserFs::recursivelyMoveUnformatted(uint32_t block_idx, std::map<uint32_t, uint
         for (uint32_t k = 0; k < block_obj->itemCount(); k ++) {
             const struct Block::item_header &ih = block_obj->itemHeader(k);
             // indirect items contain links to unformatted (data) blocks
-            if (KEY_TYPE_INDIRECT != ih.key.type(ih.version))
+            if (KEY_TYPE_INDIRECT != ih.type())
                 continue;
             for (int idx = 0; idx < ih.length/4; idx ++) {
                 uint32_t child_idx = block_obj->indirectItemRef(ih.offset, idx);
