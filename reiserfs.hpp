@@ -200,6 +200,7 @@ public:
         uint16_t length;
         uint16_t offset;
         uint16_t version;
+        int type() const { return this->key.type(this->version); }
     } __attribute__ ((__packed__));
 
     const struct key &getKey(uint32_t index) const {
