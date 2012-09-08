@@ -14,13 +14,11 @@ uint32_t nextTargetBlock(const ReiserFs &fs, uint32_t previous) {
     else return 0; // no one found
 }
 
-movemap_t *
-createLargeScaleMovemap(const ReiserFs &fs)
+void
+createLargeScaleMovemap(const ReiserFs &fs, movemap_t &movemap)
 {
     std::vector<ReiserFs::tree_element> *tree = fs.enumerateTree();
     std::vector<ReiserFs::tree_element>::const_iterator iter;
-    movemap_t *movemap_ptr = new std::map<uint32_t, uint32_t>;
-    movemap_t &movemap = *movemap_ptr;
 
     uint32_t free_idx = 0;
 
@@ -56,7 +54,6 @@ createLargeScaleMovemap(const ReiserFs &fs)
         }
     }
     delete tree;
-    return movemap_ptr;
 }
 
 uint32_t
@@ -120,20 +117,20 @@ void
 simpleDefrag(ReiserFs &fs)
 {
     uint32_t blocks_moved = 0;
+    movemap_t movemap;
     do {
         std::cout << "-------------------------------------------------------------" << std::endl;
-        std::map<uint32_t, uint32_t> *movemap = createLargeScaleMovemap(fs);
+        createLargeScaleMovemap(fs, movemap);
 
-        uint32_t cnt = removeDegenerateEntries(*movemap);
+        uint32_t cnt = removeDegenerateEntries(movemap);
         std::cout << "degenerate moves removed = " << cnt << std::endl;
-        std::cout << "movemap size = " << movemap->size() << std::endl;
+        std::cout << "movemap size = " << movemap.size() << std::endl;
 
         movemap_t clean_moves;
-        extractCleanMoves(fs, *movemap, clean_moves);
+        extractCleanMoves(fs, movemap, clean_moves);
         std::cout << "clean_moves size = " << clean_moves.size() << std::endl;
 
         blocks_moved = fs.moveMultipleBlocks(clean_moves);
-        delete movemap;
     } while (blocks_moved > 0);
 }
 
@@ -141,25 +138,26 @@ void
 simpleDefragWithPreclean(ReiserFs &fs)
 {
     uint32_t blocks_moved = 0;
+    movemap_t movemap;
     do {
         std::cout << "-------------------------------------------------------------" << std::endl;
-        std::map<uint32_t, uint32_t> *movemap = createLargeScaleMovemap(fs);
+        createLargeScaleMovemap(fs, movemap);
 
-        removeDegenerateEntries(*movemap);
-        std::cout << "movemap size = " << movemap->size() << std::endl;
+        removeDegenerateEntries(movemap);
+        std::cout << "movemap size = " << movemap.size() << std::endl;
 
         std::set<uint32_t> occup;
         std::cout << "occup initial size = " << occup.size() << std::endl;
-        for (movemap_t::iterator it = movemap->begin(); it != movemap->end(); ++ it) {
+        for (movemap_t::iterator it = movemap.begin(); it != movemap.end(); ++ it) {
             occup.insert(it->first); occup.insert(it->second);
         }
         movemap_t clean_moves;
-        extractCleanMoves(fs, *movemap, clean_moves);
+        extractCleanMoves(fs, movemap, clean_moves);
         std::cout << "clean_moves size 1 = " << clean_moves.size() << std::endl;
 
         uint32_t free_idx = 0;
         movemap_t preclean;
-        for (movemap_t::iterator it = movemap->begin(); it != movemap->end(); ++ it) {
+        for (movemap_t::iterator it = movemap.begin(); it != movemap.end(); ++ it) {
             do {
                 free_idx = fs.findFreeBlockAfter(free_idx);
                 if (free_idx == 0) break;
@@ -169,15 +167,14 @@ simpleDefragWithPreclean(ReiserFs &fs)
         }
         std::cout << "preclean size = " << preclean.size() << std::endl;
         fs.moveMultipleBlocks(preclean);
-        delete movemap;
+        movemap.clear();
         clean_moves.clear();
-        movemap = createLargeScaleMovemap(fs);
-        removeDegenerateEntries(*movemap);
-        extractCleanMoves(fs, *movemap, clean_moves);
+        createLargeScaleMovemap(fs, movemap);
+        removeDegenerateEntries(movemap);
+        extractCleanMoves(fs, movemap, clean_moves);
         std::cout << "clean_moves size 2 = " << clean_moves.size() << std::endl;
 
         blocks_moved = fs.moveMultipleBlocks(clean_moves);
-        delete movemap;
     } while (blocks_moved > 0);
 }
 
