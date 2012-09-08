@@ -268,7 +268,7 @@ ReiserFs::recursivelyMoveInternalNodes(uint32_t block_idx, std::map<uint32_t, ui
     if (level > target_level) {
         // if we are not on target_level, go deeper
         for (uint32_t k = 0; k < block_obj->ptrCount(); k ++ ) {
-            uint32_t child_idx = block_obj->getPtr(k).block;
+            uint32_t child_idx = block_obj->ptr(k).block;
             this->recursivelyMoveInternalNodes(child_idx, movemap, target_level);
         }
         this->journal->releaseBlock(block_obj);
@@ -276,7 +276,7 @@ ReiserFs::recursivelyMoveInternalNodes(uint32_t block_idx, std::map<uint32_t, ui
         assert (level == target_level); // we reached target_level
         this->journal->beginTransaction();
         for (uint32_t k = 0; k < block_obj->ptrCount(); k ++ ) {
-            uint32_t child_idx = block_obj->getPtr(k).block;
+            uint32_t child_idx = block_obj->ptr(k).block;
             if (movemap.count(child_idx) > 0) {
                 // move pointed block
                 this->journal->moveRawBlock(child_idx, movemap[child_idx]);
@@ -285,7 +285,7 @@ ReiserFs::recursivelyMoveInternalNodes(uint32_t block_idx, std::map<uint32_t, ui
                 this->bitmap->markBlockUnused(child_idx);
                 this->bitmap->markBlockUsed(movemap[child_idx]);
                 // update pointer
-                block_obj->getPtr2(k).block = movemap[child_idx];
+                block_obj->ptr(k).block = movemap[child_idx];
                 block_obj->markDirty();
             }
         }
@@ -301,7 +301,7 @@ ReiserFs::recursivelyMoveUnformatted(uint32_t block_idx, std::map<uint32_t, uint
     uint32_t level = block_obj->level();
     if (level > TREE_LEVEL_LEAF) {
         for (uint32_t k = 0; k < block_obj->ptrCount(); k ++) {
-            uint32_t child_idx = block_obj->getPtr(k).block;
+            uint32_t child_idx = block_obj->ptr(k).block;
             this->recursivelyMoveUnformatted(child_idx, movemap);
         }
         this->journal->releaseBlock(block_obj);
@@ -338,11 +338,11 @@ ReiserFs::collectLeafNodeIndices(uint32_t block_idx, std::vector<uint32_t> &lni)
     if (block_obj->level() == TREE_LEVEL_LEAF + 1) {
         // this is pre-leaves layer, collect pointers
         for (uint32_t k = 0; k < block_obj->ptrCount(); k ++)
-            lni.push_back(block_obj->getPtr(k).block);
+            lni.push_back(block_obj->ptr(k).block);
     } else {
         // visit lower levels
         for (uint32_t k = 0; k < block_obj->ptrCount(); k ++)
-            this->collectLeafNodeIndices(block_obj->getPtr(k).block, lni);
+            this->collectLeafNodeIndices(block_obj->ptr(k).block, lni);
     }
     this->journal->releaseBlock(block_obj);
 }
@@ -439,7 +439,7 @@ ReiserFs::recursivelyEnumerateNodes(uint32_t block_idx, std::vector<ReiserFs::tr
         te.type = BLOCKTYPE_INTERNAL;
         tree.push_back(te);
         for (uint32_t k = 0; k < block_obj->ptrCount(); k ++) {
-            uint32_t child_idx = block_obj->getPtr(k).block;
+            uint32_t child_idx = block_obj->ptr(k).block;
             this->recursivelyEnumerateNodes(child_idx, tree);
         }
     } else {

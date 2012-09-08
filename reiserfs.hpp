@@ -203,18 +203,18 @@ public:
         int type() const { return this->key.type(this->version); }
     } __attribute__ ((__packed__));
 
-    const struct key &getKey(uint32_t index) const {
+    const struct key &key(uint32_t index) const {
         const struct key *kp = reinterpret_cast<const struct key *>(&buf[0] + 24 + 16*index);
         const struct key &kpr = kp[0];
         return kpr;
     }
-    const struct tree_ptr &getPtr(uint32_t index) const {
+    const struct tree_ptr &ptr(uint32_t index) const {
         const struct tree_ptr *tp =
             reinterpret_cast<const struct tree_ptr *>(&buf[0] + 24 + 16*keyCount() + 8*index);
         const struct tree_ptr &tpr = tp[0];
         return tpr;
     }
-    struct tree_ptr &getPtr2(uint32_t index) {
+    struct tree_ptr &ptr(uint32_t index) {
         struct tree_ptr *tp =
             reinterpret_cast<struct tree_ptr *>(&buf[0] + 24 + 16*keyCount() + 8*index);
         struct tree_ptr &tpr = tp[0];
