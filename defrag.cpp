@@ -117,6 +117,27 @@ cleanupRegion(ReiserFs &fs, uint32_t from) {
 }
 
 void
+simpleDefrag(ReiserFs &fs)
+{
+    uint32_t blocks_moved = 0;
+    do {
+        std::cout << "-------------------------------------------------------------" << std::endl;
+        std::map<uint32_t, uint32_t> *movemap = createLargeScaleMovemap(fs);
+
+        uint32_t cnt = removeDegenerateEntries(*movemap);
+        std::cout << "degenerate moves removed = " << cnt << std::endl;
+        std::cout << "movemap size = " << movemap->size() << std::endl;
+
+        movemap_t clean_moves;
+        extractCleanMoves(fs, *movemap, clean_moves);
+        std::cout << "clean_moves size = " << clean_moves.size() << std::endl;
+
+        blocks_moved = fs.moveMultipleBlocks(clean_moves);
+        delete movemap;
+    } while (blocks_moved > 0);
+}
+
+void
 simpleDefragWithPreclean(ReiserFs &fs)
 {
     uint32_t blocks_moved = 0;
