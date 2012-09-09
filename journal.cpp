@@ -4,12 +4,20 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <cstdlib>
 
 
 FsJournal::FsJournal(int fd_)
 {
     this->fd = fd_;
     std::cout << "FsJournal initialized" << std::endl;
+    this->generation = 0;
+    this->max_cache_size = 5120;
+}
+
+FsJournal::~FsJournal()
+{
+    // purge cache will be performed automatically
 }
 
 void
@@ -28,6 +36,13 @@ FsJournal::commitTransaction()
 Block*
 FsJournal::readBlock(uint32_t block_idx)
 {
+    this->generation ++;
+    // check if cache have this block
+    if (this->blockInCache(block_idx)) {
+        this->touchCacheEntry(block_idx);
+        return this->block_cache[block_idx].block_obj;
+    }
+    // not found, read from disk
     off_t new_ofs = ::lseek (this->fd, static_cast<off_t>(block_idx) * BLOCKSIZE, SEEK_SET);
     if (static_cast<off_t>(-1) == new_ofs) {
         std::cerr << "error: seeking" << std::endl;
@@ -41,6 +56,7 @@ FsJournal::readBlock(uint32_t block_idx)
         return NULL;
     }
     block_obj->block = block_idx;
+    this->pushToCache(block_obj);
     return block_obj;
 }
 
@@ -80,6 +96,7 @@ FsJournal::writeBlock(Block *block_obj)
 void
 FsJournal::writeBlockAt(Block *block_obj, uint32_t block_idx)
 {
+    this->deleteFromCache(block_obj->block);
     off_t new_ofs = ::lseek (this->fd, static_cast<off_t>(block_idx) * BLOCKSIZE, SEEK_SET);
     if (static_cast<off_t>(-1) == new_ofs) {
         std::cerr << "error: seeking" << std::endl;
@@ -91,6 +108,9 @@ FsJournal::writeBlockAt(Block *block_obj, uint32_t block_idx)
         std::cerr << "error: writeBlockAt(" << block_obj << ", " << block_idx << ")" << std::endl;
         return;
     }
+    // push same block under new idx to cache
+    block_obj->block = block_idx;
+    this->pushToCache(block_obj);
 }
 
 void
@@ -102,7 +122,45 @@ FsJournal::moveRawBlock(uint32_t from, uint32_t to)
 }
 
 void
-FsJournal::releaseBlock(Block *block)
+FsJournal::releaseBlock(Block *block_obj)
 {
-    delete block;
+    if (block_obj->dirty) {
+        this->writeBlock(block_obj);
+        block_obj->dirty = false;
+    }
+    // delete block;
+}
+
+void
+FsJournal::pushToCache(Block *block_obj)
+{
+    std::cout << "pushToCache " << block_obj->block << ", " << this->block_cache.size() << std::endl;
+    while (this->block_cache.size() >= this->max_cache_size - 1)
+        this->eraseOldestCacheEntry();
+
+    FsJournal::cache_entry ci;
+    ci.block_obj = block_obj;
+    ci.generation = this->generation;
+    this->block_cache[block_obj->block] = ci;
+}
+
+void
+FsJournal::eraseOldestCacheEntry()
+{
+    // use Random Replacement
+    std::map<uint32_t, cache_entry>::iterator it, dit;
+    it = this->block_cache.begin();
+    while (it != this->block_cache.end()) {
+        dit = it ++;
+        if (std::rand()%2 == 0) {
+            this->deleteFromCache(dit->first);
+        }
+    }
+}
+
+void
+FsJournal::deleteFromCache(uint32_t block_idx)
+{
+    delete this->block_cache[block_idx].block_obj;
+    this->block_cache.erase(block_idx);
 }
