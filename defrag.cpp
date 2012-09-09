@@ -15,10 +15,13 @@ uint32_t nextTargetBlock(const ReiserFs &fs, uint32_t previous) {
 }
 
 void
-createLargeScaleMovemap(const ReiserFs &fs, movemap_t &movemap)
+createLargeScaleMovemap(const ReiserFs &fs, movemap_t &movemap, uint32_t sizelimit = 0)
 {
     std::vector<ReiserFs::tree_element> *tree = fs.enumerateTree();
     std::vector<ReiserFs::tree_element>::const_iterator iter;
+
+    if (0 == sizelimit)
+        sizelimit = fs.sizeInBlocks();
 
     uint32_t free_idx = 0;
 
@@ -34,7 +37,7 @@ createLargeScaleMovemap(const ReiserFs &fs, movemap_t &movemap)
         }
     }
 
-    for (iter = tree->begin(); iter != tree->end(); ++ iter) {
+    for (iter = tree->begin(); iter != tree->end() && movemap.size() < sizelimit; ++ iter) {
         if (iter->type == BLOCKTYPE_LEAF) {
             free_idx = nextTargetBlock(fs, free_idx);
             assert (free_idx != 0);
@@ -56,6 +59,8 @@ createLargeScaleMovemap(const ReiserFs &fs, movemap_t &movemap)
                         movemap[child_idx] = free_idx;
                     }
                 }
+
+                if (movemap.size() >= sizelimit) break;
             }
             fs.releaseBlock(block_obj);
         }
@@ -135,14 +140,14 @@ simpleDefrag(ReiserFs &fs)
 }
 
 void
-simpleDefragWithPreclean(ReiserFs &fs)
+simpleDefragWithPreclean(ReiserFs &fs, uint32_t sizelimit = 0)
 {
     uint32_t blocks_moved = 0;
     do {
         std::cout << "-------------------------------------------------------------" << std::endl;
         // prepare list of movements
         movemap_t movemap;
-        createLargeScaleMovemap(fs, movemap);
+        createLargeScaleMovemap(fs, movemap, sizelimit);
         std::cout << "movemap size = " << movemap.size() << std::endl;
 
         // remember targets of movements, so they will not be used in preclean stage
@@ -191,7 +196,7 @@ main (int argc, char *argv[])
     }
 
     // simpleDefrag(fs);
-    simpleDefragWithPreclean(fs);
+    simpleDefragWithPreclean(fs, 8000);
 
 
     fs.close();
