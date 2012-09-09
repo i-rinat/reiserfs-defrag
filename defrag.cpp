@@ -120,6 +120,7 @@ simpleDefrag(ReiserFs &fs)
     movemap_t movemap;
     do {
         std::cout << "-------------------------------------------------------------" << std::endl;
+        movemap.clear();
         createLargeScaleMovemap(fs, movemap);
 
         uint32_t cnt = removeDegenerateEntries(movemap);
@@ -141,6 +142,7 @@ simpleDefragWithPreclean(ReiserFs &fs)
     movemap_t movemap;
     do {
         std::cout << "-------------------------------------------------------------" << std::endl;
+        movemap.clear();
         createLargeScaleMovemap(fs, movemap);
         removeDegenerateEntries(movemap);
 
