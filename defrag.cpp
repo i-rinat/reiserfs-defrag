@@ -143,41 +143,41 @@ void
 simpleDefragWithPreclean(ReiserFs &fs)
 {
     uint32_t blocks_moved = 0;
-    movemap_t movemap;
     do {
         std::cout << "-------------------------------------------------------------" << std::endl;
-        movemap.clear();
+        // prepare list of movements
+        movemap_t movemap;
         createLargeScaleMovemap(fs, movemap);
+        std::cout << "movemap size = " << movemap.size() << std::endl;
 
+        // remember targets of movements, so they will not be used in preclean stage
         std::set<uint32_t> occup;
-        std::cout << "occup initial size = " << occup.size() << std::endl;
         for (movemap_t::iterator it = movemap.begin(); it != movemap.end(); ++ it) {
-            occup.insert(it->first); occup.insert(it->second);
+            occup.insert(it->second);
         }
-        movemap_t clean_moves;
-        extractCleanMoves(fs, movemap, clean_moves);
-        std::cout << "clean_moves size 1 = " << clean_moves.size() << std::endl;
 
+        // iterate over movements targets
         uint32_t free_idx = 0;
         movemap_t preclean;
         for (movemap_t::iterator it = movemap.begin(); it != movemap.end(); ++ it) {
-            do {
-                free_idx = fs.findFreeBlockAfter(free_idx);
-                if (free_idx == 0) break;
-            } while (fs.blockReserved(free_idx) || (occup.count(free_idx) > 0));
-            if (free_idx == 0) break;
-            preclean[it->second] = free_idx;
+            // only need those with occupied target blocks
+            if (fs.blockUsed(it->second)) {
+                do {
+                    free_idx = fs.findFreeBlockAfter(free_idx);
+                } while (occup.count(free_idx) > 0 && free_idx != 0);
+                if (free_idx == 0) break; // failed to find free block
+                preclean[it->second] = free_idx;
+            }
         }
+
+        // preclean stage: do actual move
         std::cout << "preclean size = " << preclean.size() << std::endl;
         fs.moveMultipleBlocks(preclean);
-        movemap.clear();
-        clean_moves.clear();
-        createLargeScaleMovemap(fs, movemap);
-        removeDegenerateEntries(movemap);
-        std::cout << "movemap size = " << movemap.size() << std::endl;
-        extractCleanMoves(fs, movemap, clean_moves);
-        std::cout << "clean_moves size 2 = " << clean_moves.size() << std::endl;
 
+        // now extract clean moves, those that can be made without cleaning of targets
+        movemap_t clean_moves;
+        extractCleanMoves(fs, movemap, clean_moves);
+        std::cout << "clean_moves size = " << clean_moves.size() << std::endl;
         blocks_moved = fs.moveMultipleBlocks(clean_moves);
     } while (blocks_moved > 0);
 }
