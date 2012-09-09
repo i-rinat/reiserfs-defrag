@@ -27,8 +27,10 @@ createLargeScaleMovemap(const ReiserFs &fs, movemap_t &movemap)
         if (iter->type == BLOCKTYPE_INTERNAL) {
             free_idx = nextTargetBlock(fs, free_idx);
             assert (free_idx != 0);
-            assert (movemap.count(iter->idx) == 0);
-            movemap[iter->idx] = free_idx;
+            if (iter->idx != free_idx) { // do not add degenerate moves
+                assert (movemap.count(iter->idx) == 0);
+                movemap[iter->idx] = free_idx;
+            }
         }
     }
 
@@ -36,7 +38,10 @@ createLargeScaleMovemap(const ReiserFs &fs, movemap_t &movemap)
         if (iter->type == BLOCKTYPE_LEAF) {
             free_idx = nextTargetBlock(fs, free_idx);
             assert (free_idx != 0);
-            movemap[iter->idx] = free_idx;
+            if (iter->idx != free_idx) {
+                assert (movemap.count(iter->idx) == 0);
+                movemap[iter->idx] = free_idx;
+            }
             Block *block_obj = fs.readBlock(iter->idx);
             for (uint32_t k = 0; k < block_obj->itemCount(); k ++) {
                 const Block::item_header &ih = block_obj->itemHeader(k);
@@ -46,8 +51,10 @@ createLargeScaleMovemap(const ReiserFs &fs, movemap_t &movemap)
                     uint32_t child_idx = block_obj->indirectItemRef(ih.offset, idx);
                     free_idx = nextTargetBlock(fs, free_idx);
                     assert (free_idx != 0);
-                    assert (movemap.count(child_idx) == 0);
-                    movemap[child_idx] = free_idx;
+                    if (child_idx != free_idx) {
+                        assert (movemap.count(child_idx) == 0);
+                        movemap[child_idx] = free_idx;
+                    }
                 }
             }
             fs.releaseBlock(block_obj);
