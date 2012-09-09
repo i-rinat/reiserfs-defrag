@@ -45,7 +45,7 @@ FsBitmap::markBlockUsed(uint32_t block_idx)
 }
 
 void
-FsBitmap::markBlockUnused(uint32_t block_idx)
+FsBitmap::markBlockFree(uint32_t block_idx)
 {
     uint32_t bitmap_block_idx = block_idx / BLOCKS_PER_BITMAP;
     uint32_t inblock_bit_idx = block_idx % BLOCKS_PER_BITMAP;
@@ -64,7 +64,7 @@ FsBitmap::markBlock(uint32_t block_idx, bool used)
     if (used)
         this->markBlockUsed(block_idx);
     else
-        this->markBlockUnused(block_idx);
+        this->markBlockFree(block_idx);
 }
 
 bool

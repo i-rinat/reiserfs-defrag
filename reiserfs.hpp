@@ -251,7 +251,7 @@ public:
     ~FsBitmap();
     bool blockUsed(uint32_t block_idx) const;
     void markBlockUsed(uint32_t block_idx);
-    void markBlockUnused(uint32_t block_idx);
+    void markBlockFree(uint32_t block_idx);
     void markBlock(uint32_t block_idx, bool used);
 
 private:

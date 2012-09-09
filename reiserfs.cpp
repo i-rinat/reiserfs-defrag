@@ -208,7 +208,7 @@ ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
         // move root block itself
         this->journal->moveRawBlock(this->sb.s_root_block, movemap[this->sb.s_root_block]);
         // update bitmap
-        this->bitmap->markBlockUnused(this->sb.s_root_block);
+        this->bitmap->markBlockFree(this->sb.s_root_block);
         this->bitmap->markBlockUsed(movemap[this->sb.s_root_block]);
         // update s_root_block field in superblock and write it down through journal
         this->sb.s_root_block = movemap[this->sb.s_root_block];
@@ -282,7 +282,7 @@ ReiserFs::recursivelyMoveInternalNodes(uint32_t block_idx, std::map<uint32_t, ui
                 this->journal->moveRawBlock(child_idx, movemap[child_idx]);
                 this->blocks_moved_formatted ++;
                 // update bitmap
-                this->bitmap->markBlockUnused(child_idx);
+                this->bitmap->markBlockFree(child_idx);
                 this->bitmap->markBlockUsed(movemap[child_idx]);
                 // update pointer
                 block_obj->ptr(k).block = movemap[child_idx];
@@ -322,7 +322,7 @@ ReiserFs::recursivelyMoveUnformatted(uint32_t block_idx, std::map<uint32_t, uint
                 this->journal->moveRawBlock(child_idx, movemap[child_idx]);
                 this->blocks_moved_unformatted ++;
                 // update bitmap
-                this->bitmap->markBlockUnused(child_idx);
+                this->bitmap->markBlockFree(child_idx);
                 this->bitmap->markBlockUsed(movemap[child_idx]);
             }
         }
