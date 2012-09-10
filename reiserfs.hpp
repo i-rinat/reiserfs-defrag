@@ -125,6 +125,7 @@ public:
     int type;
     char buf[BLOCKSIZE];
     bool dirty;
+    bool marked_for_gc;
     FsJournal *journal;
 
     struct blockheader {
@@ -255,6 +256,7 @@ private:
     void pushToCache(Block *block_obj);
     void deleteFromCache(uint32_t block_idx);
     void touchCacheEntry(uint32_t block_idx) {
+        this->block_cache[block_idx].block_obj->marked_for_gc = false;
         this->block_cache[block_idx].generation = this->generation;
     }
     void eraseOldestCacheEntry();

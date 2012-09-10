@@ -10,6 +10,7 @@ Block::Block(FsJournal *journal_)
     this->type = BLOCKTYPE_UNKNOWN;
     this->journal = journal_;
     this->dirty = false;
+    this->marked_for_gc = false;
 }
 
 Block::~Block()

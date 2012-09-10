@@ -18,6 +18,16 @@ FsJournal::FsJournal(int fd_)
 FsJournal::~FsJournal()
 {
     // purge cache will be performed automatically
+    std::map<uint32_t, cache_entry>::iterator it, dit;
+    it = this->block_cache.begin();
+    while (it != this->block_cache.end()) {
+        dit = it ++;
+        this->deleteFromCache(dit->first);
+    }
+    if (this->block_cache.size() > 0) {
+        std::cerr << "error: FsJournal::block_cache is not empty" << std::endl;
+        assert (false);
+    }
 }
 
 void
@@ -128,13 +138,12 @@ FsJournal::releaseBlock(Block *block_obj)
         this->writeBlock(block_obj);
         block_obj->dirty = false;
     }
-    // delete block;
+    block_obj->marked_for_gc = true;
 }
 
 void
 FsJournal::pushToCache(Block *block_obj)
 {
-    std::cout << "pushToCache " << block_obj->block << ", " << this->block_cache.size() << std::endl;
     while (this->block_cache.size() >= this->max_cache_size - 1)
         this->eraseOldestCacheEntry();
 
@@ -161,6 +170,7 @@ FsJournal::eraseOldestCacheEntry()
 void
 FsJournal::deleteFromCache(uint32_t block_idx)
 {
-    delete this->block_cache[block_idx].block_obj;
+    Block *block_obj = this->block_cache[block_idx].block_obj;
+    if (block_obj->marked_for_gc) delete block_obj;
     this->block_cache.erase(block_idx);
 }
