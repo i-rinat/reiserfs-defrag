@@ -17,11 +17,13 @@ FsJournal::FsJournal(int fd_)
 
 FsJournal::~FsJournal()
 {
+    std::cout << "~FsJournal, block_cache.size() = " << this->block_cache.size() << std::endl;
     // purge cache will be performed automatically
     std::map<uint32_t, cache_entry>::iterator it, dit;
     it = this->block_cache.begin();
     while (it != this->block_cache.end()) {
         dit = it ++;
+        dit->second.block_obj->marked_for_gc = true;
         this->deleteFromCache(dit->first);
     }
     if (this->block_cache.size() > 0) {
