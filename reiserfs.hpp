@@ -125,7 +125,7 @@ public:
     int type;
     char buf[BLOCKSIZE];
     bool dirty;
-    bool marked_for_gc;
+    int32_t ref_count;
     FsJournal *journal;
 
     struct blockheader {
@@ -233,7 +233,7 @@ class FsJournal {
 public:
     FsJournal(int fd_);
     ~FsJournal();
-    Block* readBlock(uint32_t block_idx);
+    Block* readBlock(uint32_t block_idx, bool caching = true);
     void readBlock(Block &block_obj, uint32_t block_idx);
     void writeBlock(Block *block_obj);
     void writeBlockAt(Block *block_obj, uint32_t block_idx);
@@ -245,20 +245,17 @@ public:
 private:
     struct cache_entry {
         Block *block_obj;
-        int64_t generation;
     };
     int fd;
     std::map<uint32_t, cache_entry> block_cache;
-    int64_t generation;
+    int64_t cache_hits;
+    int64_t cache_misses;
     uint32_t max_cache_size;
 
     bool blockInCache(uint32_t block_idx) { return this->block_cache.count(block_idx) > 0; }
     void pushToCache(Block *block_obj);
     void deleteFromCache(uint32_t block_idx);
-    void touchCacheEntry(uint32_t block_idx) {
-        this->block_cache[block_idx].block_obj->marked_for_gc = false;
-        this->block_cache[block_idx].generation = this->generation;
-    }
+    void touchCacheEntry(uint32_t block_idx);
     void eraseOldestCacheEntry();
 
 };
