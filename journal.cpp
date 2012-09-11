@@ -10,7 +10,6 @@
 FsJournal::FsJournal(int fd_)
 {
     this->fd = fd_;
-    std::cout << "FsJournal initialized" << std::endl;
     this->generation = 0;
     this->max_cache_size = 5120;
 }
