@@ -157,7 +157,7 @@ FsJournal::eraseOldestCacheEntry()
     it = this->block_cache.begin();
     while (it != this->block_cache.end()) {
         dit = it ++;
-        if (std::rand()%2 == 0) {
+        if (std::rand()%256 == 0) {
             this->deleteFromCache(dit->first);
         }
     }
