@@ -10,9 +10,9 @@
 FsJournal::FsJournal(int fd_)
 {
     this->fd = fd_;
-    this->max_cache_size = 5120;
     this->cache_hits = 0;
     this->cache_misses = 0;
+    this->max_cache_size = 51200;
 }
 
 FsJournal::~FsJournal()
