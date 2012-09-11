@@ -141,6 +141,8 @@ FsJournal::releaseBlock(Block *block_obj)
         block_obj->dirty = false;
     }
     block_obj->marked_for_gc = true;
+    if (this->block_cache.count(block_obj->block) == 0)
+        delete block_obj;
 }
 
 void
