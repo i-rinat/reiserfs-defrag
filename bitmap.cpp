@@ -85,7 +85,11 @@ FsBitmap::writeChangedBitmapBlocks()
     for (std::vector<Block>::iterator it = this->bitmap_blocks.begin();
         it != this->bitmap_blocks.end(); ++ it)
     {
-        if (it->dirty)
+        if (it->dirty) {
+            // have to clear dirty flag manually because writeBlock doesn't do that,
+            // it's releaseBlock's work
+            it->dirty = false;
             this->journal->writeBlock(&*it);
+        }
     }
 }
