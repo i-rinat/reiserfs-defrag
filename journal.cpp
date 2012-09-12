@@ -81,7 +81,6 @@ FsJournal::commitTransaction()
     for (std::vector<Block *>::const_iterator it = this->transaction.blocks.begin();
         it != this->transaction.blocks.end(); ++ it)
     {
-        std::cout << (*it)->block << std::endl;
         assert ((*it)->dirty == false); // must not be dirty
     }
 
