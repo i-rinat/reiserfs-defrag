@@ -91,6 +91,24 @@ FsJournal::commitTransaction()
     // TODO: * update data on disk
     // TODO: * close trasaction
 
+    // write data to disk
+    for (std::vector<Block *>::const_iterator it = this->transaction.blocks.begin();
+        it != this->transaction.blocks.end(); ++ it)
+    {
+        Block *block_obj = *it;
+        off_t new_ofs = ::lseek (this->fd, static_cast<off_t>(block_obj->block) * BLOCKSIZE, SEEK_SET);
+        if (static_cast<off_t>(-1) == new_ofs) {
+            std::cerr << "error: seeking" << std::endl;
+            // TODO: error handling
+            return;
+        }
+        ssize_t bytes_written = ::write (this->fd, block_obj->buf, BLOCKSIZE);
+        if (BLOCKSIZE != bytes_written) {
+            std::cerr << "error: writeBlock(" << &block_obj << ")" << std::endl;
+            return;
+        }
+    }
+
     // finally release blocks. Block can survive this if it has more than reference.
     // So do cached blocks. ->releaseBlock will not call writeBlock as block is not
     // dirty.
