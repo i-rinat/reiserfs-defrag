@@ -216,7 +216,7 @@ ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
         ::memcpy (sb_obj->buf, &this->sb, sizeof(this->sb));
         sb_obj->markDirty(); // crucial, as without markDirty journal will skip block
         this->journal->releaseBlock(sb_obj);
-
+        this->bitmap->writeChangedBitmapBlocks();
         this->journal->commitTransaction();
     }
 
@@ -290,6 +290,7 @@ ReiserFs::recursivelyMoveInternalNodes(uint32_t block_idx, std::map<uint32_t, ui
             }
         }
         this->journal->releaseBlock(block_obj);
+        this->bitmap->writeChangedBitmapBlocks();
         this->journal->commitTransaction();
     }
 }
@@ -327,6 +328,7 @@ ReiserFs::recursivelyMoveUnformatted(uint32_t block_idx, std::map<uint32_t, uint
             }
         }
         this->journal->releaseBlock(block_obj);
+        this->bitmap->writeChangedBitmapBlocks();
         this->journal->commitTransaction();
     }
 }
