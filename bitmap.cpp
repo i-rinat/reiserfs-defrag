@@ -78,3 +78,14 @@ FsBitmap::blockUsed(uint32_t block_idx) const
     // result will be converted to bool automatically
     return c & (static_cast<uint8_t>(1) << inbyte_idx);
 }
+
+void
+FsBitmap::writeChangedBitmapBlocks()
+{
+    for (std::vector<Block>::iterator it = this->bitmap_blocks.begin();
+        it != this->bitmap_blocks.end(); ++ it)
+    {
+        if (it->dirty)
+            this->journal->writeBlock(&*it);
+    }
+}

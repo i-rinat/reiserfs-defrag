@@ -267,6 +267,7 @@ public:
     void markBlockUsed(uint32_t block_idx);
     void markBlockFree(uint32_t block_idx);
     void markBlock(uint32_t block_idx, bool used);
+    void writeChangedBitmapBlocks();
 
 private:
     FsJournal *journal;
