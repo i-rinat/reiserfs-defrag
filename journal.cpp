@@ -108,7 +108,7 @@ FsJournal::writeBlock(Block *block_obj)
 }
 
 void
-FsJournal::moveRawBlock(uint32_t from, uint32_t to)
+FsJournal::moveRawBlock(uint32_t from, uint32_t to, bool include_in_transaction)
 {
     Block *block_obj = this->readBlock(from, false);
     this->deleteFromCache(block_obj->block);

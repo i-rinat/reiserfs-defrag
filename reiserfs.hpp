@@ -237,7 +237,7 @@ public:
     void readBlock(Block &block_obj, uint32_t block_idx);
     void writeBlock(Block *block_obj);
     void releaseBlock(Block *block_obj);
-    void moveRawBlock(uint32_t from, uint32_t to);
+    void moveRawBlock(uint32_t from, uint32_t to, bool include_in_transaction = true);
     void beginTransaction();
     void commitTransaction();
 
