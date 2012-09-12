@@ -5,19 +5,18 @@ FsBitmap::FsBitmap(FsJournal *journal_, const FsSuperblock *sb_)
 {
     this->journal = journal_;
     this->sb = sb_;
-    this->bitmap_block_count = (sb->s_block_count - 1) / BLOCKS_PER_BITMAP + 1;
-    this->bitmap_blocks = NULL;
-    if (this->bitmap_block_count != sb->s_bmap_nr) {
+    uint32_t bitmap_block_count = (sb->s_block_count - 1) / BLOCKS_PER_BITMAP + 1;
+    if (bitmap_block_count != sb->s_bmap_nr) {
         std::cerr << "error: sb->s_bmap_nr doesn't correspond to filesystem size" << std::endl;
         // TODO: add error handling, exception would be fine
     }
 
-    bitmap_blocks = new Block[this->bitmap_block_count];
-    for (unsigned int k = 0; k < this->bitmap_block_count; k ++) {
+    bitmap_blocks.resize(bitmap_block_count);
+    for (uint32_t k = 0; k < bitmap_block_count; k ++) {
         this->bitmap_blocks[k].attachJournal(this->journal);
     }
 
-    for (unsigned int bitmap_idx = 0; bitmap_idx < this->bitmap_block_count; bitmap_idx ++) {
+    for (uint32_t bitmap_idx = 0; bitmap_idx < bitmap_block_count; bitmap_idx ++) {
         uint32_t actual_block_idx = bitmap_idx * BLOCKS_PER_BITMAP;
         if (0 == actual_block_idx) actual_block_idx = FIRST_BITMAP_BLOCK;
         this->journal->readBlock(this->bitmap_blocks[bitmap_idx], actual_block_idx);
@@ -26,8 +25,6 @@ FsBitmap::FsBitmap(FsJournal *journal_, const FsSuperblock *sb_)
 
 FsBitmap::~FsBitmap()
 {
-    if (this->bitmap_blocks)
-        delete [] this->bitmap_blocks;
 }
 
 void

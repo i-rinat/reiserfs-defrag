@@ -271,8 +271,7 @@ public:
 private:
     FsJournal *journal;
     const FsSuperblock *sb;
-    uint32_t bitmap_block_count;
-    Block *bitmap_blocks;
+    std::vector<Block> bitmap_blocks;
 };
 
 class ReiserFs {
