@@ -102,7 +102,7 @@ FsJournal::commitTransaction()
 
     this->transaction.blocks.resize(0);
     this->transaction.running = false;
-    ::fsync(this->fd);
+    // ::fsync(this->fd);
 }
 
 Block*
