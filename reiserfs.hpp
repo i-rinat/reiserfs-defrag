@@ -245,6 +245,7 @@ private:
     struct cache_entry {
         Block *block_obj;
     };
+    bool use_journaling;
     int fd;
     std::map<uint32_t, cache_entry> block_cache;
     int64_t cache_hits;

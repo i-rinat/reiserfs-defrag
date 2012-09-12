@@ -15,6 +15,7 @@ FsJournal::FsJournal(int fd_)
     this->cache_misses = 0;
     this->max_cache_size = 51200;
     this->transaction.running = false;
+    this->use_journaling = true;
 }
 
 FsJournal::~FsJournal()
@@ -37,6 +38,8 @@ FsJournal::~FsJournal()
 void
 FsJournal::beginTransaction()
 {
+    if (not this->use_journaling) return;
+
     if (this->transaction.running) {
         std::cerr << "error: nested transaction" << std::endl;
         return; // TODO: error handling
@@ -61,6 +64,7 @@ void sortAndRemoveDuplicates(std::vector<Tn> &v)
 void
 FsJournal::commitTransaction()
 {
+    if (not this->use_journaling) return;
 
     if (this->transaction.blocks.size() == 0) {
         // std::cout << "warning: empty transaction" << std::endl;
@@ -151,20 +155,22 @@ FsJournal::readBlock(Block &block_obj, uint32_t block_idx)
 void
 FsJournal::writeBlock(Block *block_obj)
 {
-    off_t new_ofs = ::lseek (this->fd, static_cast<off_t>(block_obj->block) * BLOCKSIZE, SEEK_SET);
-    if (static_cast<off_t>(-1) == new_ofs) {
-        std::cerr << "error: seeking" << std::endl;
-        // TODO: error handling
-        return;
+    if (this->use_journaling) {
+        this->transaction.blocks.push_back(block_obj);
+        block_obj->ref_count ++;
+    } else {
+        off_t new_ofs = ::lseek (this->fd, static_cast<off_t>(block_obj->block) * BLOCKSIZE, SEEK_SET);
+        if (static_cast<off_t>(-1) == new_ofs) {
+            std::cerr << "error: seeking" << std::endl;
+            // TODO: error handling
+            return;
+        }
+        ssize_t bytes_written = ::write (this->fd, block_obj->buf, BLOCKSIZE);
+        if (BLOCKSIZE != bytes_written) {
+            std::cerr << "error: writeBlock(" << &block_obj << ")" << std::endl;
+            return;
+        }
     }
-    ssize_t bytes_written = ::write (this->fd, block_obj->buf, BLOCKSIZE);
-    if (BLOCKSIZE != bytes_written) {
-        std::cerr << "error: writeBlock(" << &block_obj << ")" << std::endl;
-        return;
-    }
-
-    this->transaction.blocks.push_back(block_obj);
-    block_obj->ref_count ++;
 }
 
 void
