@@ -250,6 +250,10 @@ private:
     int64_t cache_hits;
     int64_t cache_misses;
     uint32_t max_cache_size;
+    struct {
+        std::vector<Block *> blocks;
+        bool running;
+    } transaction;
 
     bool blockInCache(uint32_t block_idx) { return this->block_cache.count(block_idx) > 0; }
     void pushToCache(Block *block_obj);

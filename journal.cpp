@@ -1,6 +1,7 @@
 #include "reiserfs.hpp"
 #include <string.h>
 #include <iostream>
+#include <algorithm>
 #include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -13,6 +14,7 @@ FsJournal::FsJournal(int fd_)
     this->cache_hits = 0;
     this->cache_misses = 0;
     this->max_cache_size = 51200;
+    this->transaction.running = false;
 }
 
 FsJournal::~FsJournal()
@@ -35,14 +37,69 @@ FsJournal::~FsJournal()
 void
 FsJournal::beginTransaction()
 {
-    // std::cout << "FsJournal::beginTransaction stub" << std::endl;
+    if (this->transaction.running) {
+        std::cerr << "error: nested transaction" << std::endl;
+        return; // TODO: error handling
+    }
+    if (this->transaction.blocks.size() != 0) {
+        std::cerr << "error: there was writes outside transaction" << std::endl;
+        return; // TODO: error handling
+    }
+
+    this->transaction.running = true;
+}
+
+template<typename Tn>
+void sortAndRemoveDuplicates(std::vector<Tn> &v)
+{
+    // first sort
+    std::sort (v.begin(), v.end());
+    // then deduplicate and erase trailing garbage
+    v.erase (std::unique (v.begin(), v.end()), v.end());
 }
 
 void
 FsJournal::commitTransaction()
 {
-    // std::cout << "FsJournal::commitTransaction stub" << std::endl;
-    // ::fsync(this->fd);
+
+    if (this->transaction.blocks.size() == 0) {
+        // std::cout << "warning: empty transaction" << std::endl;
+        this->transaction.running = false;
+        return;
+    }
+
+    // remove duplicate entries
+    sortAndRemoveDuplicates(this->transaction.blocks);
+
+    std::cout << "Journal: transaction size = " << this->transaction.blocks.size() << std::endl;
+
+    // check if any of blocks are dirty. They all must be not.
+    for (std::vector<Block *>::const_iterator it = this->transaction.blocks.begin();
+        it != this->transaction.blocks.end(); ++ it)
+    {
+        std::cout << (*it)->block << std::endl;
+        assert ((*it)->dirty == false); // must not be dirty
+    }
+
+    // TODO: * allocate memory enough to make journal entry
+    // TODO: * construct journal entry
+    // TODO: * write journal entry
+    // TODO: * update journal header
+    // TODO: * update data on disk
+    // TODO: * close trasaction
+
+    // finally release blocks. Block can survive this if it has more than reference.
+    // So do cached blocks. ->releaseBlock will not call writeBlock as block is not
+    // dirty.
+    for (std::vector<Block *>::const_iterator it = this->transaction.blocks.begin();
+        it != this->transaction.blocks.end(); ++ it)
+    {
+        this->releaseBlock(*it);
+    }
+
+    this->transaction.blocks.resize(0);
+    this->transaction.running = false;
+    ::fsync(this->fd);
 }
 
 Block*
@@ -105,6 +162,9 @@ FsJournal::writeBlock(Block *block_obj)
         std::cerr << "error: writeBlock(" << &block_obj << ")" << std::endl;
         return;
     }
+
+    this->transaction.blocks.push_back(block_obj);
+    block_obj->ref_count ++;
 }
 
 void
@@ -115,6 +175,11 @@ FsJournal::moveRawBlock(uint32_t from, uint32_t to, bool include_in_transaction)
     assert (block_obj->ref_count == 1);
     block_obj->markDirty();
     block_obj->block = to;
+
+    if (include_in_transaction) {
+        this->transaction.blocks.push_back(block_obj);
+        block_obj->ref_count ++;
+    }
     this->releaseBlock(block_obj);
 }
 
