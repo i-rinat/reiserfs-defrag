@@ -123,6 +123,12 @@ FsJournal::commitTransaction()
     // ::fsync(this->fd);
 }
 
+uint32_t
+FsJournal::estimateTransactionSize()
+{
+    return this->transaction.blocks.size();
+}
+
 Block*
 FsJournal::readBlock(uint32_t block_idx, bool caching)
 {

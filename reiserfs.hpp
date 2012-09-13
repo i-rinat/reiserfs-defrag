@@ -240,6 +240,7 @@ public:
     void moveRawBlock(uint32_t from, uint32_t to, bool include_in_transaction = true);
     void beginTransaction();
     void commitTransaction();
+    uint32_t estimateTransactionSize();
 
 private:
     struct cache_entry {
