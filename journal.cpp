@@ -231,7 +231,7 @@ FsJournal::releaseBlock(Block *block_obj)
 void
 FsJournal::pushToCache(Block *block_obj, int priority)
 {
-    while (this->block_cache.size() >= this->max_cache_size - 1)
+    if (this->block_cache.size() >= this->max_cache_size - 1)
         this->eraseOldestCacheEntry();
 
     FsJournal::cache_entry ci;
