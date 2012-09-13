@@ -320,7 +320,7 @@ ReiserFs::recursivelyMoveUnformatted(uint32_t block_idx, std::map<uint32_t, uint
                 // update pointers in indirect item
                 block_obj->setIndirectItemRef(ih.offset, idx, movemap[child_idx]);
                 // actually move block
-                this->journal->moveRawBlock(child_idx, movemap[child_idx], false);
+                this->journal->moveRawBlock(child_idx, movemap[child_idx], true);
                 this->blocks_moved_unformatted ++;
                 // update bitmap
                 this->bitmap->markBlockFree(child_idx);
