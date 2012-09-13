@@ -154,12 +154,13 @@ FsJournal::commitTransaction()
         ::read (this->fd, &journal_header, sizeof(journal_header));
     }
 
-    uint32_t transaction_id = journal_header.last_flush_id ++;
+    uint32_t transaction_id = journal_header.last_flush_id + 1;
     uint32_t transaction_offset = journal_header.unflushed_offset;
     uint32_t transaction_block_count = this->transaction.blocks.size();
     // update journal header, advance by number of blocks plus desc and commit blocks
     journal_header.unflushed_offset += 2 + transaction_block_count;
     journal_header.unflushed_offset %= this->sb->jp_journal_size; // wrap
+    journal_header.last_flush_id ++;
 
     // fill description and commit blocks
     description_block.transaction_id = transaction_id;
