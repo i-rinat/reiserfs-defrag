@@ -67,6 +67,15 @@ ReiserFs::readSuperblock()
 }
 
 void
+ReiserFs::writeSuperblock()
+{
+    Block *sb_obj = this->journal->readBlock(SUPERBLOCK_BLOCK);
+    ::memcpy (sb_obj->buf, &this->sb, sizeof(this->sb));
+    sb_obj->markDirty(); // crucial, as without markDirty journal will skip block
+    this->journal->releaseBlock(sb_obj);
+}
+
+void
 ReiserFs::dumpSuperblock()
 {
     std::cout << "dumpSuperblock() --------------------------------------" << std::endl;
@@ -212,10 +221,7 @@ ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
         this->bitmap->markBlockUsed(movemap[this->sb.s_root_block]);
         // update s_root_block field in superblock and write it down through journal
         this->sb.s_root_block = movemap[this->sb.s_root_block];
-        Block *sb_obj = this->journal->readBlock(SUPERBLOCK_BLOCK);
-        ::memcpy (sb_obj->buf, &this->sb, sizeof(this->sb));
-        sb_obj->markDirty(); // crucial, as without markDirty journal will skip block
-        this->journal->releaseBlock(sb_obj);
+        this->writeSuperblock();
         this->bitmap->writeChangedBitmapBlocks();
         this->journal->commitTransaction();
     }

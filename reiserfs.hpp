@@ -333,6 +333,7 @@ private:
     uint32_t blocks_moved_unformatted;  //< counter used for moveMultipleBlocks
 
     void readSuperblock();
+    void writeSuperblock();
     bool movemap_consistent(const std::map<uint32_t, uint32_t> &movemap);
     void collectLeafNodeIndices(uint32_t block_idx, std::vector<uint32_t> &lni);
     void recursivelyMoveInternalNodes(uint32_t block_idx, std::map<uint32_t, uint32_t> &movemap,
