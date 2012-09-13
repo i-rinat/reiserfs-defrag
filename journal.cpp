@@ -117,12 +117,83 @@ FsJournal::commitTransaction()
         assert ((*it)->dirty == false); // must not be dirty
     }
 
-    // TODO: * allocate memory enough to make journal entry
-    // TODO: * construct journal entry
-    // TODO: * write journal entry
-    // TODO: * update journal header
-    // TODO: * update data on disk
-    // TODO: * close trasaction
+    struct {
+        uint32_t last_flush_id;
+        uint32_t unflushed_offset;
+        uint32_t mount_id;
+    } journal_header;
+
+    struct {
+        uint32_t transaction_id;
+        uint32_t length;
+        uint32_t mount_id;
+        uint32_t real_blocks[(BLOCKSIZE - 24)/4];
+        uint8_t  magic[12];
+    } description_block;
+
+    struct {
+        uint32_t transaction_id;
+        uint32_t length;
+        uint32_t real_blocks[(BLOCKSIZE - 24)/4];
+        uint8_t  digest[16];
+    } commit_block;
+
+    memset (&description_block, 0, sizeof(description_block));
+    memset (&commit_block, 0, sizeof(commit_block));
+
+    assert (sizeof(commit_block) == BLOCKSIZE);
+    assert (sizeof(description_block) == BLOCKSIZE);
+    assert (sizeof(journal_header) == 3*4);
+
+    { // read journal header
+        off_t ofs = (this->sb->jp_journal_1st_block + this->sb->jp_journal_size) * BLOCKSIZE;
+        off_t new_ofs = ::lseek (this->fd, ofs, SEEK_SET);
+        if (static_cast<off_t>(-1) == new_ofs) {
+            std::cerr << "error: commitTransaction, lseek" << std::endl;
+        }
+        ::read (this->fd, &journal_header, sizeof(journal_header));
+    }
+
+    uint32_t transaction_id = journal_header.last_flush_id ++;
+    uint32_t transaction_offset = journal_header.unflushed_offset;
+    uint32_t transaction_block_count = this->transaction.blocks.size();
+    // update journal header, advance by number of blocks plus desc and commit blocks
+    journal_header.unflushed_offset += 2 + transaction_block_count;
+    journal_header.unflushed_offset %= this->sb->jp_journal_size; // wrap
+
+    // fill description and commit blocks
+    description_block.transaction_id = transaction_id;
+    description_block.length = this->transaction.blocks.size();
+    description_block.mount_id = journal_header.mount_id;
+    memcpy (description_block.magic, "ReIsErLB", 8);
+    commit_block.transaction_id = transaction_id;
+    commit_block.length = this->transaction.blocks.size();
+
+    uint32_t first_half = std::min(static_cast<uint32_t>((BLOCKSIZE-24)/4),
+                                    transaction_block_count);
+    for (uint32_t k = 0; k < first_half; k ++)
+        description_block.real_blocks[k] = this->transaction.blocks[k]->block;
+    if (transaction_block_count > first_half) {
+        for (uint32_t k = first_half; k < transaction_block_count; k ++)
+            commit_block.real_blocks[k - first_half] = this->transaction.blocks[k]->block;
+    }
+
+    // write journal entry
+    uint32_t j_pos = transaction_offset; // cursor
+    // TODO: error handling
+    writeBufAt (this->fd, this->sb->jp_journal_1st_block + j_pos, &description_block, BLOCKSIZE);
+    j_pos = (j_pos + 1) % this->sb->jp_journal_size;
+    for (std::vector<Block *>::const_iterator it = this->transaction.blocks.begin();
+        it != this->transaction.blocks.end(); ++ it)
+    {
+        // TODO: error handling
+        writeBufAt (this->fd, this->sb->jp_journal_1st_block + j_pos, (*it)->buf, BLOCKSIZE);
+        j_pos = (j_pos + 1) % this->sb->jp_journal_size;
+    }
+    // TODO: error handling
+    writeBufAt (this->fd, this->sb->jp_journal_1st_block + j_pos, &commit_block, BLOCKSIZE);
+    // ensure journal entry written
+    ::fsync (this->fd);
 
     // write data to disk
     for (std::vector<Block *>::const_iterator it = this->transaction.blocks.begin();
@@ -148,12 +219,21 @@ FsJournal::commitTransaction()
     for (std::vector<Block *>::const_iterator it = this->transaction.blocks.begin();
         it != this->transaction.blocks.end(); ++ it)
     {
+        uint32_t block_idx = (*it)->block;
+        // reset block priority to normal. Contents written to disk, so cache entry
+        // may safelly be deleted
+        if (this->block_cache.count(block_idx) > 0)
+            this->block_cache[block_idx].priority = CACHE_PRIORITY_NORMAL;
         this->releaseBlock(*it);
     }
-
     this->transaction.blocks.resize(0);
+
+    // update journal header (thus close transaction)
+    // TODO: error handling
+    writeBufAt (this->fd, this->sb->jp_journal_1st_block + this->sb->jp_journal_size,
+        &journal_header, sizeof(journal_header));
+    ::fsync(this->fd);
     this->transaction.running = false;
-    // ::fsync(this->fd);
 }
 
 uint32_t
