@@ -73,7 +73,21 @@ FsJournal::commitTransaction()
     }
 
     // remove duplicate entries
-    sortAndRemoveDuplicates(this->transaction.blocks);
+    // first, sort them
+    std::sort (this->transaction.blocks.begin(), this->transaction.blocks.end());
+    // remove duplicates
+    std::vector<Block *>::iterator prev = this->transaction.blocks.begin();
+    for (std::vector<Block *>::iterator it = prev+1; it != this->transaction.blocks.end(); ++it) {
+        if (*prev == *it) {
+            (*prev)->ref_count --;  // duplicate, as we 'removing' it, decrease reference count
+            assert ((*prev)->ref_count > 0);    // anyway there should be at least one reference
+        } else {
+            ++ prev;        // advance pointer
+            *prev = *it;    // and move right element to left
+        }
+    }
+    // prev points to last unique element. erase trailing
+    this->transaction.blocks.erase (prev+1, this->transaction.blocks.end());
 
     std::cout << "Journal: transaction size = " << this->transaction.blocks.size() << std::endl;
 
