@@ -23,7 +23,6 @@ Block::write()
 {
     if (this->dirty) {
         this->journal->writeBlock(this);
-        this->dirty = false;
     }
 }
 

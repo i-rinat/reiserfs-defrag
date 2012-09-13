@@ -188,6 +188,7 @@ FsJournal::writeBlock(Block *block_obj)
             return;
         }
     }
+    block_obj->dirty = false;
 }
 
 void
@@ -209,10 +210,9 @@ FsJournal::moveRawBlock(uint32_t from, uint32_t to, bool include_in_transaction)
 void
 FsJournal::releaseBlock(Block *block_obj)
 {
-    if (block_obj->dirty) {
+    if (block_obj->dirty)
         this->writeBlock(block_obj);
-        block_obj->dirty = false;
-    }
+
     block_obj->ref_count --;
     assert (block_obj->ref_count >= 0);
     if (block_obj->ref_count == 0)
