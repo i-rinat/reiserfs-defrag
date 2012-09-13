@@ -237,8 +237,11 @@ FsJournal::pushToCache(Block *block_obj, int priority)
     FsJournal::cache_entry ci;
     ci.block_obj = block_obj;
     ci.priority = priority;
+    // If this block not in cache, increase ref_count.
+    // There is not reason increase it if block already in cache.
+    if (this->block_cache.count(block_obj->block) == 0) block_obj->ref_count ++;
+    // create (or update) cache entry
     this->block_cache[block_obj->block] = ci;
-    block_obj->ref_count ++;
 }
 
 void
