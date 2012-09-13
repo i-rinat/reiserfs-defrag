@@ -234,7 +234,7 @@ public:
 
 class FsJournal {
 public:
-    FsJournal(int fd_);
+    FsJournal(int fd_, FsSuperblock *sb);
     ~FsJournal();
     Block* readBlock(uint32_t block_idx, bool caching = true);
     void readBlock(Block &block_obj, uint32_t block_idx);
@@ -252,6 +252,7 @@ private:
     };
     bool use_journaling;
     int fd;
+    FsSuperblock *sb;
     std::map<uint32_t, cache_entry> block_cache;
     int64_t cache_hits;
     int64_t cache_misses;

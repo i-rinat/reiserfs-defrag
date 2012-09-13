@@ -8,7 +8,7 @@
 #include <cstdlib>
 #include <assert.h>
 
-FsJournal::FsJournal(int fd_)
+FsJournal::FsJournal(int fd_, FsSuperblock *sb)
 {
     this->fd = fd_;
     this->cache_hits = 0;
@@ -16,6 +16,7 @@ FsJournal::FsJournal(int fd_)
     this->max_cache_size = 51200;
     this->transaction.running = false;
     this->use_journaling = true;
+    this->sb = sb;
 }
 
 FsJournal::~FsJournal()
