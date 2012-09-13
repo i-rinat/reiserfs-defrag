@@ -325,6 +325,13 @@ ReiserFs::recursivelyMoveUnformatted(uint32_t block_idx, std::map<uint32_t, uint
                 // update bitmap
                 this->bitmap->markBlockFree(child_idx);
                 this->bitmap->markBlockUsed(movemap[child_idx]);
+                // if transaction becomes too large, divide it into smaller ones
+                if (this->journal->estimateTransactionSize() > 100) {
+                    this->journal->writeBlock(block_obj);
+                    this->bitmap->writeChangedBitmapBlocks();
+                    this->journal->commitTransaction();
+                    this->journal->beginTransaction();
+                }
             }
         }
         this->journal->releaseBlock(block_obj);
