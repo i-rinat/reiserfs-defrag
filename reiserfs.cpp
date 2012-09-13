@@ -35,6 +35,10 @@ ReiserFs::open(const std::string &name, bool o_sync)
     }
 
     this->readSuperblock();
+    if (this->sb.s_umount_state != UMOUNT_STATE_CLEAN) {
+        std::cerr << "error: fs dirty, run fsck." << std::endl;
+        return RFSD_FAIL;
+    }
     this->journal = new FsJournal(this->fd, &this->sb);
     this->bitmap = new FsBitmap(this->journal, &this->sb);
     this->closed = false;
