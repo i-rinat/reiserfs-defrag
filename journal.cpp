@@ -62,6 +62,24 @@ void sortAndRemoveDuplicates(std::vector<Tn> &v)
     v.erase (std::unique (v.begin(), v.end()), v.end());
 }
 
+inline
+int
+writeBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size)
+{
+    off_t ofs = static_cast<off_t>(block_idx) * BLOCKSIZE;
+    off_t new_ofs = ::lseek (fd, ofs, SEEK_SET);
+    if (static_cast<off_t>(-1) == new_ofs || new_ofs != ofs) {
+        std::cerr << "error: can't seek to " << ofs << "." << std::endl;
+        return RFSD_FAIL;
+    }
+    ssize_t bytes_written = ::write (fd, buf, size);
+    if (size != bytes_written) {
+        std::cerr << "error: can't write data at block " << block_idx << "." << std::endl;
+        return RFSD_FAIL;
+    }
+    return RFSD_OK;
+}
+
 void
 FsJournal::commitTransaction()
 {
