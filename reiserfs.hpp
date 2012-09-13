@@ -36,6 +36,9 @@
 #define CACHE_PRIORITY_NORMAL   0
 #define CACHE_PRIORITY_HIGH     1
 
+#define UMOUNT_STATE_CLEAN  1
+#define UMOUNT_STATE_DIRTY  2
+
 struct FsSuperblock {
     uint32_t s_block_count;
     uint32_t s_free_blocks;

@@ -39,6 +39,12 @@ ReiserFs::open(const std::string &name, bool o_sync)
     this->bitmap = new FsBitmap(this->journal, &this->sb);
     this->closed = false;
 
+    // mark fs dirty
+    this->sb.s_umount_state = UMOUNT_STATE_DIRTY;
+    this->journal->beginTransaction();
+    this->writeSuperblock();
+    this->journal->commitTransaction();
+
     return RFSD_OK;
 }
 
@@ -116,6 +122,12 @@ ReiserFs::dumpSuperblock()
 void
 ReiserFs::close()
 {
+    // clean fs dirty flag
+    this->sb.s_umount_state = UMOUNT_STATE_CLEAN;
+    this->journal->beginTransaction();
+    this->writeSuperblock();
+    this->journal->commitTransaction();
+
     std::cout << "ReiserFs::close, " << this->fname << std::endl;
     delete this->bitmap;
     delete this->journal;
