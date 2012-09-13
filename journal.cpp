@@ -181,6 +181,9 @@ FsJournal::writeBlock(Block *block_obj)
     if (this->use_journaling) {
         this->transaction.blocks.push_back(block_obj);
         block_obj->ref_count ++;
+        // must retain block until transaction ends. Further readBlocks should get
+        // cached version, as disk contents differs from memory.
+        this->pushToCache(block_obj, CACHE_PRIORITY_HIGH);
     } else {
         off_t new_ofs = ::lseek (this->fd, static_cast<off_t>(block_obj->block) * BLOCKSIZE, SEEK_SET);
         if (static_cast<off_t>(-1) == new_ofs) {
