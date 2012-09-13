@@ -33,6 +33,9 @@
 #define SUPERBLOCK_BLOCK    (65536/BLOCKSIZE)
 #define FIRST_BITMAP_BLOCK  (65536/BLOCKSIZE + 1)
 
+#define CACHE_PRIORITY_NORMAL   0
+#define CACHE_PRIORITY_HIGH     1
+
 struct FsSuperblock {
     uint32_t s_block_count;
     uint32_t s_free_blocks;
@@ -245,6 +248,7 @@ public:
 private:
     struct cache_entry {
         Block *block_obj;
+        int priority;
     };
     bool use_journaling;
     int fd;
@@ -258,7 +262,7 @@ private:
     } transaction;
 
     bool blockInCache(uint32_t block_idx) { return this->block_cache.count(block_idx) > 0; }
-    void pushToCache(Block *block_obj);
+    void pushToCache(Block *block_obj, int priority = CACHE_PRIORITY_NORMAL);
     void deleteFromCache(uint32_t block_idx);
     void touchCacheEntry(uint32_t block_idx);
     void eraseOldestCacheEntry();

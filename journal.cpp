@@ -226,13 +226,14 @@ FsJournal::releaseBlock(Block *block_obj)
 }
 
 void
-FsJournal::pushToCache(Block *block_obj)
+FsJournal::pushToCache(Block *block_obj, int priority)
 {
     while (this->block_cache.size() >= this->max_cache_size - 1)
         this->eraseOldestCacheEntry();
 
     FsJournal::cache_entry ci;
     ci.block_obj = block_obj;
+    ci.priority = priority;
     this->block_cache[block_obj->block] = ci;
     block_obj->ref_count ++;
 }
@@ -252,7 +253,8 @@ FsJournal::eraseOldestCacheEntry()
     while (it != this->block_cache.end()) {
         dit = it ++;
         if (std::rand()%256 == 0) {
-            this->deleteFromCache(dit->first);
+            if (dit->second.priority == CACHE_PRIORITY_NORMAL)
+                this->deleteFromCache(dit->first);
         }
     }
 }
