@@ -194,7 +194,7 @@ FsJournal::commitTransaction()
     // TODO: error handling
     writeBufAt (this->fd, this->sb->jp_journal_1st_block + j_pos, &commit_block, BLOCKSIZE);
     // ensure journal entry written
-    ::fsync (this->fd);
+    ::fdatasync(this->fd);
 
     // write data to disk
     for (std::vector<Block *>::const_iterator it = this->transaction.blocks.begin();
