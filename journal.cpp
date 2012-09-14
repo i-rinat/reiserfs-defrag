@@ -261,7 +261,7 @@ FsJournal::readBlock(uint32_t block_idx, bool caching)
         // TODO: error handling
         return NULL;
     }
-    Block *block_obj = new Block(this);
+    Block *block_obj = new Block();
     ssize_t bytes_read = ::read (this->fd, block_obj->buf, BLOCKSIZE);
     if (BLOCKSIZE != bytes_read) {
         std::cerr << "error: readBlock(" << block_idx << ")" << std::endl;

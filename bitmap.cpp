@@ -12,9 +12,6 @@ FsBitmap::FsBitmap(FsJournal *journal_, const FsSuperblock *sb_)
     }
 
     bitmap_blocks.resize(bitmap_block_count);
-    for (uint32_t k = 0; k < bitmap_block_count; k ++) {
-        this->bitmap_blocks[k].attachJournal(this->journal);
-    }
 
     for (uint32_t bitmap_idx = 0; bitmap_idx < bitmap_block_count; bitmap_idx ++) {
         uint32_t actual_block_idx = bitmap_idx * BLOCKS_PER_BITMAP;

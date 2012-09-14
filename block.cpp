@@ -2,28 +2,20 @@
 #include <iostream>
 #include <string.h>
 #include <stdio.h>
+#include <assert.h>
 
 
-Block::Block(FsJournal *journal_)
+Block::Block()
 {
     memset(this->buf, 0, BLOCKSIZE);
     this->type = BLOCKTYPE_UNKNOWN;
-    this->journal = journal_;
     this->dirty = false;
     this->ref_count = 1;
 }
 
 Block::~Block()
 {
-    if (this->dirty) this->write();
-}
-
-void
-Block::write()
-{
-    if (this->dirty) {
-        this->journal->writeBlock(this);
-    }
+    assert (not dirty);
 }
 
 void

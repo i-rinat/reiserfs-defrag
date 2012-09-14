@@ -86,13 +86,11 @@ class FsBitmap;
 
 class Block {
 public:
-    Block(FsJournal *journal = NULL);
+    Block();
     ~Block();
     void rawDump() const;
     void formattedDump() const;
     void setType(int type) { this->type = type; }
-    void write();
-    void attachJournal(FsJournal *journal) { this->journal = journal; }
     void markDirty() { this->dirty = true; }
     uint32_t keyCount() const {
         const struct blockheader *bh = reinterpret_cast<const struct blockheader *>(&buf[0]);
