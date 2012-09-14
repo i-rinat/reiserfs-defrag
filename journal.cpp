@@ -233,7 +233,7 @@ FsJournal::commitTransaction()
     // TODO: error handling
     writeBufAt (this->fd, this->sb->jp_journal_1st_block + this->sb->jp_journal_size,
         &journal_header, sizeof(journal_header));
-    ::fsync(this->fd);
+
     this->transaction.running = false;
 }
 
