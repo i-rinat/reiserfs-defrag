@@ -133,8 +133,13 @@ ReiserFs::close()
     this->journal->commitTransaction();
 
     std::cout << "ReiserFs::close, " << this->fname << std::endl;
-    delete this->bitmap;
+
+    // FsBitmap deletes its blocks itself, so if FsJournal desctructor will be called later
+    // that FsBitmap's one, there can be case when block_cache have bitmap blocks, which
+    // already freed by FsBitmap destructor. That may lead to read freed memory
+    // So keep order: first journal, then bitmap.
     delete this->journal;
+    delete this->bitmap;
     ::close(this->fd);
     this->closed = true;
 }
