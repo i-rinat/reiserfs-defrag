@@ -360,7 +360,7 @@ FsJournal::moveRawBlock(uint32_t from, uint32_t to, bool include_in_transaction)
 {
     Block *block_obj = this->readBlock(from, false);
     this->deleteFromCache(block_obj->block);
-    assert (block_obj->ref_count == 1);
+    // assert (block_obj->ref_count == 1);
     block_obj->markDirty();
     block_obj->block = to;
 
