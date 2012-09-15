@@ -196,10 +196,8 @@ FsJournal::writeJournalEntry()
 }
 
 int
-FsJournal::commitTransaction()
+FsJournal::doCommitTransaction()
 {
-    if (not this->use_journaling) return RFSD_OK;
-
     if (this->transaction.blocks.size() == 0) {
         // std::cout << "warning: empty transaction" << std::endl;
         this->transaction.running = false;
@@ -253,6 +251,18 @@ FsJournal::commitTransaction()
         return RFSD_FAIL;
 
     this->transaction.running = false;
+    return RFSD_OK;
+}
+
+
+int
+FsJournal::commitTransaction()
+{
+    if (not this->use_journaling) return RFSD_OK;
+
+    if (RFSD_OK != this->doCommitTransaction())
+        return RFSD_FAIL;
+
     return RFSD_OK;
 }
 

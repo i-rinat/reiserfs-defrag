@@ -276,6 +276,7 @@ private:
     void eraseOldestCacheEntry();
     int writeJournalEntry();
     void removeDuplicateTransactionEntries();
+    int doCommitTransaction();
 };
 
 class FsBitmap {
