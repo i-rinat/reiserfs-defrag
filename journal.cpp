@@ -17,6 +17,15 @@ FsJournal::FsJournal(int fd_, FsSuperblock *sb)
     this->transaction.running = false;
     this->use_journaling = true;
     this->sb = sb;
+
+    // read journal header
+    int res = readBufAt (this->fd, this->sb->jp_journal_1st_block + this->sb->jp_journal_size,
+                                &journal_header, sizeof(journal_header));
+    if (RFSD_OK != res) {
+        std::cerr << "error: can't read journal header" << std::endl;
+        std::cerr << "It's better now to immediately exit." << std::endl;
+        _exit(1);
+    }
 }
 
 FsJournal::~FsJournal()
@@ -201,10 +210,6 @@ FsJournal::commitTransaction()
     this->removeDuplicateTransactionEntries();
 
     std::cout << "Journal: transaction size = " << this->transaction.blocks.size() << std::endl;
-
-    // read journal header
-    readBufAt ( this->fd, this->sb->jp_journal_1st_block + this->sb->jp_journal_size,
-                &journal_header, sizeof(journal_header));
 
     if (RFSD_OK != this->writeJournalEntry())
         return RFSD_FAIL;
