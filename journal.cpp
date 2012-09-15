@@ -154,14 +154,9 @@ FsJournal::commitTransaction()
     assert (sizeof(description_block) == BLOCKSIZE);
     assert (sizeof(journal_header) == 3*4);
 
-    { // read journal header
-        off_t ofs = (this->sb->jp_journal_1st_block + this->sb->jp_journal_size) * BLOCKSIZE;
-        off_t new_ofs = ::lseek (this->fd, ofs, SEEK_SET);
-        if (static_cast<off_t>(-1) == new_ofs) {
-            std::cerr << "error: commitTransaction, lseek" << std::endl;
-        }
-        ::read (this->fd, &journal_header, sizeof(journal_header));
-    }
+    // read journal header
+    readBufAt ( this->fd, this->sb->jp_journal_1st_block + this->sb->jp_journal_size,
+                &journal_header, sizeof(journal_header));
 
     uint32_t transaction_id = journal_header.last_flush_id + 1;
     uint32_t transaction_offset = journal_header.unflushed_offset;
@@ -263,20 +258,15 @@ FsJournal::readBlock(uint32_t block_idx, bool caching)
         return this->block_cache[block_idx].block_obj;
     }
     this->cache_misses ++;
+
     // not found, read from disk
-    off_t new_ofs = ::lseek (this->fd, static_cast<off_t>(block_idx) * BLOCKSIZE, SEEK_SET);
-    if (static_cast<off_t>(-1) == new_ofs) {
-        std::cerr << "error: seeking" << std::endl;
-        // TODO: error handling
-        return NULL;
-    }
     Block *block_obj = new Block();
-    ssize_t bytes_read = ::read (this->fd, block_obj->buf, BLOCKSIZE);
-    if (BLOCKSIZE != bytes_read) {
-        std::cerr << "error: readBlock(" << block_idx << ")" << std::endl;
+    if (RFSD_OK != readBufAt(this->fd, block_idx, block_obj->buf, BLOCKSIZE)) {
+        delete block_obj;
         return NULL;
     }
     block_obj->block = block_idx;
+
     if (caching) this->pushToCache(block_obj);
     return block_obj;
 }
@@ -284,17 +274,7 @@ FsJournal::readBlock(uint32_t block_idx, bool caching)
 void
 FsJournal::readBlock(Block &block_obj, uint32_t block_idx)
 {
-    off_t new_ofs = ::lseek (this->fd, (off_t)block_idx * BLOCKSIZE, SEEK_SET);
-    if (static_cast<off_t>(-1) == new_ofs) {
-        std::cerr << "error: seeking" << std::endl;
-        // TODO: error handling
-        return;
-    }
-    ssize_t bytes_read = ::read (this->fd, block_obj.buf, BLOCKSIZE);
-    if (BLOCKSIZE != bytes_read) {
-        std::cerr << "error: readBlock(" << &block_obj << ", " << block_idx << ")" << std::endl;
-        return;
-    }
+    readBufAt(this->fd, block_idx, block_obj.buf, BLOCKSIZE);
     block_obj.block = block_idx;
 }
 

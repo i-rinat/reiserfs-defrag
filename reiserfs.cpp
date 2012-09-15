@@ -55,25 +55,7 @@ ReiserFs::open(const std::string &name, bool o_sync)
 void
 ReiserFs::readSuperblock()
 {
-    std::cout << "readSuperblock" << std::endl;
-    const off_t sb_offset = 65536;
-    off_t res = ::lseek (this->fd, sb_offset, SEEK_SET);
-    if (res != sb_offset) {
-        std::cerr << "error: can't lseek, errno = " << errno << std::endl;
-        return;
-    }
-
-    char buf[4096];
-    ssize_t bytes_read = ::read (this->fd, buf, sizeof(buf));
-    if (bytes_read == -1) {
-        std::cerr << "error: can't read, errno = " << errno << ", " <<
-            strerror(errno) << std::endl;
-        std::cout << sizeof(buf) << std::endl;
-        std::cout << this->fd << std::endl;
-        return;
-    }
-
-    memcpy(&this->sb, buf, sizeof(this->sb));
+    readBufAt(this->fd, SUPERBLOCK_BLOCK, &this->sb, sizeof(this->sb));
 }
 
 void
