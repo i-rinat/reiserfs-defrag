@@ -107,6 +107,7 @@ readBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size)
 void
 FsJournal::removeDuplicateTransactionEntries(std::vector<Block *> &vec)
 {
+    if (vec.size() < 2) return; // no need to sort when vec has one or zero elemtents
     // first, sort them
     std::sort (vec.begin(), vec.end());
     // remove adjacent duplicates
