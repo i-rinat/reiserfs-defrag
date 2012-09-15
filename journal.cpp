@@ -60,7 +60,8 @@ FsJournal::beginTransaction()
         std::cerr << "error: nested transaction" << std::endl;
         return; // TODO: error handling
     }
-    if (this->transaction.blocks.size() != 0) {
+
+    if (this->transaction.blocks.size() != 0 && not this->transaction.batch_running) {
         std::cerr << "error: there was writes outside transaction" << std::endl;
         return; // TODO: error handling
     }
