@@ -244,6 +244,7 @@ public:
     void moveRawBlock(uint32_t from, uint32_t to, bool include_in_transaction = true);
     void beginTransaction();
     int commitTransaction();
+    int flushTransactionCache();
     uint32_t estimateTransactionSize();
 
 private:
@@ -258,15 +259,18 @@ private:
     } __attribute__ ((__packed__)) journal_header;
 
     bool use_journaling;
+    bool flag_transaction_max_size_exceeded;
     int fd;
     FsSuperblock *sb;
     std::map<uint32_t, cache_entry> block_cache;
     int64_t cache_hits;
     int64_t cache_misses;
-    uint32_t max_cache_size;
+    uint32_t max_cache_size;    //< soft size border for read cache
+    uint32_t max_batch_size;    //< maximum transaction batch size
     struct {
         std::vector<Block *> blocks;
         bool running;
+        bool batch_running;
     } transaction;
 
     bool blockInCache(uint32_t block_idx) { return this->block_cache.count(block_idx) > 0; }

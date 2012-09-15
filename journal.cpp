@@ -17,6 +17,7 @@ FsJournal::FsJournal(int fd_, FsSuperblock *sb)
     this->transaction.running = false;
     this->use_journaling = true;
     this->sb = sb;
+    this->flag_transaction_max_size_exceeded = false;
 
     // read journal header
     int res = readBufAt (this->fd, this->sb->jp_journal_1st_block + this->sb->jp_journal_size,
@@ -26,6 +27,10 @@ FsJournal::FsJournal(int fd_, FsSuperblock *sb)
         std::cerr << "It's better now to immediately exit." << std::endl;
         _exit(1);
     }
+
+    // determine max transaction batch size
+    this->max_batch_size = this->sb->jp_journal_max_batch;
+    if (this->max_batch_size > 900) this->max_batch_size = 900;
 }
 
 FsJournal::~FsJournal()
@@ -60,6 +65,7 @@ FsJournal::beginTransaction()
     }
 
     this->transaction.running = true;
+    this->transaction.batch_running = true;
 }
 
 inline
@@ -259,9 +265,28 @@ FsJournal::commitTransaction()
 
     // remove duplicate entries
     this->removeDuplicateTransactionEntries(this->transaction.blocks);
-    if (RFSD_OK != this->doCommitTransaction())
-        return RFSD_FAIL;
 
+    if (this->transaction.blocks.size() > this->max_batch_size) {
+        if (this->transaction.blocks.size() > this->sb->jp_journal_trans_max) {
+            std::cerr << "warning: transaction max size exceeded" << std::endl;
+            this->flag_transaction_max_size_exceeded = true;
+        }
+        if (RFSD_OK != this->doCommitTransaction())
+            return RFSD_FAIL;
+        this->transaction.batch_running = false;
+    }
+
+    return RFSD_OK;
+}
+
+int
+FsJournal::flushTransactionCache()
+{
+    if (this->transaction.batch_running) {
+        if (RFSD_OK != this->doCommitTransaction())
+            return RFSD_FAIL;
+        this->transaction.batch_running = false;
+    }
     return RFSD_OK;
 }
 

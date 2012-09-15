@@ -229,6 +229,9 @@ ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
         this->journal->commitTransaction();
     }
 
+    // make cached transaction to flush on disk
+    this->journal->flushTransactionCache();
+
     std::cout << "Blocks moved: " << this->blocks_moved_formatted << " formatted, "
         << this->blocks_moved_unformatted << " unformatted" << std::endl;
     return (this->blocks_moved_unformatted + this->blocks_moved_formatted);
