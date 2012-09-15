@@ -278,6 +278,7 @@ FsJournal::commitTransaction()
         this->transaction.batch_running = false;
     }
 
+    this->transaction.running = false;
     return RFSD_OK;
 }
 
