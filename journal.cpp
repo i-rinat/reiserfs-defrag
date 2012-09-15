@@ -205,12 +205,7 @@ FsJournal::writeJournalEntry()
 int
 FsJournal::doCommitTransaction()
 {
-    if (this->transaction.blocks.size() == 0) {
-        // std::cout << "warning: empty transaction" << std::endl;
-        this->transaction.running = false;
-        return RFSD_OK;
-    }
-
+    // transaction.blocks already sorted and deduplicated
     std::cout << "Journal: transaction size = " << this->transaction.blocks.size() << std::endl;
 
     if (RFSD_OK != this->writeJournalEntry())
@@ -263,6 +258,12 @@ int
 FsJournal::commitTransaction()
 {
     if (not this->use_journaling) return RFSD_OK;
+
+    if (this->transaction.blocks.size() == 0) {
+        // std::cout << "warning: empty transaction" << std::endl;
+        this->transaction.running = false;
+        return RFSD_OK;
+    }
 
     // remove duplicate entries
     this->removeDuplicateTransactionEntries(this->transaction.blocks);
