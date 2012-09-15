@@ -69,7 +69,6 @@ FsJournal::beginTransaction()
     this->transaction.batch_running = true;
 }
 
-inline
 int
 writeBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size)
 {
@@ -87,7 +86,6 @@ writeBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size)
     return RFSD_OK;
 }
 
-inline
 int
 readBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size)
 {
