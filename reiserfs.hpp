@@ -251,6 +251,12 @@ private:
         Block *block_obj;
         int priority;
     };
+    struct {
+        uint32_t last_flush_id;
+        uint32_t unflushed_offset;
+        uint32_t mount_id;
+    } __attribute__ ((__packed__)) journal_header;
+
     bool use_journaling;
     int fd;
     FsSuperblock *sb;
@@ -268,7 +274,8 @@ private:
     void deleteFromCache(uint32_t block_idx);
     void touchCacheEntry(uint32_t block_idx);
     void eraseOldestCacheEntry();
-
+    void writeJournalEntry();
+    void removeDuplicateTransactionEntries();
 };
 
 class FsBitmap {

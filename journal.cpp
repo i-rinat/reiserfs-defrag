@@ -90,17 +90,8 @@ readBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size)
 }
 
 void
-FsJournal::commitTransaction()
+FsJournal::removeDuplicateTransactionEntries()
 {
-    if (not this->use_journaling) return;
-
-    if (this->transaction.blocks.size() == 0) {
-        // std::cout << "warning: empty transaction" << std::endl;
-        this->transaction.running = false;
-        return;
-    }
-
-    // remove duplicate entries
     // first, sort them
     std::sort (this->transaction.blocks.begin(), this->transaction.blocks.end());
     // remove duplicates
@@ -117,21 +108,17 @@ FsJournal::commitTransaction()
     // prev points to last unique element. erase trailing
     this->transaction.blocks.erase (prev+1, this->transaction.blocks.end());
 
-    std::cout << "Journal: transaction size = " << this->transaction.blocks.size() << std::endl;
-
     // check if any of blocks are dirty. They all must be not.
     for (std::vector<Block *>::const_iterator it = this->transaction.blocks.begin();
         it != this->transaction.blocks.end(); ++ it)
     {
         assert ((*it)->dirty == false); // must not be dirty
     }
+}
 
-    struct {
-        uint32_t last_flush_id;
-        uint32_t unflushed_offset;
-        uint32_t mount_id;
-    } journal_header;
-
+void
+FsJournal::writeJournalEntry()
+{
     struct {
         uint32_t transaction_id;
         uint32_t length;
@@ -150,21 +137,14 @@ FsJournal::commitTransaction()
     memset (&description_block, 0, sizeof(description_block));
     memset (&commit_block, 0, sizeof(commit_block));
 
+    // one must increment last_flush_id before calling this, so use its value
+    uint32_t transaction_id = this->journal_header.last_flush_id + 1;
+    uint32_t transaction_offset = this->journal_header.unflushed_offset;
+    uint32_t transaction_block_count = this->transaction.blocks.size();
+
+    // check for proper alignment, just to be sure
     assert (sizeof(commit_block) == BLOCKSIZE);
     assert (sizeof(description_block) == BLOCKSIZE);
-    assert (sizeof(journal_header) == 3*4);
-
-    // read journal header
-    readBufAt ( this->fd, this->sb->jp_journal_1st_block + this->sb->jp_journal_size,
-                &journal_header, sizeof(journal_header));
-
-    uint32_t transaction_id = journal_header.last_flush_id + 1;
-    uint32_t transaction_offset = journal_header.unflushed_offset;
-    uint32_t transaction_block_count = this->transaction.blocks.size();
-    // update journal header, advance by number of blocks plus desc and commit blocks
-    journal_header.unflushed_offset += 2 + transaction_block_count;
-    journal_header.unflushed_offset %= this->sb->jp_journal_size; // wrap
-    journal_header.last_flush_id ++;
 
     // fill description and commit blocks
     description_block.transaction_id = transaction_id;
@@ -183,11 +163,13 @@ FsJournal::commitTransaction()
             commit_block.real_blocks[k - first_half] = this->transaction.blocks[k]->block;
     }
 
-    // write journal entry
     uint32_t j_pos = transaction_offset; // cursor
+
+    // write desc block
     // TODO: error handling
     writeBufAt (this->fd, this->sb->jp_journal_1st_block + j_pos, &description_block, BLOCKSIZE);
     j_pos = (j_pos + 1) % this->sb->jp_journal_size;
+    // write data blocks
     for (std::vector<Block *>::const_iterator it = this->transaction.blocks.begin();
         it != this->transaction.blocks.end(); ++ it)
     {
@@ -195,8 +177,38 @@ FsJournal::commitTransaction()
         writeBufAt (this->fd, this->sb->jp_journal_1st_block + j_pos, (*it)->buf, BLOCKSIZE);
         j_pos = (j_pos + 1) % this->sb->jp_journal_size;
     }
+    // write commit block
     // TODO: error handling
     writeBufAt (this->fd, this->sb->jp_journal_1st_block + j_pos, &commit_block, BLOCKSIZE);
+}
+
+void
+FsJournal::commitTransaction()
+{
+    if (not this->use_journaling) return;
+
+    if (this->transaction.blocks.size() == 0) {
+        // std::cout << "warning: empty transaction" << std::endl;
+        this->transaction.running = false;
+        return;
+    }
+
+    // remove duplicate entries
+    this->removeDuplicateTransactionEntries();
+
+    std::cout << "Journal: transaction size = " << this->transaction.blocks.size() << std::endl;
+
+    // read journal header
+    readBufAt ( this->fd, this->sb->jp_journal_1st_block + this->sb->jp_journal_size,
+                &journal_header, sizeof(journal_header));
+
+    // update journal header, advance by number of blocks plus desc and commit blocks
+    journal_header.unflushed_offset += 2 + this->transaction.blocks.size();
+    journal_header.unflushed_offset %= this->sb->jp_journal_size; // wrap
+    journal_header.last_flush_id ++;
+
+    this->writeJournalEntry();
+
     // ensure journal entry written
     ::fdatasync(this->fd);
 
