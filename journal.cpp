@@ -137,7 +137,6 @@ FsJournal::writeJournalEntry()
     memset (&description_block, 0, sizeof(description_block));
     memset (&commit_block, 0, sizeof(commit_block));
 
-    // one must increment last_flush_id before calling this, so use its value
     uint32_t transaction_id = this->journal_header.last_flush_id + 1;
     uint32_t transaction_offset = this->journal_header.unflushed_offset;
     uint32_t transaction_block_count = this->transaction.blocks.size();
@@ -207,13 +206,13 @@ FsJournal::commitTransaction()
     readBufAt ( this->fd, this->sb->jp_journal_1st_block + this->sb->jp_journal_size,
                 &journal_header, sizeof(journal_header));
 
+    if (RFSD_OK != this->writeJournalEntry())
+        return RFSD_FAIL;
+
     // update journal header, advance by number of blocks plus desc and commit blocks
     journal_header.unflushed_offset += 2 + this->transaction.blocks.size();
     journal_header.unflushed_offset %= this->sb->jp_journal_size; // wrap
     journal_header.last_flush_id ++;
-
-    if (RFSD_OK != this->writeJournalEntry())
-        return RFSD_FAIL;
 
     // ensure journal entry written
     if (0 != ::fdatasync(this->fd))
