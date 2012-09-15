@@ -35,7 +35,8 @@ FsJournal::FsJournal(int fd_, FsSuperblock *sb)
 
 FsJournal::~FsJournal()
 {
-    // purge cache will be performed automatically
+    this->flushTransactionCache();
+    // clear cache and check that all block left it
     std::map<uint32_t, cache_entry>::iterator it, dit;
     it = this->block_cache.begin();
     while (it != this->block_cache.end()) {
