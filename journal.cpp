@@ -53,15 +53,6 @@ FsJournal::beginTransaction()
     this->transaction.running = true;
 }
 
-template<typename Tn>
-void sortAndRemoveDuplicates(std::vector<Tn> &v)
-{
-    // first sort
-    std::sort (v.begin(), v.end());
-    // then deduplicate and erase trailing garbage
-    v.erase (std::unique (v.begin(), v.end()), v.end());
-}
-
 inline
 int
 writeBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size)
