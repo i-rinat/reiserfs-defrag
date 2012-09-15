@@ -116,7 +116,7 @@ FsJournal::removeDuplicateTransactionEntries()
     }
 }
 
-void
+int
 FsJournal::writeJournalEntry()
 {
     struct {
@@ -164,33 +164,38 @@ FsJournal::writeJournalEntry()
     }
 
     uint32_t j_pos = transaction_offset; // cursor
+    const uint32_t j_1st_block = this->sb->jp_journal_1st_block;
 
     // write desc block
-    // TODO: error handling
-    writeBufAt (this->fd, this->sb->jp_journal_1st_block + j_pos, &description_block, BLOCKSIZE);
+    if (RFSD_OK != writeBufAt (this->fd, j_1st_block + j_pos, &description_block, BLOCKSIZE) )
+        return RFSD_FAIL;
     j_pos = (j_pos + 1) % this->sb->jp_journal_size;
+
     // write data blocks
     for (std::vector<Block *>::const_iterator it = this->transaction.blocks.begin();
         it != this->transaction.blocks.end(); ++ it)
     {
-        // TODO: error handling
-        writeBufAt (this->fd, this->sb->jp_journal_1st_block + j_pos, (*it)->buf, BLOCKSIZE);
+        if (RFSD_OK != writeBufAt (this->fd, j_1st_block + j_pos, (*it)->buf, BLOCKSIZE) )
+            return RFSD_FAIL;
         j_pos = (j_pos + 1) % this->sb->jp_journal_size;
     }
+
     // write commit block
-    // TODO: error handling
-    writeBufAt (this->fd, this->sb->jp_journal_1st_block + j_pos, &commit_block, BLOCKSIZE);
+    if (RFSD_OK != writeBufAt (this->fd, j_1st_block + j_pos, &commit_block, BLOCKSIZE) )
+        return RFSD_FAIL;
+
+    return RFSD_OK;
 }
 
-void
+int
 FsJournal::commitTransaction()
 {
-    if (not this->use_journaling) return;
+    if (not this->use_journaling) return RFSD_OK;
 
     if (this->transaction.blocks.size() == 0) {
         // std::cout << "warning: empty transaction" << std::endl;
         this->transaction.running = false;
-        return;
+        return RFSD_OK;
     }
 
     // remove duplicate entries
@@ -207,50 +212,44 @@ FsJournal::commitTransaction()
     journal_header.unflushed_offset %= this->sb->jp_journal_size; // wrap
     journal_header.last_flush_id ++;
 
-    this->writeJournalEntry();
+    if (RFSD_OK != this->writeJournalEntry())
+        return RFSD_FAIL;
 
     // ensure journal entry written
-    ::fdatasync(this->fd);
+    if (0 != ::fdatasync(this->fd))
+        return RFSD_FAIL;
 
     // write data to disk
     for (std::vector<Block *>::const_iterator it = this->transaction.blocks.begin();
         it != this->transaction.blocks.end(); ++ it)
     {
-        Block *block_obj = *it;
-        off_t new_ofs = ::lseek (this->fd, static_cast<off_t>(block_obj->block) * BLOCKSIZE, SEEK_SET);
-        if (static_cast<off_t>(-1) == new_ofs) {
-            std::cerr << "error: seeking" << std::endl;
-            // TODO: error handling
-            return;
-        }
-        ssize_t bytes_written = ::write (this->fd, block_obj->buf, BLOCKSIZE);
-        if (BLOCKSIZE != bytes_written) {
-            std::cerr << "error: writeBlock(" << &block_obj << ")" << std::endl;
-            return;
-        }
+        if (RFSD_OK != writeBufAt(this->fd, (*it)->block, (*it)->buf, BLOCKSIZE))
+            return RFSD_FAIL;
     }
 
-    // finally release blocks. Block can survive this if it has more than reference.
-    // So do cached blocks. ->releaseBlock will not call writeBlock as block is not
+    // finally release blocks. Block can survive this if it has more than one reference,
+    // like cached blocks. ->releaseBlock will not call writeBlock as block is not
     // dirty.
     for (std::vector<Block *>::const_iterator it = this->transaction.blocks.begin();
         it != this->transaction.blocks.end(); ++ it)
     {
         uint32_t block_idx = (*it)->block;
         // reset block priority to normal. Contents written to disk, so cache entry
-        // may safelly be deleted
+        // may safelly be deleted if needed
         if (this->block_cache.count(block_idx) > 0)
             this->block_cache[block_idx].priority = CACHE_PRIORITY_NORMAL;
         this->releaseBlock(*it);
     }
     this->transaction.blocks.resize(0);
 
-    // update journal header (thus close transaction)
-    // TODO: error handling
-    writeBufAt (this->fd, this->sb->jp_journal_1st_block + this->sb->jp_journal_size,
+    // sync journal header, thus closing transaction
+    int res = writeBufAt (this->fd, this->sb->jp_journal_1st_block + this->sb->jp_journal_size,
         &journal_header, sizeof(journal_header));
+    if (RFSD_OK != res)
+        return RFSD_FAIL;
 
     this->transaction.running = false;
+    return RFSD_OK;
 }
 
 uint32_t

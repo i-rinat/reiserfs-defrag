@@ -243,7 +243,7 @@ public:
     void releaseBlock(Block *block_obj);
     void moveRawBlock(uint32_t from, uint32_t to, bool include_in_transaction = true);
     void beginTransaction();
-    void commitTransaction();
+    int commitTransaction();
     uint32_t estimateTransactionSize();
 
 private:
@@ -274,7 +274,7 @@ private:
     void deleteFromCache(uint32_t block_idx);
     void touchCacheEntry(uint32_t block_idx);
     void eraseOldestCacheEntry();
-    void writeJournalEntry();
+    int writeJournalEntry();
     void removeDuplicateTransactionEntries();
 };
 
