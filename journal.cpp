@@ -99,13 +99,13 @@ readBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size)
 }
 
 void
-FsJournal::removeDuplicateTransactionEntries()
+FsJournal::removeDuplicateTransactionEntries(std::vector<Block *> &vec)
 {
     // first, sort them
-    std::sort (this->transaction.blocks.begin(), this->transaction.blocks.end());
-    // remove duplicates
-    std::vector<Block *>::iterator prev = this->transaction.blocks.begin();
-    for (std::vector<Block *>::iterator it = prev+1; it != this->transaction.blocks.end(); ++it) {
+    std::sort (vec.begin(), vec.end());
+    // remove adjacent duplicates
+    std::vector<Block *>::iterator prev = vec.begin();
+    for (std::vector<Block *>::iterator it = prev+1; it != vec.end(); ++it) {
         if (*prev == *it) {
             (*prev)->ref_count --;  // duplicate, as we 'removing' it, decrease reference count
             assert ((*prev)->ref_count > 0);    // anyway there should be at least one reference
@@ -115,11 +115,11 @@ FsJournal::removeDuplicateTransactionEntries()
         }
     }
     // prev points to last unique element. erase trailing
-    this->transaction.blocks.erase (prev+1, this->transaction.blocks.end());
+    vec.erase (prev+1, vec.end());
 
     // check if any of blocks are dirty. They all must be not.
-    for (std::vector<Block *>::const_iterator it = this->transaction.blocks.begin();
-        it != this->transaction.blocks.end(); ++ it)
+    for (std::vector<Block *>::const_iterator it = vec.begin();
+        it != vec.end(); ++ it)
     {
         assert ((*it)->dirty == false); // must not be dirty
     }
@@ -204,9 +204,6 @@ FsJournal::doCommitTransaction()
         return RFSD_OK;
     }
 
-    // remove duplicate entries
-    this->removeDuplicateTransactionEntries();
-
     std::cout << "Journal: transaction size = " << this->transaction.blocks.size() << std::endl;
 
     if (RFSD_OK != this->writeJournalEntry())
@@ -260,6 +257,8 @@ FsJournal::commitTransaction()
 {
     if (not this->use_journaling) return RFSD_OK;
 
+    // remove duplicate entries
+    this->removeDuplicateTransactionEntries(this->transaction.blocks);
     if (RFSD_OK != this->doCommitTransaction())
         return RFSD_FAIL;
 
