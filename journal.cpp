@@ -340,17 +340,8 @@ FsJournal::writeBlock(Block *block_obj)
         // cached version, as disk contents differs from memory.
         this->pushToCache(block_obj, CACHE_PRIORITY_HIGH);
     } else {
-        off_t new_ofs = ::lseek (this->fd, static_cast<off_t>(block_obj->block) * BLOCKSIZE, SEEK_SET);
-        if (static_cast<off_t>(-1) == new_ofs) {
-            std::cerr << "error: seeking" << std::endl;
-            // TODO: error handling
-            return;
-        }
-        ssize_t bytes_written = ::write (this->fd, block_obj->buf, BLOCKSIZE);
-        if (BLOCKSIZE != bytes_written) {
-            std::cerr << "error: writeBlock(" << &block_obj << ")" << std::endl;
-            return;
-        }
+        if (RFSD_OK != writeBufAt(this->fd, block_obj->block, block_obj->buf, BLOCKSIZE))
+            return RFSD_FAIL;
     }
     block_obj->dirty = false;
     return RFSD_OK;
