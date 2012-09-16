@@ -299,6 +299,14 @@ ReiserFs::recursivelyMoveInternalNodes(uint32_t block_idx, std::map<uint32_t, ui
                 // update pointer
                 block_obj->ptr(k).block = movemap[child_idx];
                 block_obj->markDirty();
+                // if transaction becomes too large, divide it into smaller ones
+                if (this->journal->estimateTransactionSize() > 100) {
+                    if (block_obj->dirty)
+                        this->journal->writeBlock(block_obj);
+                    this->bitmap->writeChangedBitmapBlocks();
+                    this->journal->commitTransaction();
+                    this->journal->beginTransaction();
+                }
             }
         }
         this->journal->releaseBlock(block_obj);
