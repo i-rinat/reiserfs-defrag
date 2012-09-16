@@ -330,7 +330,7 @@ FsJournal::readBlock(Block &block_obj, uint32_t block_idx)
     block_obj.block = block_idx;
 }
 
-void
+int
 FsJournal::writeBlock(Block *block_obj)
 {
     if (this->use_journaling) {
@@ -353,6 +353,7 @@ FsJournal::writeBlock(Block *block_obj)
         }
     }
     block_obj->dirty = false;
+    return RFSD_OK;
 }
 
 void
