@@ -239,9 +239,9 @@ public:
     ~FsJournal();
     Block* readBlock(uint32_t block_idx, bool caching = true);
     void readBlock(Block &block_obj, uint32_t block_idx);
-    int writeBlock(Block *block_obj);
-    void releaseBlock(Block *block_obj);
-    void moveRawBlock(uint32_t from, uint32_t to, bool include_in_transaction = true);
+    int writeBlock(Block *block_obj, bool factor_into_trasaction = true);
+    void releaseBlock(Block *block_obj, bool factor_into_trasaction = true);
+    void moveRawBlock(uint32_t from, uint32_t to, bool factor_into_trasaction = true);
     void beginTransaction();
     int commitTransaction();
     int flushTransactionCache();

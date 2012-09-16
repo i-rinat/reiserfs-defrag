@@ -331,9 +331,9 @@ FsJournal::readBlock(Block &block_obj, uint32_t block_idx)
 }
 
 int
-FsJournal::writeBlock(Block *block_obj)
+FsJournal::writeBlock(Block *block_obj, bool factor_into_trasaction)
 {
-    if (this->use_journaling) {
+    if (this->use_journaling && factor_into_trasaction) {
         this->transaction.blocks.push_back(block_obj);
         block_obj->ref_count ++;
         // must retain block until transaction ends. Further readBlocks should get
@@ -348,7 +348,7 @@ FsJournal::writeBlock(Block *block_obj)
 }
 
 void
-FsJournal::moveRawBlock(uint32_t from, uint32_t to, bool include_in_transaction)
+FsJournal::moveRawBlock(uint32_t from, uint32_t to, bool factor_into_trasaction)
 {
     Block *block_obj = this->readBlock(from, false);
     this->deleteFromCache(block_obj->block);
@@ -357,18 +357,18 @@ FsJournal::moveRawBlock(uint32_t from, uint32_t to, bool include_in_transaction)
     block_obj->block = to;
     block_obj->markDirty();
 
-    if (include_in_transaction) {
+    if (factor_into_trasaction) {
         this->transaction.blocks.push_back(block_obj);
         block_obj->ref_count ++;
     }
-    this->releaseBlock(block_obj);
+    this->releaseBlock(block_obj, factor_into_trasaction);
 }
 
 void
-FsJournal::releaseBlock(Block *block_obj)
+FsJournal::releaseBlock(Block *block_obj, bool factor_into_transaction)
 {
     if (block_obj->dirty)
-        this->writeBlock(block_obj);
+        this->writeBlock(block_obj, factor_into_transaction);
 
     block_obj->ref_count --;
     assert (block_obj->ref_count >= 0);
