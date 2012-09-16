@@ -197,7 +197,7 @@ main (int argc, char *argv[])
 
     fs.useDataJournaling(false);
     // simpleDefrag(fs);
-    simpleDefragWithPreclean(fs, 8000);
+    simpleDefragWithPreclean(fs, 40000);
 
 
     fs.close();
