@@ -11,11 +11,18 @@
 ReiserFs::ReiserFs()
 {
     this->closed = true;
+    this->use_data_journaling = false;
 }
 
 ReiserFs::~ReiserFs()
 {
     if (! this->closed) this->close();
+}
+
+void
+ReiserFs::useDataJournaling(bool use)
+{
+    this->use_data_journaling = use;
 }
 
 int
@@ -340,7 +347,8 @@ ReiserFs::recursivelyMoveUnformatted(uint32_t block_idx, std::map<uint32_t, uint
                 // update pointers in indirect item
                 block_obj->setIndirectItemRef(ih.offset, idx, movemap[child_idx]);
                 // actually move block
-                this->journal->moveRawBlock(child_idx, movemap[child_idx], false);
+                bool should_journal_data = this->use_data_journaling;
+                this->journal->moveRawBlock(child_idx, movemap[child_idx], should_journal_data);
                 this->blocks_moved_unformatted ++;
                 // update bitmap
                 this->bitmap->markBlockFree(child_idx);

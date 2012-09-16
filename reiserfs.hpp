@@ -313,6 +313,7 @@ public:
     void moveBlock(uint32_t from, uint32_t to);
     uint32_t moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap);
     void dumpSuperblock();
+    void useDataJournaling(bool use);
 
     // proxies for FsJournal methods
     Block* readBlock(uint32_t block) const;
@@ -341,6 +342,7 @@ private:
     std::string fname;
     int fd;
     bool closed;
+    bool use_data_journaling;
     std::string err_string;
     uint32_t blocks_moved_formatted;    //< counter used for moveMultipleBlocks
     uint32_t blocks_moved_unformatted;  //< counter used for moveMultipleBlocks
