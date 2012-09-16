@@ -206,8 +206,7 @@ int
 FsJournal::doCommitTransaction()
 {
     // transaction.blocks already sorted and deduplicated
-    std::cout << "Journal: transaction size = " << this->transaction.blocks.size() << std::endl;
-
+    // write journal entry
     if (RFSD_OK != this->writeJournalEntry())
         return RFSD_FAIL;
 

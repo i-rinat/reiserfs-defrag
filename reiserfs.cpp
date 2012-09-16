@@ -200,13 +200,10 @@ ReiserFs::movemap_consistent(const std::map<uint32_t, uint32_t> &movemap)
 uint32_t
 ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
 {
-    std::cout << "Moving blocks" << std::endl;
     if (! this->movemap_consistent(movemap)) {
         std::cerr << "error: movemap not consistent, " << this->err_string << std::endl;
         return 0;
     }
-
-    std::cout << "root block: " << this->sb.s_root_block << std::endl;
 
     uint32_t tree_height = this->estimateTreeHeight();
     // reset statistics
@@ -239,8 +236,6 @@ ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
     // make cached transaction to flush on disk
     this->journal->flushTransactionCache();
 
-    std::cout << "Blocks moved: " << this->blocks_moved_formatted << " formatted, "
-        << this->blocks_moved_unformatted << " unformatted" << std::endl;
     return (this->blocks_moved_unformatted + this->blocks_moved_formatted);
 }
 
