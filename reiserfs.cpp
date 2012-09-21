@@ -343,6 +343,20 @@ ReiserFs::recursivelyMoveInternalNodes(uint32_t block_idx, std::map<uint32_t, ui
                     this->journal->commitTransaction();
                     this->journal->beginTransaction();
                 }
+                // update in-memory leaf index
+                if (TREE_LEVEL_LEAF == level - 1) {
+                    // child_idx pointing to leaf node, which moved just now
+                    // so we must update all occurences of child_idx to movemap[child_idx]
+                    // in leaf_index
+                    for (std::vector<leaf_index_entry>::iterator it = this->leaf_index.begin();
+                        it != this->leaf_index.end(); ++ it)
+                    {
+                        if (it->leafs.count(child_idx) > 0) {
+                            it->leafs.erase(child_idx);
+                            it->leafs.insert(movemap[child_idx]);
+                        }
+                    }
+                }
             }
         }
         this->journal->releaseBlock(block_obj);
