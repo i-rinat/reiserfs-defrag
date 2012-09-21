@@ -390,6 +390,9 @@ ReiserFs::recursivelyMoveUnformatted(uint32_t block_idx, std::map<uint32_t, uint
                     this->journal->commitTransaction();
                     this->journal->beginTransaction();
                 }
+                // update in-memory leaf index
+                uint32_t basket_id = movemap[child_idx] / this->leaf_index_granularity;
+                this->leaf_index[basket_id].leafs.insert(block_idx);
             }
         }
         this->journal->releaseBlock(block_obj);
