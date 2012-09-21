@@ -184,7 +184,9 @@ main (int argc, char *argv[])
     fs.useDataJournaling(false);
 
     Defrag defrag(fs);
+    defrag.setSizeLimit(8192);
     defrag.simpleDefragWithPreclean();
+
 
     fs.close();
     return 0;
