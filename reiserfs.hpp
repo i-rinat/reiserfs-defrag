@@ -4,6 +4,7 @@
 #include <string>
 #include <ostream>
 #include <map>
+#include <set>
 #include <vector>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -305,6 +306,11 @@ public:
         uint32_t type;
         uint32_t idx;
     } tree_element;
+    struct leaf_index_entry {
+        leaf_index_entry() { changed = false; };
+        bool changed;
+        std::set<uint32_t> leafs;
+    };
 
     ReiserFs();
     ~ReiserFs();
@@ -346,6 +352,8 @@ private:
     std::string err_string;
     uint32_t blocks_moved_formatted;    //< counter used for moveMultipleBlocks
     uint32_t blocks_moved_unformatted;  //< counter used for moveMultipleBlocks
+    std::vector<leaf_index_entry> leaf_index;
+    uint32_t leaf_index_granularity;
 
     void readSuperblock();
     void writeSuperblock();
@@ -356,6 +364,7 @@ private:
     void recursivelyMoveUnformatted(uint32_t block_idx, std::map<uint32_t, uint32_t> &movemap);
     uint32_t estimateTreeHeight();
     void recursivelyEnumerateNodes(uint32_t block_idx, std::vector<ReiserFs::tree_element> &tree) const;
+    void createLeafIndex();
 };
 
 int readBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size);

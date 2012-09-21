@@ -12,6 +12,7 @@ ReiserFs::ReiserFs()
 {
     this->closed = true;
     this->use_data_journaling = false;
+    this->leaf_index_granularity = 2000;
 }
 
 ReiserFs::~ReiserFs()
@@ -55,6 +56,8 @@ ReiserFs::open(const std::string &name, bool o_sync)
     this->journal->beginTransaction();
     this->writeSuperblock();
     this->journal->commitTransaction();
+
+    this->createLeafIndex();
 
     return RFSD_OK;
 }
@@ -131,6 +134,37 @@ ReiserFs::close()
     delete this->bitmap;
     ::close(this->fd);
     this->closed = true;
+}
+
+void
+ReiserFs::createLeafIndex()
+{
+    uint32_t basket_count = (this->sizeInBlocks() - 1) / this->leaf_index_granularity + 1;
+    this->leaf_index.clear();
+    this->leaf_index.resize (basket_count);
+
+    std::vector<tree_element> tree;
+    recursivelyEnumerateNodes(this->sb.s_root_block, tree);
+
+    for (std::vector<tree_element>::iterator it = tree.begin(); it != tree.end(); ++ it) {
+        if (it->type != BLOCKTYPE_LEAF)
+            continue;
+        Block *block_obj = this->journal->readBlock(it->idx, false);
+        for (uint32_t k = 0; k < block_obj->itemCount(); k ++) {
+            const struct Block::item_header &ih = block_obj->itemHeader(k);
+            // indirect items contain links to unformatted (data) blocks
+            if (KEY_TYPE_INDIRECT != ih.type())
+                continue;
+            for (int idx = 0; idx < ih.length/4; idx ++) {
+                uint32_t child_idx = block_obj->indirectItemRef(ih.offset, idx);
+                uint32_t basket_id = child_idx / this->leaf_index_granularity;
+                this->leaf_index[basket_id].leafs.insert(it->idx);
+            }
+        }
+        this->journal->releaseBlock(block_obj);
+    }
+
+    return;
 }
 
 void
