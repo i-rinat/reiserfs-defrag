@@ -158,7 +158,7 @@ ReiserFs::createLeafIndex()
             for (int idx = 0; idx < ih.length/4; idx ++) {
                 uint32_t child_idx = block_obj->indirectItemRef(ih.offset, idx);
                 uint32_t basket_id = child_idx / this->leaf_index_granularity;
-                this->leaf_index[basket_id].leafs.insert(it->idx);
+                this->leaf_index[basket_id].leaves.insert(it->idx);
             }
         }
         this->journal->releaseBlock(block_obj);
@@ -351,9 +351,9 @@ ReiserFs::recursivelyMoveInternalNodes(uint32_t block_idx, std::map<uint32_t, ui
                     for (std::vector<leaf_index_entry>::iterator it = this->leaf_index.begin();
                         it != this->leaf_index.end(); ++ it)
                     {
-                        if (it->leafs.count(child_idx) > 0) {
-                            it->leafs.erase(child_idx);
-                            it->leafs.insert(movemap[child_idx]);
+                        if (it->leaves.count(child_idx) > 0) {
+                            it->leaves.erase(child_idx);
+                            it->leaves.insert(movemap[child_idx]);
                         }
                     }
                 }
@@ -407,7 +407,7 @@ ReiserFs::recursivelyMoveUnformatted(uint32_t block_idx, std::map<uint32_t, uint
                 // update in-memory leaf index
                 uint32_t new_basket_id = movemap[child_idx] / this->leaf_index_granularity;
                 uint32_t old_basket_id = child_idx / this->leaf_index_granularity;
-                this->leaf_index[new_basket_id].leafs.insert(block_idx);
+                this->leaf_index[new_basket_id].leaves.insert(block_idx);
                 this->leaf_index[new_basket_id].changed = true;
                 this->leaf_index[old_basket_id].changed = true;
             }

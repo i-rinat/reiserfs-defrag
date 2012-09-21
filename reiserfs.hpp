@@ -309,7 +309,7 @@ public:
     struct leaf_index_entry {
         leaf_index_entry() { changed = false; };
         bool changed;
-        std::set<uint32_t> leafs;
+        std::set<uint32_t> leaves;
     };
 
     ReiserFs();
