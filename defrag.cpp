@@ -10,7 +10,6 @@ class Defrag {
 public:
     Defrag (ReiserFs &fs);
     void setSizeLimit(uint32_t size_limit);
-    void simpleDefrag();
     void simpleDefragWithPreclean();
 
 private:
@@ -127,23 +126,6 @@ Defrag::extractCleanMoves()
         if (this->fs.blockUsed(from) && !this->fs.blockReserved(from) && !this->fs.blockUsed(to))
             this->clean_moves[from] = to;
     }
-}
-
-void
-Defrag::simpleDefrag()
-{
-    uint32_t blocks_moved = 0;
-    do {
-        std::cout << "-------------------------------------------------------------" << std::endl;
-        this->movemap.clear();
-        this->createLargeScaleMovemap();
-        std::cout << "movemap size = " << this->movemap.size() << std::endl;
-
-        this->extractCleanMoves();
-        std::cout << "clean_moves size = " << this->clean_moves.size() << std::endl;
-
-        blocks_moved = this->fs.moveMultipleBlocks(this->clean_moves);
-    } while (blocks_moved > 0);
 }
 
 void
