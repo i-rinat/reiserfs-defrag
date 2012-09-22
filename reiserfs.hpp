@@ -353,7 +353,7 @@ private:
     uint32_t blocks_moved_formatted;    //< counter used for moveMultipleBlocks
     uint32_t blocks_moved_unformatted;  //< counter used for moveMultipleBlocks
     std::vector<leaf_index_entry> leaf_index;
-    uint32_t leaf_index_granularity;
+    uint32_t leaf_index_granularity;    //< size of each basket for leaf index
 
     void readSuperblock();
     void writeSuperblock();
@@ -364,6 +364,7 @@ private:
     void recursivelyMoveUnformatted(uint32_t block_idx, std::map<uint32_t, uint32_t> &movemap);
     uint32_t estimateTreeHeight();
     void recursivelyEnumerateNodes(uint32_t block_idx, std::vector<ReiserFs::tree_element> &tree) const;
+    /// creates list of leaves that point to blocks in specific basket
     void createLeafIndex();
     /// removes obsolete entries after block movement
     void updateLeafIndex();
