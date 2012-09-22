@@ -4,7 +4,7 @@
 #include <vector>
 #include <set>
 
-typedef std::map<uint32_t, uint32_t> movemap_t;
+typedef ReiserFs::movemap_t movemap_t;
 
 class Defrag {
 public:

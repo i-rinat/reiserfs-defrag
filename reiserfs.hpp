@@ -311,13 +311,14 @@ public:
         bool changed;
         std::set<uint32_t> leaves;
     };
+    typedef std::map<uint32_t, uint32_t> movemap_t;
 
     ReiserFs();
     ~ReiserFs();
     int open(const std::string &name, bool o_sync = true);
     void close();
     void moveBlock(uint32_t from, uint32_t to);
-    uint32_t moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap);
+    uint32_t moveMultipleBlocks(movemap_t &movemap);
     void dumpSuperblock();
     void useDataJournaling(bool use);
 
@@ -357,11 +358,11 @@ private:
 
     void readSuperblock();
     void writeSuperblock();
-    bool movemap_consistent(const std::map<uint32_t, uint32_t> &movemap);
+    bool movemap_consistent(const movemap_t &movemap);
     void collectLeafNodeIndices(uint32_t block_idx, std::vector<uint32_t> &lni);
-    void recursivelyMoveInternalNodes(uint32_t block_idx, std::map<uint32_t, uint32_t> &movemap,
+    void recursivelyMoveInternalNodes(uint32_t block_idx, movemap_t &movemap,
         uint32_t target_level);
-    void recursivelyMoveUnformatted(uint32_t block_idx, std::map<uint32_t, uint32_t> &movemap);
+    void recursivelyMoveUnformatted(uint32_t block_idx, movemap_t &movemap);
     uint32_t estimateTreeHeight();
     void recursivelyEnumerateNodes(uint32_t block_idx, std::vector<ReiserFs::tree_element> &tree) const;
     /// creates list of leaves that point to blocks in specific basket

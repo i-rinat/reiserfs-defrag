@@ -204,16 +204,16 @@ ReiserFs::updateLeafIndex()
 void
 ReiserFs::moveBlock(uint32_t from, uint32_t to)
 {
-    std::map<uint32_t, uint32_t> movemap;
+    movemap_t movemap;
     movemap[from] = to;
     this->moveMultipleBlocks (movemap);
 }
 
 bool
-ReiserFs::movemap_consistent(const std::map<uint32_t, uint32_t> &movemap)
+ReiserFs::movemap_consistent(const movemap_t &movemap)
 {
-    std::map<uint32_t, uint32_t> revmap;
-    std::map<uint32_t, uint32_t>::const_iterator mapiter;
+    movemap_t revmap;
+    movemap_t::const_iterator mapiter;
 
     for (mapiter = movemap.begin(); mapiter != movemap.end(); ++ mapiter) {
         // check if all 'from' blocks are occupied
@@ -266,7 +266,7 @@ ReiserFs::movemap_consistent(const std::map<uint32_t, uint32_t> &movemap)
 ///
 /// \return number of blocks moved
 uint32_t
-ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
+ReiserFs::moveMultipleBlocks(movemap_t &movemap)
 {
     if (! this->movemap_consistent(movemap)) {
         std::cerr << "error: movemap not consistent, " << this->err_string << std::endl;
@@ -335,7 +335,7 @@ ReiserFs::estimateTreeHeight()
 
 /// \brief moves internal nodes and leaves
 void
-ReiserFs::recursivelyMoveInternalNodes(uint32_t block_idx, std::map<uint32_t, uint32_t> &movemap,
+ReiserFs::recursivelyMoveInternalNodes(uint32_t block_idx, movemap_t &movemap,
     uint32_t target_level)
 {
     /* we reach node on target_level (>=2), move nodes which it refers (as
@@ -402,7 +402,7 @@ ReiserFs::recursivelyMoveInternalNodes(uint32_t block_idx, std::map<uint32_t, ui
 }
 
 void
-ReiserFs::recursivelyMoveUnformatted(uint32_t block_idx, std::map<uint32_t, uint32_t> &movemap)
+ReiserFs::recursivelyMoveUnformatted(uint32_t block_idx, movemap_t &movemap)
 {
     Block *block_obj = this->journal->readBlock(block_idx);
     uint32_t level = block_obj->level();
