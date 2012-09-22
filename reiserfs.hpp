@@ -319,7 +319,7 @@ public:
     int open(const std::string &name, bool o_sync = true);
     void close();
     void moveBlock(uint32_t from, uint32_t to);
-    uint32_t moveMultipleBlocks(movemap_t &movemap);
+    uint32_t moveMultipleBlocks(movemap_t &movemap, const struct Block::key &key = Block::zero_key);
     void dumpSuperblock();
     void useDataJournaling(bool use);
 
@@ -364,7 +364,8 @@ private:
     void collectLeafNodeIndices(uint32_t block_idx, std::vector<uint32_t> &lni);
     void recursivelyMoveInternalNodes(uint32_t block_idx, movemap_t &movemap,
         uint32_t target_level);
-    void recursivelyMoveUnformatted(uint32_t block_idx, movemap_t &movemap);
+    void recursivelyMoveUnformatted(uint32_t block_idx, movemap_t &movemap,
+                                    const struct Block::key &key = Block::zero_key);
     uint32_t estimateTreeHeight();
     void recursivelyEnumerateNodes(uint32_t block_idx, std::vector<ReiserFs::tree_element> &tree) const;
     /// creates list of leaves that point to blocks in specific basket
