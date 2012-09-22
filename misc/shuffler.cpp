@@ -20,14 +20,14 @@ main (int argc, char *argv[])
     std::vector<uint32_t> occupied_blocks;
 
     for (uint32_t k = 0; k < fs_size; k ++) {
-        if (fs.blockIsReserved(k)) continue;
+        if (fs.blockReserved(k)) continue;
         if (fs.blockUsed(k)) occupied_blocks.push_back(k);
         else free_blocks.push_back(k);
     }
     std::random_shuffle (free_blocks.begin(), free_blocks.end());
     std::random_shuffle (occupied_blocks.begin(), occupied_blocks.end());
 
-    std::map<uint32_t, uint32_t> movemap;
+    ReiserFs::movemap_t movemap;
 
     for(std::vector<uint32_t>::const_iterator
             from = occupied_blocks.begin(), to = free_blocks.begin();
