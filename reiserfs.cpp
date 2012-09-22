@@ -303,6 +303,8 @@ ReiserFs::moveMultipleBlocks(std::map<uint32_t, uint32_t> & movemap)
 
     // make cached transaction to flush on disk
     this->journal->flushTransactionCache();
+    // wipe obsolete entries out of leaf index
+    this->updateLeafIndex();
 
     return (this->blocks_moved_unformatted + this->blocks_moved_formatted);
 }
