@@ -365,6 +365,8 @@ private:
     uint32_t estimateTreeHeight();
     void recursivelyEnumerateNodes(uint32_t block_idx, std::vector<ReiserFs::tree_element> &tree) const;
     void createLeafIndex();
+    /// removes obsolete entries after block movement
+    void updateLeafIndex();
 };
 
 int readBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size);

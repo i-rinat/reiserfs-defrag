@@ -168,6 +168,40 @@ ReiserFs::createLeafIndex()
 }
 
 void
+ReiserFs::updateLeafIndex()
+{
+    for (uint32_t basket_id = 0; basket_id < this->leaf_index.size(); basket_id ++) {
+        leaf_index_entry &basket = this->leaf_index[basket_id];
+        if (not basket.changed)
+            continue;
+        std::set<uint32_t>::iterator leaf_iter;
+        for (leaf_iter = basket.leaves.begin(); leaf_iter != basket.leaves.end(); ++ leaf_iter) {
+            uint32_t block_idx = *leaf_iter;
+            Block *block_obj = this->journal->readBlock(block_idx, false);
+            bool leaf_has_link = false;
+            for (uint32_t item_id = 0; item_id < block_obj->itemCount(); item_id ++) {
+                const struct Block::item_header &ih = block_obj->itemHeader(item_id);
+                if (KEY_TYPE_INDIRECT != ih.type())
+                    continue;
+                for (int idx = 0; idx < ih.length/4; idx ++) {
+                    uint32_t target_idx = block_obj->indirectItemRef(ih.offset, idx);
+                    uint32_t target_basket = target_idx / this->leaf_index_granularity;
+                    if (target_basket == basket_id) {
+                        leaf_has_link = true;
+                        break;
+                    }
+                }
+                if (leaf_has_link) break;
+            }
+            this->journal->releaseBlock(block_obj);
+            if (not leaf_has_link) basket.leaves.erase(leaf_iter ++);
+            else ++leaf_iter;
+        }
+        basket.changed = false;
+    }
+}
+
+void
 ReiserFs::moveBlock(uint32_t from, uint32_t to)
 {
     std::map<uint32_t, uint32_t> movemap;
