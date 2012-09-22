@@ -515,6 +515,26 @@ ReiserFs::findFreeBlockBefore(uint32_t block_idx) const
     return 0;
 }
 
+void
+ReiserFs::getLeavesForBlockRange(std::vector<uint32_t> &leaves, uint32_t from, uint32_t to)
+{
+    // make sure parameters fit range
+    uint32_t fs_size = this->sizeInBlocks();
+    from = std::max(0u, std::min(from, fs_size - 1));
+    to = std::max(0u, std::min(to, fs_size - 1));
+
+    leaves.clear();
+    uint32_t basket_from = from / this->leaf_index_granularity;
+    uint32_t basket_to = to / this->leaf_index_granularity;
+
+    for (uint32_t basket_id = basket_from; basket_id <= basket_to; basket_id ++) {
+        leaves.insert(leaves.end(), this->leaf_index[basket_id].leaves.begin(),
+            this->leaf_index[basket_id].leaves.end());
+    }
+    std::sort(leaves.begin(), leaves.end());
+    leaves.erase(std::unique(leaves.begin(), leaves.end()), leaves.end());
+}
+
 bool
 ReiserFs::blockIsBitmap(uint32_t block_idx) const
 {
