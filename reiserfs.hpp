@@ -232,6 +232,7 @@ public:
         const struct item_header &ihpr = ihp[0];
         return ihpr;
     }
+    static const struct key zero_key;
 };
 
 class FsJournal {

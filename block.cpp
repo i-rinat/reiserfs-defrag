@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <assert.h>
 
+const struct Block::key Block::zero_key = {0u, 0u, 0u, 0u};
 
 Block::Block()
 {
