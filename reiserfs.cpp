@@ -174,8 +174,8 @@ ReiserFs::updateLeafIndex()
         leaf_index_entry &basket = this->leaf_index[basket_id];
         if (not basket.changed)
             continue;
-        std::set<uint32_t>::iterator leaf_iter;
-        for (leaf_iter = basket.leaves.begin(); leaf_iter != basket.leaves.end(); ++ leaf_iter) {
+        std::set<uint32_t>::iterator leaf_iter = basket.leaves.begin();
+        while (leaf_iter != basket.leaves.end()) {
             uint32_t block_idx = *leaf_iter;
             Block *block_obj = this->journal->readBlock(block_idx, false);
             bool leaf_has_link = false;
