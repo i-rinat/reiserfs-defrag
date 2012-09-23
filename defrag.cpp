@@ -45,7 +45,7 @@ Defrag::cleanupRegion(uint32_t from, uint32_t to)
     std::cout << "cleanRegion from " << from << " to " << to << std::endl;
     std::cout << "leaves len = " << leaves.size() << std::endl;
 
-    uint32_t free_idx = this->nextTargetBlock(to);
+    uint32_t free_idx = this->fs.findFreeBlockAfter(to);
     assert (free_idx != 0);
     movemap_t movemap;
     std::vector<struct Block::key> key_list;
@@ -61,7 +61,7 @@ Defrag::cleanupRegion(uint32_t from, uint32_t to)
                 uint32_t child_idx = block_obj->indirectItemRef(ih.offset, idx);
                 if (from <= child_idx && child_idx <= to) {
                     movemap[child_idx] = free_idx;
-                    free_idx = this->nextTargetBlock(free_idx);
+                    free_idx = this->fs.findFreeBlockAfter(free_idx);
                     assert (free_idx != 0);
                     take_this_leaf = true;
                 }
