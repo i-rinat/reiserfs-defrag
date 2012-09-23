@@ -181,6 +181,10 @@ public:
             return dir_id == b.dir_id && obj_id == b.obj_id && offset_type_1 == b.offset_type_1
                 && offset_type_2 == b.offset_type_2;
         }
+        bool operator != (const key& b) const {
+            return dir_id != b.dir_id || obj_id != b.obj_id || offset_type_1 != b.offset_type_1
+                || offset_type_2 != b.offset_type_2;
+        }
         bool operator >= (const key& b) const { return (*this > b) || (*this == b); }
         bool operator <= (const key& b) const { return (*this < b) || (*this == b); }
 
