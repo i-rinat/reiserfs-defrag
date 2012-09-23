@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <assert.h>
 
 #define RFSD_OK     0
 #define RFSD_FAIL   -1
@@ -147,6 +148,41 @@ public:
         uint32_t obj_id;
         uint32_t offset_type_1;
         uint32_t offset_type_2;
+
+        bool operator < (const key& b) const {
+            if (dir_id < b.dir_id) return true;
+            if (dir_id > b.dir_id) return false;
+            //  dir_id == b.dir_id
+            if (obj_id < b.obj_id) return true;
+            if (obj_id > b.obj_id) return false;
+            // obj_id == b.obj_id
+            if (offset_v1() < b.offset_v1()) return true;
+            if (offset_v1() > b.offset_v1()) return false;
+            // offset_v1() == b.offset_v1()
+            assert (type_v1() == b.type_v1()); // should reach here only when keys are equal
+            if (type_v1() < b.type_v1()) return true;
+            return false;
+        }
+        bool operator > (const key& b) const {
+            if (dir_id > b.dir_id) return true;
+            if (dir_id < b.dir_id) return false;
+            //  dir_id == b.dir_id
+            if (obj_id > b.obj_id) return true;
+            if (obj_id < b.obj_id) return false;
+            // obj_id == b.obj_id
+            if (offset_v1() > b.offset_v1()) return true;
+            if (offset_v1() < b.offset_v1()) return false;
+            // offset_v1() == b.offset_v1()
+            assert (type_v1() == b.type_v1()); // should reach here only when keys are equal
+            if (type_v1() > b.type_v1()) return true;
+            return false;
+        }
+        bool operator == (const key& b) const {
+            return dir_id == b.dir_id && obj_id == b.obj_id && offset_type_1 == b.offset_type_1
+                && offset_type_2 == b.offset_type_2;
+        }
+        bool operator >= (const key& b) const { return (*this > b) || (*this == b); }
+        bool operator <= (const key& b) const { return (*this < b) || (*this == b); }
 
         uint32_t offset_v0() const { return offset_type_1; }
         uint64_t offset_v1() const {
