@@ -402,8 +402,7 @@ ReiserFs::recursivelyMoveInternalNodes(uint32_t block_idx, movemap_t &movemap,
 }
 
 void
-ReiserFs::recursivelyMoveUnformatted(uint32_t block_idx, movemap_t &movemap,
-                                        const struct Block::key &key)
+ReiserFs::recursivelyMoveUnformatted(uint32_t block_idx, movemap_t &movemap)
 {
     Block *block_obj = this->journal->readBlock(block_idx);
     uint32_t level = block_obj->level();
