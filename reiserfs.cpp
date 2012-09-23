@@ -479,6 +479,8 @@ ReiserFs::recursivelyMoveUnformatted(uint32_t block_idx, movemap_t &movemap,
             // indirect items contain links to unformatted (data) blocks
             if (KEY_TYPE_INDIRECT != ih.type())
                 continue;
+            if (ih.key != key)
+                continue;
             for (int idx = 0; idx < ih.length/4; idx ++) {
                 uint32_t child_idx = block_obj->indirectItemRef(ih.offset, idx);
                 if (movemap.count(child_idx) == 0) continue;
