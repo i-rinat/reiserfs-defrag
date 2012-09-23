@@ -60,6 +60,7 @@ Defrag::cleanupRegion(uint32_t from, uint32_t to)
                 uint32_t child_idx = block_obj->indirectItemRef(ih.offset, idx);
                 if (from <= child_idx && child_idx <= to) {
                     movemap[child_idx] = free_idx;
+                    free_idx = this->nextTargetBlock(free_idx);
                     take_this_leaf = true;
                 }
             }
