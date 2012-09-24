@@ -137,6 +137,47 @@ ReiserFs::close()
 }
 
 void
+ReiserFs::cleanupRegionMoveDataDown(uint32_t from, uint32_t to)
+{
+    std::vector<uint32_t> leaves;
+    this->getLeavesForBlockRange(leaves, from, to);
+    std::cout << "cleanRegion from " << from << " to " << to << std::endl;
+    std::cout << "leaves len = " << leaves.size() << std::endl;
+
+    uint32_t free_idx = this->findFreeBlockAfter(to);
+    assert (free_idx != 0);
+    movemap_t movemap;
+    std::set<struct Block::key> key_list;
+    for (uint32_t k = 0; k < leaves.size(); k ++) {
+        uint32_t leaf_idx = leaves[k];
+        Block *block_obj = this->journal->readBlock(leaf_idx);
+        movemap.clear();
+        key_list.clear();
+        for (uint32_t item_idx = 0; item_idx < block_obj->itemCount(); item_idx ++) {
+            const Block::item_header &ih = block_obj->itemHeader(item_idx);
+            if (KEY_TYPE_INDIRECT != ih.type())
+                continue;
+            bool use_key = false;
+            for (uint32_t idx = 0; idx < ih.length/4; idx ++) {
+                uint32_t child_idx = block_obj->indirectItemRef(ih.offset, idx);
+                if (from <= child_idx && child_idx <= to) {
+                    movemap[child_idx] = free_idx;
+                    free_idx = this->findFreeBlockAfter(free_idx);
+                    assert (free_idx != 0);
+                    use_key = true;
+                }
+            }
+            if (use_key) {
+                key_list.insert(ih.key);
+            }
+        }
+        this->journal->releaseBlock(block_obj);
+        this->leafContentMoveUnformatted(leaf_idx, movemap, key_list);
+    }
+    this->journal->flushTransactionCache();
+}
+
+void
 ReiserFs::createLeafIndex()
 {
     uint32_t basket_count = (this->sizeInBlocks() - 1) / this->leaf_index_granularity + 1;

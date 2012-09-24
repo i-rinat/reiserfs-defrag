@@ -38,51 +38,9 @@ Defrag::setSizeLimit(uint32_t size_limit)
 }
 
 void
-Defrag::cleanupRegion(uint32_t from, uint32_t to)
-{
-    std::vector<uint32_t> leaves;
-    this->fs.getLeavesForBlockRange(leaves, from, to);
-    std::cout << "cleanRegion from " << from << " to " << to << std::endl;
-    std::cout << "leaves len = " << leaves.size() << std::endl;
-
-    uint32_t free_idx = this->fs.findFreeBlockAfter(to);
-    assert (free_idx != 0);
-    movemap_t movemap;
-    std::vector<struct Block::key> key_list;
-    for (uint32_t k = 0; k < leaves.size(); k ++) {
-        uint32_t leaf_idx = leaves[k];
-        Block *block_obj = this->fs.readBlock(leaf_idx);
-        for (uint32_t item_idx = 0; item_idx < block_obj->itemCount(); item_idx ++) {
-            const Block::item_header &ih = block_obj->itemHeader(item_idx);
-            if (KEY_TYPE_INDIRECT != ih.type())
-                continue;
-            bool take_this_leaf = false;
-            for (uint32_t idx = 0; idx < ih.length/4; idx ++) {
-                uint32_t child_idx = block_obj->indirectItemRef(ih.offset, idx);
-                if (from <= child_idx && child_idx <= to) {
-                    movemap[child_idx] = free_idx;
-                    free_idx = this->fs.findFreeBlockAfter(free_idx);
-                    assert (free_idx != 0);
-                    take_this_leaf = true;
-                }
-            }
-            if (take_this_leaf) {
-                key_list.push_back(ih.key);
-            }
-        }
-        this->fs.releaseBlock(block_obj);
-    }
-
-    for (uint32_t k = 0; k < key_list.size(); k ++) {
-        key_list[k].dump_v1(std::cout, true);
-    }
-
-}
-
-void
 Defrag::treeThroughDefrag()
 {
-    cleanupRegion(0, 32767);
+    this->fs.cleanupRegionMoveDataDown(0, 32767);
 }
 
 uint32_t
