@@ -407,9 +407,6 @@ private:
         uint32_t target_level);
     /// traverses tree, moves unformatted blocks
     void recursivelyMoveUnformatted(uint32_t block_idx, movemap_t &movemap);
-    /// traverses tree, moves unformatted blocks of only those items that have key equal to @key
-    void recursivelyMoveUnformatted(uint32_t block_idx, movemap_t &movemap,
-                                    const struct Block::key &key);
     uint32_t estimateTreeHeight();
     void recursivelyEnumerateNodes(uint32_t block_idx, std::vector<ReiserFs::tree_element> &tree) const;
     /// creates list of leaves that point to blocks in specific basket
