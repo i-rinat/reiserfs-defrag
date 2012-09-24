@@ -522,6 +522,52 @@ ReiserFs::recursivelyMoveUnformatted(uint32_t block_idx, movemap_t &movemap,
 }
 
 void
+ReiserFs::leafContentMoveUnformatted(uint32_t block_idx, movemap_t &movemap, const std::set<struct Block::key> &key_list)
+{
+    Block *block_obj = this->journal->readBlock(block_idx);
+    this->journal->beginTransaction();
+    for (uint32_t k = 0; k < block_obj->itemCount(); k ++) {
+        const struct Block::item_header &ih = block_obj->itemHeader(k);
+        // indirect items contain links to unformatted (data) blocks
+        if (KEY_TYPE_INDIRECT != ih.type())
+            continue;
+        if (key_list.count(ih.key) == 0)
+            continue;
+        for (int idx = 0; idx < ih.length/4; idx ++) {
+            uint32_t child_idx = block_obj->indirectItemRef(ih.offset, idx);
+            if (movemap.count(child_idx) == 0) continue;
+            // update pointers in indirect item
+            block_obj->setIndirectItemRef(ih.offset, idx, movemap[child_idx]);
+            // actually move block
+            bool should_journal_data = this->use_data_journaling;
+            this->journal->moveRawBlock(child_idx, movemap[child_idx], should_journal_data);
+            this->blocks_moved_unformatted ++;
+            // update bitmap
+            this->bitmap->markBlockFree(child_idx);
+            this->bitmap->markBlockUsed(movemap[child_idx]);
+            // if transaction becomes too large, divide it into smaller ones
+            if (this->journal->estimateTransactionSize() > 100) {
+                if (block_obj->dirty)
+                    this->journal->writeBlock(block_obj);
+                this->bitmap->writeChangedBitmapBlocks();
+                this->journal->commitTransaction();
+                this->journal->beginTransaction();
+            }
+            // update in-memory leaf index
+            uint32_t new_basket_id = movemap[child_idx] / this->leaf_index_granularity;
+            uint32_t old_basket_id = child_idx / this->leaf_index_granularity;
+            this->leaf_index[new_basket_id].leaves.insert(block_idx);
+            this->leaf_index[new_basket_id].changed = true;
+            this->leaf_index[old_basket_id].changed = true;
+            movemap.erase(child_idx);
+        }
+    }
+    this->journal->releaseBlock(block_obj);
+    this->bitmap->writeChangedBitmapBlocks();
+    this->journal->commitTransaction();
+}
+
+void
 ReiserFs::collectLeafNodeIndices(uint32_t block_idx, std::vector<uint32_t> &lni)
 {
     Block *block_obj = this->journal->readBlock(block_idx);

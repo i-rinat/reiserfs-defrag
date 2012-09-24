@@ -415,6 +415,13 @@ private:
     void createLeafIndex();
     /// removes obsolete entries after block movement
     void updateLeafIndex();
+
+    /// move unformatted blocks of specific leaf
+    ///
+    /// permorm move of unformatted data blocks provided in @movemap from leaf specified by
+    /// @block_idx. Takes @key_list as mandatory hint
+    void leafContentMoveUnformatted(uint32_t block_idx, movemap_t &movemap,
+        const std::set<struct Block::key> &key_list);
 };
 
 int readBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size);
