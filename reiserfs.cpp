@@ -308,7 +308,7 @@ ReiserFs::movemap_consistent(const movemap_t &movemap)
 ///
 /// \return number of blocks moved
 uint32_t
-ReiserFs::moveMultipleBlocks(movemap_t &movemap)
+ReiserFs::moveMultipleBlocks(movemap_t &movemap, bool ignore_unformatted)
 {
     if (! this->movemap_consistent(movemap)) {
         std::cerr << "error: movemap not consistent, " << this->err_string << std::endl;
@@ -321,7 +321,8 @@ ReiserFs::moveMultipleBlocks(movemap_t &movemap)
     this->blocks_moved_unformatted = 0;
 
     // first, move unformatted blocks
-    this->recursivelyMoveUnformatted(this->sb.s_root_block, movemap);
+    if (not ignore_unformatted)
+        this->recursivelyMoveUnformatted(this->sb.s_root_block, movemap);
 
     // then move internal nodes, from layer 2 to sb.s_tree_height
     for (uint32_t t_level = TREE_LEVEL_LEAF + 1; t_level <= tree_height; t_level ++)
