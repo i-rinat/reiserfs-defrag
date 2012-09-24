@@ -376,7 +376,6 @@ public:
     std::vector<tree_element> *enumerateTree() const;
     /// move movable blocks of range [ @from, @to] (borders included) below @to
     void cleanupRegionMoveDataDown(uint32_t from, uint32_t to);
-    void getLeavesForBlockRange(std::vector<uint32_t> &leaves, uint32_t from, uint32_t to);
 
     /// checks if block is bitmap
     bool blockIsBitmap(uint32_t block_idx) const;
@@ -424,6 +423,7 @@ private:
     /// @block_idx. Takes @key_list as mandatory hint
     void leafContentMoveUnformatted(uint32_t block_idx, movemap_t &movemap,
         const std::set<struct Block::key> &key_list);
+    void getLeavesForBlockRange(std::vector<uint32_t> &leaves, uint32_t from, uint32_t to);
 };
 
 int readBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size);
