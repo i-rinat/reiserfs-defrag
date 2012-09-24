@@ -144,6 +144,7 @@ ReiserFs::cleanupRegionMoveDataDown(uint32_t from, uint32_t to)
     std::cout << "cleanRegion from " << from << " to " << to << std::endl;
     std::cout << "leaves len = " << leaves.size() << std::endl;
 
+    // move unformatted
     uint32_t free_idx = this->findFreeBlockAfter(to);
     assert (free_idx != 0);
     movemap_t movemap;
@@ -175,7 +176,20 @@ ReiserFs::cleanupRegionMoveDataDown(uint32_t from, uint32_t to)
         this->leafContentMoveUnformatted(leaf_idx, movemap, key_list);
         assert (movemap.size() == 0);
     }
+
+    // now, when unformatted blocks moved, time to move tree nodes
+    // create movemap
+    movemap.clear();
+    for (uint32_t c_idx = from; c_idx <= to; c_idx ++) {
+        if (this->blockReserved(c_idx)) continue;
+        if (not this->bitmap->blockUsed(c_idx)) continue;
+        movemap[c_idx] = free_idx;
+        free_idx = this->findFreeBlockAfter(free_idx);
+        assert (free_idx != 0);
+    }
+    this->moveMultipleBlocks(movemap, true); // move only tree nodes, should be fast
     this->journal->flushTransactionCache();
+    this->updateLeafIndex();
 }
 
 void
