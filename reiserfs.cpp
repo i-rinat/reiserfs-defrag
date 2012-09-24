@@ -173,6 +173,7 @@ ReiserFs::cleanupRegionMoveDataDown(uint32_t from, uint32_t to)
         }
         this->journal->releaseBlock(block_obj);
         this->leafContentMoveUnformatted(leaf_idx, movemap, key_list);
+        assert (movemap.size() == 0);
     }
     this->journal->flushTransactionCache();
 }
