@@ -373,7 +373,7 @@ public:
     bool blockUsed(uint32_t block_idx) const { return this->bitmap->blockUsed(block_idx); }
     uint32_t sizeInBlocks() const { return this->sb.s_block_count; }
     void looseWalkTree();
-    std::vector<tree_element> *enumerateTree() const;
+    void enumerateTree(std::vector<tree_element> &tree, bool only_internal_nodes = false) const;
     /// move movable blocks of range [ @from, @to] (borders included) below @to
     void cleanupRegionMoveDataDown(uint32_t from, uint32_t to);
 
@@ -408,7 +408,8 @@ private:
     /// traverses tree, moves unformatted blocks
     void recursivelyMoveUnformatted(uint32_t block_idx, movemap_t &movemap);
     uint32_t estimateTreeHeight();
-    void recursivelyEnumerateNodes(uint32_t block_idx, std::vector<ReiserFs::tree_element> &tree) const;
+    void recursivelyEnumerateNodes(uint32_t block_idx, std::vector<ReiserFs::tree_element> &tree,
+                                   bool only_internal_nodes = false) const;
     /// creates list of leaves that point to blocks in specific basket
     void createLeafIndex();
     /// removes obsolete entries after block movement

@@ -56,14 +56,15 @@ Defrag::nextTargetBlock(uint32_t previous)
 void
 Defrag::createLargeScaleMovemap()
 {
-    std::vector<ReiserFs::tree_element> *tree = this->fs.enumerateTree();
+    std::vector<ReiserFs::tree_element> tree;
     std::vector<ReiserFs::tree_element>::const_iterator iter;
 
     uint32_t free_idx = 0;
     this->movemap.clear();
+    this->fs.enumerateTree(tree);
 
     // move all internal nodes to beginning of partition
-    for (iter = tree->begin(); iter != tree->end(); ++ iter) {
+    for (iter = tree.begin(); iter != tree.end(); ++ iter) {
         if (iter->type == BLOCKTYPE_INTERNAL) {
             free_idx = this->nextTargetBlock(free_idx);
             assert (free_idx != 0);
@@ -74,7 +75,7 @@ Defrag::createLargeScaleMovemap()
         }
     }
 
-    for (iter = tree->begin(); iter != tree->end() && movemap.size() < this->size_limit; ++ iter) {
+    for (iter = tree.begin(); iter != tree.end() && movemap.size() < this->size_limit; ++ iter) {
         if (iter->type == BLOCKTYPE_LEAF) {
             free_idx = this->nextTargetBlock(free_idx);
             assert (free_idx != 0);
@@ -102,7 +103,6 @@ Defrag::createLargeScaleMovemap()
             this->fs.releaseBlock(block_obj);
         }
     }
-    delete tree;
 }
 
 uint32_t

@@ -678,7 +678,8 @@ ReiserFs::blockReserved(uint32_t block_idx) const
 }
 
 void
-ReiserFs::recursivelyEnumerateNodes(uint32_t block_idx, std::vector<ReiserFs::tree_element> &tree) const
+ReiserFs::recursivelyEnumerateNodes(uint32_t block_idx, std::vector<ReiserFs::tree_element> &tree,
+                                    bool only_internal_nodes) const
 {
     Block *block_obj = this->journal->readBlock(block_idx);
     uint32_t level = block_obj->level();
@@ -693,17 +694,16 @@ ReiserFs::recursivelyEnumerateNodes(uint32_t block_idx, std::vector<ReiserFs::tr
         }
     } else {
         // leaf level
-        te.type = BLOCKTYPE_LEAF;
-        tree.push_back(te);
+        if (not only_internal_nodes) {
+            te.type = BLOCKTYPE_LEAF;
+            tree.push_back(te);
+        }
     }
     this->journal->releaseBlock(block_obj);
 }
 
-std::vector<ReiserFs::tree_element> *
-ReiserFs::enumerateTree() const
+void
+ReiserFs::enumerateTree(std::vector<tree_element> &tree, bool only_internal_nodes) const
 {
-    std::vector<ReiserFs::tree_element> *tree = new std::vector<ReiserFs::tree_element>;
-
-    this->recursivelyEnumerateNodes(this->sb.s_root_block, *tree);
-    return tree;
+    this->recursivelyEnumerateNodes(this->sb.s_root_block, tree, only_internal_nodes);
 }
