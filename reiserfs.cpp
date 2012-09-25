@@ -148,7 +148,7 @@ ReiserFs::cleanupRegionMoveDataDown(uint32_t from, uint32_t to)
     uint32_t free_idx = this->findFreeBlockAfter(to);
     assert (free_idx != 0);
     movemap_t movemap;
-    std::set<struct Block::key> key_list;
+    std::set<Block::key_t> key_list;
     for (uint32_t k = 0; k < leaves.size(); k ++) {
         uint32_t leaf_idx = leaves[k];
         Block *block_obj = this->journal->readBlock(leaf_idx);
@@ -505,7 +505,8 @@ ReiserFs::recursivelyMoveUnformatted(uint32_t block_idx, movemap_t &movemap)
 }
 
 void
-ReiserFs::leafContentMoveUnformatted(uint32_t block_idx, movemap_t &movemap, const std::set<struct Block::key> &key_list)
+ReiserFs::leafContentMoveUnformatted(uint32_t block_idx, movemap_t &movemap,
+                                     const std::set<Block::key_t> &key_list)
 {
     Block *block_obj = this->journal->readBlock(block_idx);
     this->journal->beginTransaction();

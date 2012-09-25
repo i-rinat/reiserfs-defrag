@@ -143,13 +143,13 @@ public:
     } __attribute__ ((__packed__));
 
     // reiserfs key, 3.5 (v0) and 3.6 (v1) formats
-    struct key {
+    struct key_struct {
         uint32_t dir_id;
         uint32_t obj_id;
         uint32_t offset_type_1;
         uint32_t offset_type_2;
 
-        bool operator < (const key& b) const {
+        bool operator < (const struct key_struct& b) const {
             if (dir_id < b.dir_id) return true;
             if (dir_id > b.dir_id) return false;
             //  dir_id == b.dir_id
@@ -163,7 +163,7 @@ public:
             if (type_v1() < b.type_v1()) return true;
             return false;
         }
-        bool operator > (const key& b) const {
+        bool operator > (const struct key_struct& b) const {
             if (dir_id > b.dir_id) return true;
             if (dir_id < b.dir_id) return false;
             //  dir_id == b.dir_id
@@ -177,16 +177,16 @@ public:
             if (type_v1() > b.type_v1()) return true;
             return false;
         }
-        bool operator == (const key& b) const {
+        bool operator == (const struct key_struct& b) const {
             return dir_id == b.dir_id && obj_id == b.obj_id && offset_type_1 == b.offset_type_1
                 && offset_type_2 == b.offset_type_2;
         }
-        bool operator != (const key& b) const {
+        bool operator != (const struct key_struct& b) const {
             return dir_id != b.dir_id || obj_id != b.obj_id || offset_type_1 != b.offset_type_1
                 || offset_type_2 != b.offset_type_2;
         }
-        bool operator >= (const key& b) const { return (*this > b) || (*this == b); }
-        bool operator <= (const key& b) const { return (*this < b) || (*this == b); }
+        bool operator >= (const struct key_struct& b) const { return (*this > b) || (*this == b); }
+        bool operator <= (const struct key_struct& b) const { return (*this < b) || (*this == b); }
 
         uint32_t offset_v0() const { return offset_type_1; }
         uint64_t offset_v1() const {
@@ -233,6 +233,7 @@ public:
 
         }
     } __attribute__ ((__packed__));
+    typedef struct key_struct key_t;
 
     struct tree_ptr {
         uint32_t block;
@@ -241,7 +242,7 @@ public:
     } __attribute__ ((__packed__));
 
     struct item_header {
-        struct key key;
+        key_t key;
         uint16_t count;
         uint16_t length;
         uint16_t offset;
@@ -249,9 +250,9 @@ public:
         int type() const { return this->key.type(this->version); }
     } __attribute__ ((__packed__));
 
-    const struct key &key(uint32_t index) const {
-        const struct key *kp = reinterpret_cast<const struct key *>(&buf[0] + 24 + 16*index);
-        const struct key &kpr = kp[0];
+    const key_t &key(uint32_t index) const {
+        const key_t *kp = reinterpret_cast<const key_t *>(&buf[0] + 24 + 16*index);
+        const key_t &kpr = kp[0];
         return kpr;
     }
     const struct tree_ptr &ptr(uint32_t index) const {
@@ -272,7 +273,7 @@ public:
         const struct item_header &ihpr = ihp[0];
         return ihpr;
     }
-    static const struct key zero_key;
+    static const key_t zero_key;
 };
 
 class FsJournal {
@@ -419,7 +420,7 @@ private:
     /// permorm move of unformatted data blocks provided in @movemap from leaf specified by
     /// @block_idx. Takes @key_list as mandatory hint
     void leafContentMoveUnformatted(uint32_t block_idx, movemap_t &movemap,
-        const std::set<struct Block::key> &key_list);
+                                    const std::set<Block::key_t> &key_list);
     void getLeavesForBlockRange(std::vector<uint32_t> &leaves, uint32_t from, uint32_t to);
 };
 
