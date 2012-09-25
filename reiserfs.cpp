@@ -700,3 +700,39 @@ ReiserFs::enumerateTree(std::vector<tree_element> &tree, bool only_internal_node
 {
     this->recursivelyEnumerateNodes(this->sb.s_root_block, tree, only_internal_nodes);
 }
+
+void
+ReiserFs::recursivelyEnumerateLeaves(uint32_t block_idx, const Block::key_t &start_key,
+                                     int soft_threshold,
+                                     std::vector<uint32_t> &leaves,
+                                     Block::key_t &last_key) const
+{
+    Block *block_obj = this->journal->readBlock(block_idx);
+    uint32_t level = block_obj->level();
+    if (level > TREE_LEVEL_LEAF) {
+        // internal node
+        for (uint32_t k = 0; k < block_obj->keyCount(); k ++) {
+            if (start_key < block_obj->key(k)) {
+                this->recursivelyEnumerateLeaves(block_obj->ptr(k).block, start_key, soft_threshold,
+                                                 leaves, last_key);
+            }
+        }
+    } else {
+        // leaf
+
+    }
+
+    this->journal->releaseBlock(block_obj);
+
+    //WIP
+}
+
+void
+ReiserFs::enumerateLeaves(const Block::key_t &start_key, int soft_threshold,
+                          std::vector<uint32_t> &leaves, Block::key_t &last_key) const
+{
+    last_key = start_key;
+    leaves.clear();
+    this->recursivelyEnumerateLeaves(this->sb.s_root_block, start_key, soft_threshold,
+                                     leaves, last_key);
+}

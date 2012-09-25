@@ -374,6 +374,15 @@ public:
     uint32_t sizeInBlocks() const { return this->sb.s_block_count; }
     void looseWalkTree();
     void enumerateTree(std::vector<tree_element> &tree, bool only_internal_nodes = false) const;
+
+    /// walk tree, collecting leaves
+    ///
+    /// traverse tree from @start_key, stop walking after getting @soft_threshold blocks
+    /// (both leaves and unformatted). Returns vector of pointers to leaves in @leaves and
+    /// key of last element in last leaf in @last_key
+    void enumerateLeaves(const Block::key_t &start_key, int soft_threshold,
+                         std::vector<uint32_t> &leaves, Block::key_t &last_key) const;
+
     /// move movable blocks of range [ @from, @to] (borders included) below @to
     void cleanupRegionMoveDataDown(uint32_t from, uint32_t to);
 
@@ -410,6 +419,9 @@ private:
     uint32_t estimateTreeHeight();
     void recursivelyEnumerateNodes(uint32_t block_idx, std::vector<ReiserFs::tree_element> &tree,
                                    bool only_internal_nodes = false) const;
+    void recursivelyEnumerateLeaves(uint32_t block_idx, const Block::key_t &start_key,
+                                    int soft_threshold, std::vector<uint32_t> &leaves,
+                                    Block::key_t &last_key) const;
     /// creates list of leaves that point to blocks in specific basket
     void createLeafIndex();
     /// removes obsolete entries after block movement
