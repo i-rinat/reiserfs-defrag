@@ -358,7 +358,6 @@ public:
     ~ReiserFs();
     int open(const std::string &name, bool o_sync = true);
     void close();
-    void moveBlock(uint32_t from, uint32_t to);
     uint32_t moveMultipleBlocks(movemap_t &movemap, bool ignore_unformatted = false);
     void dumpSuperblock();
     void useDataJournaling(bool use);

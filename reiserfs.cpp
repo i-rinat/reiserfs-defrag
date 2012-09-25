@@ -257,14 +257,6 @@ ReiserFs::updateLeafIndex()
     }
 }
 
-void
-ReiserFs::moveBlock(uint32_t from, uint32_t to)
-{
-    movemap_t movemap;
-    movemap[from] = to;
-    this->moveMultipleBlocks (movemap);
-}
-
 bool
 ReiserFs::movemap_consistent(const movemap_t &movemap)
 {
