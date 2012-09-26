@@ -42,7 +42,48 @@ Defrag::setSizeLimit(uint32_t size_limit)
 void
 Defrag::treeThroughDefrag(uint32_t batch_size)
 {
-    this->fs.cleanupRegionMoveDataDown(0, 32767);
+    std::vector<uint32_t> leaves;
+    movemap_t movemap;
+    Block::key_t last_key;
+    Block::key_t start_key = Block::zero_key;
+    uint32_t free_idx = this->nextTargetBlock(0);
+    assert (free_idx != 0);
+
+    // compute max batch size. Should reserve leaf block, with largest indirect item
+    // (1012 pointers), plus leaf block itself, plus one block (prevent free_idx becoming zero)
+    uint32_t max_batch_size = this->fs.freeBlockCount() - 1012 - 1 - 1;
+
+    if (batch_size > max_batch_size)
+        batch_size = max_batch_size;
+    std::cout << "batch size = " << batch_size << " blocks" << std::endl;
+    if (batch_size < 32) {
+        std::cout << "batch_size too small" << std::endl;
+        return;
+    }
+
+    while (1) {
+        std::cout << "--------------------------------------" << std::endl;
+        this->fs.enumerateLeaves(start_key, batch_size, leaves, last_key);
+        if (leaves.size() == 0)     // nothing left
+            break;
+        uint32_t old_free_idx = free_idx;
+        this->createMovemapFromListOfLeaves(movemap, leaves, free_idx);
+        if (movemap.size() == 0) {
+            start_key = last_key;
+            continue;
+        }
+        this->fs.cleanupRegionMoveDataDown(old_free_idx, free_idx - 1);
+
+        free_idx = old_free_idx;
+        this->fs.enumerateLeaves(start_key, batch_size, leaves, last_key);
+        if (leaves.size() == 0)     // nothing left
+            break;
+        this->createMovemapFromListOfLeaves(movemap, leaves, free_idx);
+        std::cout << "movemap size = " << movemap.size() << std::endl;
+        this->fs.moveBlocks(movemap);
+        start_key = last_key;
+    }
+    std::cout << "data moving complete" << std::endl;
 }
 
 void
