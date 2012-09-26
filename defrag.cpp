@@ -11,7 +11,7 @@ public:
     Defrag (ReiserFs &fs);
     void setSizeLimit(uint32_t size_limit);
     void simpleDefragWithPreclean();
-    void treeThroughDefrag();
+    void treeThroughDefrag(uint32_t batch_size = 16000);
 
 private:
     ReiserFs &fs;
@@ -40,7 +40,7 @@ Defrag::setSizeLimit(uint32_t size_limit)
 }
 
 void
-Defrag::treeThroughDefrag()
+Defrag::treeThroughDefrag(uint32_t batch_size)
 {
     this->fs.cleanupRegionMoveDataDown(0, 32767);
 }
