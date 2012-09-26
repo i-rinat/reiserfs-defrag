@@ -724,19 +724,16 @@ ReiserFs::recursivelyEnumerateLeaves(uint32_t block_idx, const Block::key_t &sta
     } else {
         // leaf
         soft_threshold --; // count leaf block itself
-        bool include_leaf = false;
         for (uint32_t item_idx = 0; item_idx < block_obj->itemCount(); item_idx ++) {
             const Block::item_header &ih = block_obj->itemHeader(item_idx);
             if (KEY_TYPE_INDIRECT != ih.type())
                 continue;
             if (ih.key > start_key) {
-                include_leaf = true;
                 soft_threshold -= ih.length / 4; // decrease by number of unformatted blocks
                 last_key = ih.key;  // and update last_key
             }
         }
-        if (include_leaf)
-            leaves.push_back(block_idx);
+        leaves.push_back(block_idx);
     }
 
     this->journal->releaseBlock(block_obj);
