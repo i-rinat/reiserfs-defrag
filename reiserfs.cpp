@@ -744,9 +744,8 @@ ReiserFs::recursivelyEnumerateLeaves(uint32_t block_idx, const Block::key_t &sta
                 this->recursivelyEnumerateLeaves(block_obj->ptr(k).block, start_key, soft_threshold,
                                                  new_left, new_right, leaves, last_key);
                 if (soft_threshold < 0)
-                    return;
+                    break;
             }
-
         }
     } else {
         // leaf
