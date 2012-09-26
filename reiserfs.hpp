@@ -364,6 +364,7 @@ public:
     uint32_t moveBlocks(movemap_t &movemap);
     void dumpSuperblock();
     void useDataJournaling(bool use);
+    uint32_t freeBlockCount() const;
 
     // proxies for FsJournal methods
     Block* readBlock(uint32_t block) const;

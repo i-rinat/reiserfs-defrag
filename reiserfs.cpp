@@ -642,6 +642,12 @@ ReiserFs::findFreeBlockBefore(uint32_t block_idx) const
     return 0;
 }
 
+uint32_t
+ReiserFs::freeBlockCount() const
+{
+    return this->sb.s_free_blocks;
+}
+
 void
 ReiserFs::getLeavesForBlockRange(std::vector<uint32_t> &leaves, uint32_t from, uint32_t to)
 {
