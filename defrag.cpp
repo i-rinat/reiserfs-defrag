@@ -21,6 +21,8 @@ private:
 
     uint32_t nextTargetBlock(uint32_t previous);
     void createLargeScaleMovemap();
+    void createMovemapFromListOfLeaves(movemap_t &movemap, const std::vector<uint32_t> &leaves,
+                                       uint32_t &free_idx);
     uint32_t removeDegenerateEntries();
     void extractCleanMoves();
     void cleanupRegion(uint32_t from, uint32_t to);
@@ -41,6 +43,34 @@ void
 Defrag::treeThroughDefrag()
 {
     this->fs.cleanupRegionMoveDataDown(0, 32767);
+}
+
+void
+Defrag::createMovemapFromListOfLeaves(movemap_t &movemap, const std::vector<uint32_t> &leaves,
+                                      uint32_t &free_idx)
+{
+    movemap.clear();
+    for (std::vector<uint32_t>::const_iterator it = leaves.begin(); it != leaves.end(); ++ it) {
+        uint32_t leaf_idx = *it;
+        if (leaf_idx != free_idx)
+            movemap[leaf_idx] = free_idx;
+        free_idx = this->nextTargetBlock(free_idx);
+        assert (free_idx != 0);
+        Block *block_obj = this->fs.readBlock(leaf_idx);
+        for (uint32_t item_idx = 0; item_idx < block_obj->itemCount(); item_idx ++) {
+            const Block::item_header &ih = block_obj->itemHeader(item_idx);
+            if (KEY_TYPE_INDIRECT != ih.type())
+                continue;
+            for (uint32_t idx = 0; idx < ih.length / 4; idx ++) {
+                uint32_t child_idx = block_obj->indirectItemRef(ih.offset, idx);
+                if (child_idx != free_idx)
+                    movemap[child_idx] = free_idx;
+                free_idx = this->nextTargetBlock(free_idx);
+                assert (free_idx != 0);
+            }
+        }
+        this->fs.releaseBlock(block_obj);
+    }
 }
 
 uint32_t
