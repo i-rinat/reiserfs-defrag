@@ -274,6 +274,7 @@ public:
         return ihpr;
     }
     static const key_t zero_key;
+    static const key_t largest_key;
 };
 
 class FsJournal {
