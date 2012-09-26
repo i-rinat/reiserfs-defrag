@@ -448,6 +448,7 @@ private:
     void leafContentMoveUnformatted(uint32_t block_idx, const movemap_t &movemap,
                                     const std::set<Block::key_t> &key_list);
     void getLeavesForBlockRange(std::vector<uint32_t> &leaves, uint32_t from, uint32_t to);
+    void getLeavesForMovemap(std::vector<uint32_t> &leaves, const movemap_t &movemap);
 };
 
 int readBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size);

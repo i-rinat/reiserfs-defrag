@@ -632,6 +632,32 @@ ReiserFs::getLeavesForBlockRange(std::vector<uint32_t> &leaves, uint32_t from, u
     leaves.erase(std::unique(leaves.begin(), leaves.end()), leaves.end());
 }
 
+void
+ReiserFs::getLeavesForMovemap(std::vector<uint32_t> &leaves, const movemap_t &movemap)
+{
+    leaves.clear();
+    std::vector<uint32_t> basket_list;
+    for (movemap_t::const_iterator it = movemap.begin(); it != movemap.end(); ++ it) {
+        uint32_t basket_id = it->first / this->leaf_index_granularity;
+        basket_list.push_back(basket_id);
+    }
+    // remove duplicates
+    std::sort(basket_list.begin(), basket_list.end());
+    basket_list.erase(
+        std::unique(basket_list.begin(), basket_list.end()),
+        basket_list.end());
+
+    for (std::vector<uint32_t>::iterator it = basket_list.begin(); it != basket_list.end(); ++ it) {
+        uint32_t basket_id = *it;
+        leaves.insert(leaves.end(), this->leaf_index[basket_id].leaves.begin(),
+            this->leaf_index[basket_id].leaves.end());
+    }
+
+    // remove duplicates
+    std::sort(leaves.begin(), leaves.end());
+    leaves.erase(std::unique(leaves.begin(), leaves.end()), leaves.end());
+}
+
 bool
 ReiserFs::blockIsBitmap(uint32_t block_idx) const
 {
