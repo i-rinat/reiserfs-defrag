@@ -445,7 +445,7 @@ private:
     ///
     /// permorm move of unformatted data blocks provided in @movemap from leaf specified by
     /// @block_idx. Takes @key_list as mandatory hint
-    void leafContentMoveUnformatted(uint32_t block_idx, movemap_t &movemap,
+    void leafContentMoveUnformatted(uint32_t block_idx, const movemap_t &movemap,
                                     const std::set<Block::key_t> &key_list);
     void getLeavesForBlockRange(std::vector<uint32_t> &leaves, uint32_t from, uint32_t to);
 };

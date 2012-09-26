@@ -505,7 +505,7 @@ ReiserFs::recursivelyMoveUnformatted(uint32_t block_idx, movemap_t &movemap)
 }
 
 void
-ReiserFs::leafContentMoveUnformatted(uint32_t block_idx, movemap_t &movemap,
+ReiserFs::leafContentMoveUnformatted(uint32_t block_idx, const movemap_t &movemap,
                                      const std::set<Block::key_t> &key_list)
 {
     Block *block_obj = this->journal->readBlock(block_idx);
@@ -520,15 +520,16 @@ ReiserFs::leafContentMoveUnformatted(uint32_t block_idx, movemap_t &movemap,
         for (int idx = 0; idx < ih.length/4; idx ++) {
             uint32_t child_idx = block_obj->indirectItemRef(ih.offset, idx);
             if (movemap.count(child_idx) == 0) continue;
+            uint32_t target_idx = movemap.find(child_idx)->second;
             // update pointers in indirect item
-            block_obj->setIndirectItemRef(ih.offset, idx, movemap[child_idx]);
+            block_obj->setIndirectItemRef(ih.offset, idx, target_idx);
             // actually move block
             bool should_journal_data = this->use_data_journaling;
-            this->journal->moveRawBlock(child_idx, movemap[child_idx], should_journal_data);
+            this->journal->moveRawBlock(child_idx, target_idx, should_journal_data);
             this->blocks_moved_unformatted ++;
             // update bitmap
             this->bitmap->markBlockFree(child_idx);
-            this->bitmap->markBlockUsed(movemap[child_idx]);
+            this->bitmap->markBlockUsed(target_idx);
             // if transaction becomes too large, divide it into smaller ones
             if (this->journal->estimateTransactionSize() > 100) {
                 if (block_obj->dirty)
@@ -538,12 +539,11 @@ ReiserFs::leafContentMoveUnformatted(uint32_t block_idx, movemap_t &movemap,
                 this->journal->beginTransaction();
             }
             // update in-memory leaf index
-            uint32_t new_basket_id = movemap[child_idx] / this->leaf_index_granularity;
+            uint32_t new_basket_id = target_idx / this->leaf_index_granularity;
             uint32_t old_basket_id = child_idx / this->leaf_index_granularity;
             this->leaf_index[new_basket_id].leaves.insert(block_idx);
             this->leaf_index[new_basket_id].changed = true;
             this->leaf_index[old_basket_id].changed = true;
-            movemap.erase(child_idx);
         }
     }
     this->journal->releaseBlock(block_obj);
