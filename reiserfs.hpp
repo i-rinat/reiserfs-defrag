@@ -378,9 +378,13 @@ public:
 
     /// walk tree, collecting leaves
     ///
-    /// traverse tree from @start_key, stop walking after getting @soft_threshold blocks
-    /// (both leaves and unformatted). Returns vector of pointers to leaves in @leaves and
-    /// key of last element in last leaf in @last_key
+    /// traverse tree from \p start_key, stop walking after getting \p soft_threshold blocks
+    /// (both leaves and unformatted). Returns vector of pointers to leaves in \p leaves and
+    /// key of last element in last leaf in \p last_key. \p leaves vector will be cleared.
+    /// \param  start_key[in]
+    /// \param  soft_threshold[in]
+    /// \param  leaves[out]
+    /// \param  last_key[out]
     void enumerateLeaves(const Block::key_t &start_key, int soft_threshold,
                          std::vector<uint32_t> &leaves, Block::key_t &last_key) const;
 
@@ -420,9 +424,18 @@ private:
     uint32_t estimateTreeHeight();
     void recursivelyEnumerateNodes(uint32_t block_idx, std::vector<ReiserFs::tree_element> &tree,
                                    bool only_internal_nodes = false) const;
+    /// worker method for leaves enumeration
+    ///
+    /// \param block_idx[in]        target block
+    /// \param start_key[in]        do not process items with keys lower that \p start_key
+    /// \param soft_threshold[in/out] stop walking tree after so many blocks collected
+    /// \param left[in]             left border hint
+    /// \param right[in]            right border hint
+    /// \param leaves[out]          output vector which receives leaf list
+    /// \param last_key[out]        receives key of last processed item
     void recursivelyEnumerateLeaves(uint32_t block_idx, const Block::key_t &start_key,
-                                    int soft_threshold, std::vector<uint32_t> &leaves,
-                                    Block::key_t &last_key) const;
+                                    int &soft_threshold, Block::key_t left, Block::key_t right,
+                                    std::vector<uint32_t> &leaves, Block::key_t &last_key) const;
     /// creates list of leaves that point to blocks in specific basket
     void createLeafIndex();
     /// removes obsolete entries after block movement

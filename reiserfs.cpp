@@ -703,28 +703,43 @@ ReiserFs::enumerateTree(std::vector<tree_element> &tree, bool only_internal_node
 
 void
 ReiserFs::recursivelyEnumerateLeaves(uint32_t block_idx, const Block::key_t &start_key,
-                                     int soft_threshold,
-                                     std::vector<uint32_t> &leaves,
-                                     Block::key_t &last_key) const
+                                     int &soft_threshold, Block::key_t left, Block::key_t right,
+                                     std::vector<uint32_t> &leaves, Block::key_t &last_key) const
 {
     Block *block_obj = this->journal->readBlock(block_idx);
     uint32_t level = block_obj->level();
     if (level > TREE_LEVEL_LEAF) {
         // internal node
-        for (uint32_t k = 0; k < block_obj->keyCount(); k ++) {
-            if (start_key < block_obj->key(k)) {
+        for (uint32_t k = 0; k < block_obj->ptrCount(); k ++) {
+            const Block::key_t new_left = (k > 0) ? block_obj->key(k-1) : left;
+            const Block::key_t new_right = (k < block_obj->keyCount()) ? block_obj->key(k) : right;
+            if (new_right > start_key) {
                 this->recursivelyEnumerateLeaves(block_obj->ptr(k).block, start_key, soft_threshold,
-                                                 leaves, last_key);
+                                                 new_left, new_right, leaves, last_key);
+                if (soft_threshold < 0)
+                    return;
             }
+
         }
     } else {
         // leaf
-
+        soft_threshold --; // count leaf block itself
+        bool include_leaf = false;
+        for (uint32_t item_idx = 0; item_idx < block_obj->itemCount(); item_idx ++) {
+            const Block::item_header &ih = block_obj->itemHeader(item_idx);
+            if (KEY_TYPE_INDIRECT != ih.type())
+                continue;
+            if (ih.key > start_key) {
+                include_leaf = true;
+                soft_threshold -= ih.length / 4; // decrease by number of unformatted blocks
+                last_key = ih.key;  // and update last_key
+            }
+        }
+        if (include_leaf)
+            leaves.push_back(block_idx);
     }
 
     this->journal->releaseBlock(block_obj);
-
-    //WIP
 }
 
 void
@@ -734,5 +749,5 @@ ReiserFs::enumerateLeaves(const Block::key_t &start_key, int soft_threshold,
     last_key = start_key;
     leaves.clear();
     this->recursivelyEnumerateLeaves(this->sb.s_root_block, start_key, soft_threshold,
-                                     leaves, last_key);
+                                     Block::zero_key, Block::largest_key, leaves, last_key);
 }
