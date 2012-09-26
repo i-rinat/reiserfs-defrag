@@ -505,8 +505,8 @@ ReiserFs::recursivelyMoveUnformatted(uint32_t block_idx, movemap_t &movemap)
 }
 
 void
-ReiserFs::leafContentMoveUnformatted(uint32_t block_idx, const movemap_t &movemap,
-                                     const std::set<Block::key_t> &key_list)
+ReiserFs::leafContentMoveUnformatted(uint32_t block_idx, movemap_t &movemap,
+                                     const std::set<Block::key_t> &key_list, bool all_keys)
 {
     Block *block_obj = this->journal->readBlock(block_idx);
     this->journal->beginTransaction();
@@ -515,7 +515,7 @@ ReiserFs::leafContentMoveUnformatted(uint32_t block_idx, const movemap_t &movema
         // indirect items contain links to unformatted (data) blocks
         if (KEY_TYPE_INDIRECT != ih.type())
             continue;
-        if (key_list.count(ih.key) == 0)
+        if (not all_keys && (key_list.count(ih.key) == 0))
             continue;
         for (int idx = 0; idx < ih.length/4; idx ++) {
             uint32_t child_idx = block_obj->indirectItemRef(ih.offset, idx);
@@ -544,6 +544,7 @@ ReiserFs::leafContentMoveUnformatted(uint32_t block_idx, const movemap_t &movema
             this->leaf_index[new_basket_id].leaves.insert(block_idx);
             this->leaf_index[new_basket_id].changed = true;
             this->leaf_index[old_basket_id].changed = true;
+            movemap.erase(child_idx);
         }
     }
     this->journal->releaseBlock(block_obj);
