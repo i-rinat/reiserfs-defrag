@@ -310,6 +310,35 @@ ReiserFs::movemap_consistent(const movemap_t &movemap)
     return true;
 }
 
+uint32_t
+ReiserFs::moveBlocks(movemap_t &movemap)
+{
+    if (! this->movemap_consistent(movemap)) {
+        std::cerr << "error: movemap not consistent, " << this->err_string << std::endl;
+        return 0;
+    }
+
+    this->blocks_moved_formatted = 0;
+    this->blocks_moved_unformatted = 0;
+
+    std::vector<uint32_t> leaves;
+    std::set<Block::key_t> stub_empty_list;
+    this->getLeavesForMovemap(leaves, movemap);
+
+    for (std::vector<uint32_t>::const_iterator it = leaves.begin(); it != leaves.end(); ++ it) {
+        uint32_t leaf_idx = *it;
+        // move items with all keys from specific leaf
+        this->leafContentMoveUnformatted(leaf_idx, movemap, stub_empty_list, true);
+    }
+
+    uint32_t stash_count = this->blocks_moved_formatted + this->blocks_moved_unformatted;
+
+    // do move tree nodes
+    stash_count += this->moveMultipleBlocks(movemap, true);
+
+    return stash_count;
+}
+
 /// moves multiple blocks
 ///
 /// \return number of blocks moved
