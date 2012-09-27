@@ -751,7 +751,7 @@ ReiserFs::recursivelyEnumerateNodes(uint32_t block_idx, std::vector<ReiserFs::tr
         tree.push_back(te);
         for (uint32_t k = 0; k < block_obj->ptrCount(); k ++) {
             uint32_t child_idx = block_obj->ptr(k).block;
-            this->recursivelyEnumerateNodes(child_idx, tree);
+            this->recursivelyEnumerateNodes(child_idx, tree, only_internal_nodes);
         }
     } else {
         // leaf level
