@@ -369,6 +369,7 @@ ReiserFs::moveMultipleBlocks(movemap_t &movemap, bool ignore_unformatted)
 
     // previous call moves all but root_block, move it if necessary
     if (movemap.count(this->sb.s_root_block)) {
+        uint32_t old_root_block_idx = this->sb.s_root_block;
         this->journal->beginTransaction();
         // move root block itself
         this->journal->moveRawBlock(this->sb.s_root_block, movemap[this->sb.s_root_block]);
@@ -380,6 +381,7 @@ ReiserFs::moveMultipleBlocks(movemap_t &movemap, bool ignore_unformatted)
         this->writeSuperblock();
         this->bitmap->writeChangedBitmapBlocks();
         this->journal->commitTransaction();
+        movemap.erase(old_root_block_idx);
     }
 
     // make cached transaction to flush on disk
@@ -474,6 +476,7 @@ ReiserFs::recursivelyMoveInternalNodes(uint32_t block_idx, movemap_t &movemap,
                         }
                     }
                 }
+                movemap.erase(child_idx);
             }
         }
         this->journal->releaseBlock(block_obj);
