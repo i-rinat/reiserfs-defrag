@@ -766,6 +766,7 @@ ReiserFs::recursivelyEnumerateNodes(uint32_t block_idx, std::vector<ReiserFs::tr
 void
 ReiserFs::enumerateTree(std::vector<tree_element> &tree, bool only_internal_nodes) const
 {
+    tree.clear();
     this->recursivelyEnumerateNodes(this->sb.s_root_block, tree, only_internal_nodes);
 }
 
