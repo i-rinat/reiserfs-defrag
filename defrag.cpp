@@ -299,7 +299,7 @@ main (int argc, char *argv[])
     Defrag defrag(fs);
     defrag.setSizeLimit(8192);
     // defrag.simpleDefragWithPreclean();
-    defrag.treeThroughDefrag();
+    defrag.treeThroughDefrag(250000);
 
 
     fs.close();
