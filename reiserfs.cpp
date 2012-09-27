@@ -57,7 +57,9 @@ ReiserFs::open(const std::string &name, bool o_sync)
     this->writeSuperblock();
     this->journal->commitTransaction();
 
+    std::cout << "creating leaf index ... " << std::flush;
     this->createLeafIndex();
+    std::cout << "done" << std::endl;
 
     return RFSD_OK;
 }
