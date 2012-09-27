@@ -383,6 +383,7 @@ ReiserFs::moveMultipleBlocks(movemap_t &movemap, bool ignore_unformatted)
         this->journal->commitTransaction();
         movemap.erase(old_root_block_idx);
     }
+    assert (movemap.size() == 0);
 
     // make cached transaction to flush on disk
     this->journal->flushTransactionCache();
