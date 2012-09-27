@@ -61,6 +61,41 @@ Defrag::treeThroughDefrag(uint32_t batch_size)
         return;
     }
 
+    // pack internal nodes first
+    do {
+        uint32_t old_free_idx = free_idx;
+        std::cout << "--- packing internal nodes -----------" << std::endl;
+        std::vector<ReiserFs::tree_element> internal_nodes;
+
+        this->fs.enumerateTree(internal_nodes, true);
+        movemap.clear();
+        for (std::vector<ReiserFs::tree_element>::iterator it = internal_nodes.begin();
+            it != internal_nodes.end(); ++ it)
+        {
+            uint32_t int_node_idx = it->idx;
+            if (int_node_idx !=  free_idx)
+                movemap[int_node_idx] = free_idx;
+            free_idx = this->nextTargetBlock(free_idx);
+            assert (free_idx != 0);
+        }
+        this->fs.cleanupRegionMoveDataDown(old_free_idx, free_idx - 1);
+        free_idx = old_free_idx;
+
+        this->fs.enumerateTree(internal_nodes, true);
+        movemap.clear();
+        for (std::vector<ReiserFs::tree_element>::iterator it = internal_nodes.begin();
+            it != internal_nodes.end(); ++ it)
+        {
+            uint32_t int_node_idx = it->idx;
+            if (int_node_idx !=  free_idx)
+                movemap[int_node_idx] = free_idx;
+            free_idx = this->nextTargetBlock(free_idx);
+            assert (free_idx != 0);
+        }
+        this->fs.moveBlocks(movemap);
+    } while (0);
+
+    // process leaves and unformatted blocks
     while (1) {
         std::cout << "--------------------------------------" << std::endl;
         this->fs.enumerateLeaves(start_key, batch_size, leaves, last_key);
