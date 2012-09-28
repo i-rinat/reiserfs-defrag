@@ -790,18 +790,20 @@ ReiserFs::recursivelyEnumerateLeaves(uint32_t block_idx, const Block::key_t &sta
             }
         }
     } else {
-        // leaf
+        // leaf node
+        // every run will touch last leaf from previous scan. To prevent adding leaf twice
+        // we check each item key and skip those less than start_key
         bool touch_leaf = false;
         for (uint32_t item_idx = 0; item_idx < block_obj->itemCount(); item_idx ++) {
             const Block::item_header &ih = block_obj->itemHeader(item_idx);
-            if (ih.key <= start_key)
+            if (ih.key <= start_key)    // skip items with inappropriate keys
                 continue;
+            touch_leaf = true;
             last_key = ih.key;  // and update last_key
             if (KEY_TYPE_INDIRECT != ih.type())
                 continue;
             if (ih.key > start_key) {
                 soft_threshold -= ih.length / 4; // decrease by number of unformatted blocks
-                touch_leaf = true;
             }
         }
         if (touch_leaf) {
