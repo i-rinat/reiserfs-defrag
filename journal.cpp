@@ -127,7 +127,6 @@ FsJournal::writeJournalEntry()
 
     uint32_t transaction_id = this->journal_header.last_flush_id + 1;
     uint32_t transaction_offset = this->journal_header.unflushed_offset;
-    uint32_t transaction_block_count = this->transaction.blocks.size();
 
     // check for proper alignment, just to be sure
     assert (sizeof(commit_block) == BLOCKSIZE);
