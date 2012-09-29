@@ -312,7 +312,7 @@ private:
     uint32_t max_cache_size;    //< soft size border for read cache
     uint32_t max_batch_size;    //< maximum transaction batch size
     struct {
-        std::vector<Block *> blocks;
+        std::set<Block *> blocks;
         bool running;
         bool batch_running;
     } transaction;

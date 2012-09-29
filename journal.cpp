@@ -169,13 +169,21 @@ FsJournal::writeJournalEntry()
     commit_block.transaction_id = transaction_id;
     commit_block.length = this->transaction.blocks.size();
 
-    uint32_t first_half = std::min(static_cast<uint32_t>((BLOCKSIZE-24)/4),
-                                    transaction_block_count);
-    for (uint32_t k = 0; k < first_half; k ++)
-        description_block.real_blocks[k] = this->transaction.blocks[k]->block;
-    if (transaction_block_count > first_half) {
-        for (uint32_t k = first_half; k < transaction_block_count; k ++)
-            commit_block.real_blocks[k - first_half] = this->transaction.blocks[k]->block;
+    uint32_t first_half = static_cast<uint32_t>((BLOCKSIZE-24)/4);
+    uint32_t k = 0;
+    for (std::set<Block *>::const_iterator iter = this->transaction.blocks.begin();
+        iter != this->transaction.blocks.end(); ++ iter)
+    {
+        uint32_t block_idx = (*iter)->block;
+        if (k < first_half) {
+            description_block.real_blocks[k] = block_idx;
+        } else if (k < 2*first_half) {
+            commit_block.real_blocks[k - first_half] = block_idx;
+        } else {
+            // TODO: add error handling
+            assert (false);
+        }
+        k ++;
     }
 
     uint32_t j_pos = transaction_offset; // cursor
@@ -187,7 +195,7 @@ FsJournal::writeJournalEntry()
     j_pos = (j_pos + 1) % this->sb->jp_journal_size;
 
     // write data blocks
-    for (std::vector<Block *>::const_iterator it = this->transaction.blocks.begin();
+    for (std::set<Block *>::const_iterator it = this->transaction.blocks.begin();
         it != this->transaction.blocks.end(); ++ it)
     {
         if (RFSD_OK != writeBufAt (this->fd, j_1st_block + j_pos, (*it)->buf, BLOCKSIZE) )
@@ -220,7 +228,7 @@ FsJournal::doCommitTransaction()
         return RFSD_FAIL;
 
     // write data to disk
-    for (std::vector<Block *>::const_iterator it = this->transaction.blocks.begin();
+    for (std::set<Block *>::const_iterator it = this->transaction.blocks.begin();
         it != this->transaction.blocks.end(); ++ it)
     {
         if (RFSD_OK != writeBufAt(this->fd, (*it)->block, (*it)->buf, BLOCKSIZE))
@@ -230,7 +238,7 @@ FsJournal::doCommitTransaction()
     // finally release blocks. Block can survive this if it has more than one reference,
     // like cached blocks. ->releaseBlock will not call writeBlock as block is not
     // dirty.
-    for (std::vector<Block *>::const_iterator it = this->transaction.blocks.begin();
+    for (std::set<Block *>::const_iterator it = this->transaction.blocks.begin();
         it != this->transaction.blocks.end(); ++ it)
     {
         uint32_t block_idx = (*it)->block;
@@ -240,7 +248,7 @@ FsJournal::doCommitTransaction()
             this->block_cache[block_idx].priority = CACHE_PRIORITY_NORMAL;
         this->releaseBlock(*it);
     }
-    this->transaction.blocks.resize(0);
+    this->transaction.blocks.clear();
 
     // sync journal header, thus closing transaction
     int res = writeBufAt (this->fd, this->sb->jp_journal_1st_block + this->sb->jp_journal_size,
@@ -263,9 +271,6 @@ FsJournal::commitTransaction()
         this->transaction.running = false;
         return RFSD_OK;
     }
-
-    // remove duplicate entries
-    this->removeDuplicateTransactionEntries(this->transaction.blocks);
 
     if (this->transaction.blocks.size() > this->max_batch_size) {
         if (this->transaction.blocks.size() > this->sb->jp_journal_trans_max) {
@@ -333,8 +338,10 @@ int
 FsJournal::writeBlock(Block *block_obj, bool factor_into_trasaction)
 {
     if (this->use_journaling && factor_into_trasaction) {
-        this->transaction.blocks.push_back(block_obj);
-        block_obj->ref_count ++;
+        if (this->transaction.blocks.count(block_obj) == 0) {
+            block_obj->ref_count ++;
+            this->transaction.blocks.insert(block_obj);
+        }
         // must retain block until transaction ends. Further readBlocks should get
         // cached version, as disk contents differs from memory.
         this->pushToCache(block_obj, CACHE_PRIORITY_HIGH);
@@ -357,8 +364,10 @@ FsJournal::moveRawBlock(uint32_t from, uint32_t to, bool factor_into_trasaction)
     block_obj->markDirty();
 
     if (factor_into_trasaction) {
-        this->transaction.blocks.push_back(block_obj);
-        block_obj->ref_count ++;
+        if (this->transaction.blocks.count(block_obj) == 0) {
+            this->transaction.blocks.insert(block_obj);
+            block_obj->ref_count ++;
+        }
     }
     this->releaseBlock(block_obj, factor_into_trasaction);
 }
