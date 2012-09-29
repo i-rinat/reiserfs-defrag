@@ -333,12 +333,38 @@ ReiserFs::moveBlocks(movemap_t &movemap)
         this->leafContentMoveUnformatted(leaf_idx, movemap, stub_empty_list, true);
     }
 
-    uint32_t stash_count = this->blocks_moved_formatted + this->blocks_moved_unformatted;
+    // tree nodes
+    uint32_t tree_height = this->estimateTreeHeight();  // estimate tree height
+    // move internal nodes, from layer 2 to sb.s_tree_height
+    for (uint32_t t_level = TREE_LEVEL_LEAF + 1; t_level <= tree_height; t_level ++)
+    {
+        this->recursivelyMoveInternalNodes(this->sb.s_root_block, movemap, t_level);
+    }
 
-    // do move tree nodes
-    stash_count += this->moveMultipleBlocks(movemap, true);
+    // previous call moves all but root_block, move it if necessary
+    if (movemap.count(this->sb.s_root_block)) {
+        uint32_t old_root_block_idx = this->sb.s_root_block;
+        this->journal->beginTransaction();
+        // move root block itself
+        this->journal->moveRawBlock(this->sb.s_root_block, movemap[this->sb.s_root_block]);
+        // update bitmap
+        this->bitmap->markBlockFree(this->sb.s_root_block);
+        this->bitmap->markBlockUsed(movemap[this->sb.s_root_block]);
+        // update s_root_block field in superblock and write it down through journal
+        this->sb.s_root_block = movemap[this->sb.s_root_block];
+        this->writeSuperblock();
+        this->bitmap->writeChangedBitmapBlocks();
+        this->journal->commitTransaction();
+        movemap.erase(old_root_block_idx);
+    }
+    assert (movemap.size() == 0);
 
-    return stash_count;
+    // make cached transaction to flush on disk
+    this->journal->flushTransactionCache();
+    // wipe obsolete entries out of leaf index
+    this->updateLeafIndex();
+
+    return (this->blocks_moved_unformatted + this->blocks_moved_formatted);
 }
 
 /// moves multiple blocks
