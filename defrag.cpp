@@ -52,7 +52,7 @@ Defrag::treeThroughDefrag(uint32_t batch_size)
         std::cout << "--- packing internal nodes -----------" << std::endl;
         std::vector<ReiserFs::tree_element> internal_nodes;
 
-        this->fs.enumerateTree(internal_nodes, true);
+        this->fs.enumerateInternalNodes(internal_nodes);
         movemap.clear();
         for (std::vector<ReiserFs::tree_element>::iterator it = internal_nodes.begin();
             it != internal_nodes.end(); ++ it)
@@ -66,7 +66,7 @@ Defrag::treeThroughDefrag(uint32_t batch_size)
         this->fs.cleanupRegionMoveDataDown(old_free_idx, free_idx - 1);
         free_idx = old_free_idx;
 
-        this->fs.enumerateTree(internal_nodes, true);
+        this->fs.enumerateInternalNodes(internal_nodes);
         movemap.clear();
         for (std::vector<ReiserFs::tree_element>::iterator it = internal_nodes.begin();
             it != internal_nodes.end(); ++ it)

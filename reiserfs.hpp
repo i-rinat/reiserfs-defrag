@@ -375,7 +375,8 @@ public:
     bool blockUsed(uint32_t block_idx) const { return this->bitmap->blockUsed(block_idx); }
     uint32_t sizeInBlocks() const { return this->sb.s_block_count; }
     void looseWalkTree();
-    void enumerateTree(std::vector<tree_element> &tree, bool only_internal_nodes = false) const;
+    void enumerateTree(std::vector<tree_element> &tree) const;
+    void enumerateInternalNodes(std::vector<tree_element> &tree) const;
 
     /// walk tree, collecting leaves
     ///
@@ -424,7 +425,7 @@ private:
     void recursivelyMoveUnformatted(uint32_t block_idx, movemap_t &movemap);
     uint32_t estimateTreeHeight();
     void recursivelyEnumerateNodes(uint32_t block_idx, std::vector<ReiserFs::tree_element> &tree,
-                                   bool only_internal_nodes = false) const;
+                                   bool only_internal_nodes) const;
     /// worker method for leaves enumeration
     ///
     /// \param block_idx[in]        target block
