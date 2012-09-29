@@ -104,34 +104,6 @@ readBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size)
     return RFSD_OK;
 }
 
-void
-FsJournal::removeDuplicateTransactionEntries(std::vector<Block *> &vec)
-{
-    if (vec.size() < 2) return; // no need to sort when vec has one or zero elemtents
-    // first, sort them
-    std::sort (vec.begin(), vec.end());
-    // remove adjacent duplicates
-    std::vector<Block *>::iterator prev = vec.begin();
-    for (std::vector<Block *>::iterator it = prev+1; it != vec.end(); ++it) {
-        if (*prev == *it) {
-            (*prev)->ref_count --;  // duplicate, as we 'removing' it, decrease reference count
-            assert ((*prev)->ref_count > 0);    // anyway there should be at least one reference
-        } else {
-            ++ prev;        // advance pointer
-            *prev = *it;    // and move right element to left
-        }
-    }
-    // prev points to last unique element. erase trailing
-    vec.erase (prev+1, vec.end());
-
-    // check if any of blocks are dirty. They all must be not.
-    for (std::vector<Block *>::const_iterator it = vec.begin();
-        it != vec.end(); ++ it)
-    {
-        assert ((*it)->dirty == false); // must not be dirty
-    }
-}
-
 int
 FsJournal::writeJournalEntry()
 {

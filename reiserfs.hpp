@@ -323,7 +323,6 @@ private:
     void touchCacheEntry(uint32_t block_idx);
     void eraseOldestCacheEntry();
     int writeJournalEntry();
-    void removeDuplicateTransactionEntries(std::vector<Block *> &vec);
     int doCommitTransaction();
 };
 
