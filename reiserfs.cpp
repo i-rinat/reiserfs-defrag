@@ -189,7 +189,7 @@ ReiserFs::cleanupRegionMoveDataDown(uint32_t from, uint32_t to)
         free_idx = this->findFreeBlockAfter(free_idx);
         assert (free_idx != 0);
     }
-    this->moveMultipleBlocks(movemap, true); // move only tree nodes, should be fast
+    this->moveBlocks(movemap); // will move only tree nodes, should be fast
     this->journal->flushTransactionCache();
     this->updateLeafIndex();
 }
@@ -366,59 +366,6 @@ ReiserFs::moveBlocks(movemap_t &movemap)
 
     return (this->blocks_moved_unformatted + this->blocks_moved_formatted);
 }
-
-/// moves multiple blocks
-///
-/// \return number of blocks moved
-uint32_t
-ReiserFs::moveMultipleBlocks(movemap_t &movemap, bool ignore_unformatted)
-{
-    if (! this->movemap_consistent(movemap)) {
-        std::cerr << "error: movemap not consistent, " << this->err_string << std::endl;
-        return 0;
-    }
-
-    uint32_t tree_height = this->estimateTreeHeight();
-    // reset statistics
-    this->blocks_moved_formatted = 0;
-    this->blocks_moved_unformatted = 0;
-
-    // first, move unformatted blocks
-    if (not ignore_unformatted)
-        this->recursivelyMoveUnformatted(this->sb.s_root_block, movemap);
-
-    // then move internal nodes, from layer 2 to sb.s_tree_height
-    for (uint32_t t_level = TREE_LEVEL_LEAF + 1; t_level <= tree_height; t_level ++)
-    {
-        this->recursivelyMoveInternalNodes(this->sb.s_root_block, movemap, t_level);
-    }
-
-    // previous call moves all but root_block, move it if necessary
-    if (movemap.count(this->sb.s_root_block)) {
-        uint32_t old_root_block_idx = this->sb.s_root_block;
-        this->journal->beginTransaction();
-        // move root block itself
-        this->journal->moveRawBlock(this->sb.s_root_block, movemap[this->sb.s_root_block]);
-        // update bitmap
-        this->bitmap->markBlockFree(this->sb.s_root_block);
-        this->bitmap->markBlockUsed(movemap[this->sb.s_root_block]);
-        // update s_root_block field in superblock and write it down through journal
-        this->sb.s_root_block = movemap[this->sb.s_root_block];
-        this->writeSuperblock();
-        this->bitmap->writeChangedBitmapBlocks();
-        this->journal->commitTransaction();
-        movemap.erase(old_root_block_idx);
-    }
-    assert (movemap.size() == 0);
-
-    // make cached transaction to flush on disk
-    this->journal->flushTransactionCache();
-    // wipe obsolete entries out of leaf index
-    this->updateLeafIndex();
-
-    return (this->blocks_moved_unformatted + this->blocks_moved_formatted);
-}
-
 
 Block*
 ReiserFs::readBlock(uint32_t block) const

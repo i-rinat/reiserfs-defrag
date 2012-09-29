@@ -273,12 +273,12 @@ Defrag::simpleDefragWithPreclean()
 
         // preclean stage: do actual move
         std::cout << "preclean size = " << preclean.size() << std::endl;
-        this->fs.moveMultipleBlocks(preclean);
+        this->fs.moveBlocks(preclean);
 
         // now extract clean moves, those that can be made without cleaning of targets
         this->extractCleanMoves();
         std::cout << "clean_moves size = " << this->clean_moves.size() << std::endl;
-        blocks_moved = this->fs.moveMultipleBlocks(this->clean_moves);
+        blocks_moved = this->fs.moveBlocks(this->clean_moves);
     } while (blocks_moved > 0);
 }
 
