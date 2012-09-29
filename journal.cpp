@@ -132,6 +132,9 @@ FsJournal::writeJournalEntry()
     assert (sizeof(commit_block) == BLOCKSIZE);
     assert (sizeof(description_block) == BLOCKSIZE);
 
+    // ensure transaction fits structures
+    assert (this->transaction.blocks.size() + 2 <= 2*(BLOCKSIZE-24)/4);
+
     // fill description and commit blocks
     description_block.transaction_id = transaction_id;
     description_block.length = this->transaction.blocks.size();
