@@ -38,7 +38,7 @@ main (int argc, char *argv[])
     }
 
     if (movemap.size() > 0) {
-        fs.moveMultipleBlocks(movemap);
+        fs.moveBlocks(movemap);
     }
 
     fs.close();

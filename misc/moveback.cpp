@@ -24,7 +24,7 @@ main (int argc, char *argv[])
         block_idx ++;
     }
 
-    fs.moveMultipleBlocks(movemap);
+    fs.moveBlocks(movemap);
     fs.close();
     return 0;
 }

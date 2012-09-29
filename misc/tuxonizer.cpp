@@ -26,7 +26,7 @@ main (int argc, char *argv[])
             }
         }
     }
-    fs.moveMultipleBlocks(movemap);
+    fs.moveBlocks(movemap);
 
     fs.close();
 
