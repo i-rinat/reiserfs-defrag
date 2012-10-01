@@ -19,6 +19,10 @@ Some results:
 
  1. 3 GiB, with 92162 files and 25050 dirs, 78% full, took 2 minutes to complete.
  2. 120 GiB, with 3820294 files and 328952 dirs, 80% full, took 350 minutes to complete.
+ 3. 120 GiB, with 54 files and 2 dirs, 78% full, took 54 minutes to complete.
+
+All filesystems were 'just created'. 1) debian/non-free amd64 repo unpacked;
+2) debian/main amd64 repo unpacked; 3) bunch of large files, each ~1.5 Gb in size.
 
 
 Fragmentation
