@@ -5,19 +5,20 @@ partition to make it less fragmented. Offline. You need to unmount fs first.
 
 Status
 ======
-Experimental. Do not use it on sensitive data.
+**Experimental. Do not use it on sensitive data.**
 
-As for now (tag:journaling-merge) it journals meta-data while moving blocks.
+As for now (tag:*tree-through*) it journals meta-data while moving blocks.
 That _should_ prevent data loss, but I did not verify that thoroughly. I think now it
-has quadratic complexity to the partition size, I'm trying to fix issue. Now it also lacks
+has quadratic complexity to the partition size. I've sorted out quadratic cpu usage, but
+it still have quadratic time due to move patterns. Now it also lacks
 of wise algorithms and just packs data in tree order. (Here tree is the internal tree that
 stores meta-data, it has no much common with directory tree). And that means almost every
 block will be moved. Insanely slow.
 
 Some results:
 
- 1. 3 GiB, with 92000 files and 25000 dirs, 78% full, took 2 minutes to complete.
- 2. 120 GiB, with 3824699 files and 329550 dirs, 80% full, took 660 minutes to complete.
+ 1. 3 GiB, with 92162 files and 25050 dirs, 78% full, took 2 minutes to complete.
+ 2. 120 GiB, with 3820294 files and 328952 dirs, 80% full, took 350 minutes to complete.
 
 
 Fragmentation
@@ -51,8 +52,8 @@ I declare goals as:
  * (g4) program should be able to do incremental (fast) defragmentation;
  * (g5) program should be able to move selected files to beginning of partition.
 
-g1 and g2 are done. g3 can be easily done but with breaking g2. I don't have clear
-algorithms for g4 and g5 for the moment.
+g1 and g2 are done. g3 should be considered done, as cpu usage should be almost linear.
+I don't have clear algorithms for g4 and g5 for the moment.
 
 Build and install
 =================
