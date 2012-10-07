@@ -7,7 +7,7 @@ Status
 ======
 **Experimental. Do not use it on sensitive data.**
 
-As for now (tag:*tree-through*) it journals meta-data while moving blocks.
+As for now (tag:*tree-through-v2*) it journals meta-data while moving blocks.
 That _should_ prevent data loss, but I did not verify that thoroughly. I think now it
 has quadratic complexity to the partition size. I've sorted out quadratic cpu usage, but
 it still have quadratic time due to move patterns. Now it also lacks
