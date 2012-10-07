@@ -118,6 +118,18 @@ ReiserFs::dumpSuperblock()
 }
 
 void
+ReiserFs::dumpMovemap(const movemap_t &movemap) const
+{
+    std::cout << "movemap: ";
+    for (movemap_t::const_iterator iter = movemap.begin(); iter != movemap.end(); ++ iter) {
+        if (movemap.begin() != iter)
+            std::cout << ", ";
+        std::cout << iter->first << "->" << iter->second;
+    }
+    std::cout << std::endl;
+}
+
+void
 ReiserFs::close()
 {
     // clean fs dirty flag

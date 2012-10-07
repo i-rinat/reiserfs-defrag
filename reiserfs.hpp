@@ -450,6 +450,8 @@ private:
                                     const std::set<Block::key_t> &key_list, bool all_keys = false);
     void getLeavesForBlockRange(std::vector<uint32_t> &leaves, uint32_t from, uint32_t to);
     void getLeavesForMovemap(std::vector<uint32_t> &leaves, const movemap_t &movemap);
+    /// print movemap contents to stdout
+    void dumpMovemap(const movemap_t &movemap) const;
 };
 
 int readBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size);
