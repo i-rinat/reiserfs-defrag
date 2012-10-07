@@ -277,6 +277,10 @@ ReiserFs::movemap_consistent(const movemap_t &movemap)
     movemap_t revmap;
     movemap_t::const_iterator mapiter;
 
+    // last journal block is journal header block, its length is one
+    const uint32_t journal_last_block =
+        this->sb.jp_journal_1st_block + (this->sb.jp_journal_size - 1) + 1;
+
     for (mapiter = movemap.begin(); mapiter != movemap.end(); ++ mapiter) {
         // check if all 'from' blocks are occupied
         if (! this->bitmap->blockUsed(mapiter->first)) {
@@ -293,22 +297,18 @@ ReiserFs::movemap_consistent(const movemap_t &movemap)
             err_string = "some 'from' blocks map to superblock";
             return false;
         }
-        if (mapiter->first == FIRST_BITMAP_BLOCK
-            || (mapiter->first/BLOCKS_PER_BITMAP)*BLOCKS_PER_BITMAP == mapiter->first)
-        {
-            err_string = "some 'from' blocks map to bitmap blocks";
-            return false;
-        }
         // first 64 kiB are reserved
         if (mapiter->first < 65536/BLOCKSIZE) {
             err_string = "some 'from' blocks map to first 64 kiB";
             return false;
         }
-        // last journal block is journal header block, its length is no
-        uint32_t journal_last_block = this->sb.jp_journal_1st_block
-                                      + (this->sb.jp_journal_size - 1) + 1;
-        if (mapiter->first >= this->sb.jp_journal_1st_block
-            && mapiter->first <= journal_last_block)
+        // bitmap blocks can't be moved
+        if (mapiter->first == FIRST_BITMAP_BLOCK || mapiter->first % BLOCKS_PER_BITMAP == 0) {
+            err_string = "some 'from' blocks map to bitmap blocks";
+            return false;
+        }
+        if (this->sb.jp_journal_1st_block <= mapiter->first
+                && mapiter->first <= journal_last_block)
         {
             err_string = "some 'from' blocks map to journal";
             return false;
