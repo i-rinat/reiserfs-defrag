@@ -124,6 +124,8 @@ Defrag::createMovemapFromListOfLeaves(movemap_t &movemap, const std::vector<uint
                 continue;
             for (uint32_t idx = 0; idx < ih.length / 4; idx ++) {
                 uint32_t child_idx = block_obj->indirectItemRef(ih.offset, idx);
+                if (0 == child_idx)     // sparse file
+                    continue;
                 if (child_idx != free_idx)
                     movemap[child_idx] = free_idx;
                 free_idx = this->nextTargetBlock(free_idx);

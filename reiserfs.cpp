@@ -175,6 +175,8 @@ ReiserFs::cleanupRegionMoveDataDown(uint32_t from, uint32_t to)
             bool use_key = false;
             for (uint32_t idx = 0; idx < ih.length/4; idx ++) {
                 uint32_t child_idx = block_obj->indirectItemRef(ih.offset, idx);
+                if (0 == child_idx)     // sparse file
+                    continue;
                 if (from <= child_idx && child_idx <= to) {
                     movemap[child_idx] = free_idx;
                     free_idx = this->findFreeBlockAfter(free_idx);
@@ -227,6 +229,8 @@ ReiserFs::createLeafIndex()
                 continue;
             for (int idx = 0; idx < ih.length/4; idx ++) {
                 uint32_t child_idx = block_obj->indirectItemRef(ih.offset, idx);
+                if (0 == child_idx)     // sparse file
+                    continue;
                 uint32_t basket_id = child_idx / this->leaf_index_granularity;
                 this->leaf_index[basket_id].leaves.insert(it->idx);
             }
@@ -255,6 +259,8 @@ ReiserFs::updateLeafIndex()
                     continue;
                 for (int idx = 0; idx < ih.length/4; idx ++) {
                     uint32_t target_idx = block_obj->indirectItemRef(ih.offset, idx);
+                    if (0 == target_idx)        // sparse file
+                        continue;
                     uint32_t target_basket = target_idx / this->leaf_index_granularity;
                     if (target_basket == basket_id) {
                         leaf_has_link = true;
@@ -492,6 +498,8 @@ ReiserFs::recursivelyMoveUnformatted(uint32_t block_idx, movemap_t &movemap)
                 continue;
             for (int idx = 0; idx < ih.length/4; idx ++) {
                 uint32_t child_idx = block_obj->indirectItemRef(ih.offset, idx);
+                if (0 == child_idx)     // sparse file
+                    continue;
                 if (movemap.count(child_idx) == 0) continue;
                 // update pointers in indirect item
                 block_obj->setIndirectItemRef(ih.offset, idx, movemap[child_idx]);
@@ -539,6 +547,8 @@ ReiserFs::leafContentMoveUnformatted(uint32_t block_idx, movemap_t &movemap,
             continue;
         for (int idx = 0; idx < ih.length/4; idx ++) {
             uint32_t child_idx = block_obj->indirectItemRef(ih.offset, idx);
+            if (0 == child_idx)     // sparse file
+                continue;
             if (movemap.count(child_idx) == 0) continue;
             uint32_t target_idx = movemap.find(child_idx)->second;
             // update pointers in indirect item
