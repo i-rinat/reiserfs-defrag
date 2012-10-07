@@ -13,6 +13,7 @@ ReiserFs::ReiserFs()
     this->closed = true;
     this->use_data_journaling = false;
     this->leaf_index_granularity = 2000;
+    this->setAGSize(AG_SIZE_128M);
 }
 
 ReiserFs::~ReiserFs()
@@ -693,6 +694,20 @@ ReiserFs::getLeavesForMovemap(std::vector<uint32_t> &leaves, const movemap_t &mo
     // remove duplicates
     std::sort(leaves.begin(), leaves.end());
     leaves.erase(std::unique(leaves.begin(), leaves.end()), leaves.end());
+}
+
+uint32_t
+ReiserFs::AGCount() const
+{
+    return this->ag_count;
+}
+
+void
+ReiserFs::setAGSize(uint32_t size)
+{
+    assert (size == AG_SIZE_128M || size == AG_SIZE_256M || size == AG_SIZE_512M);
+    this->ag_size = size;
+    this->ag_count = (this->sizeInBlocks() - 1) / size + 1;
 }
 
 bool

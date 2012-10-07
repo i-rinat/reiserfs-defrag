@@ -41,6 +41,10 @@
 #define UMOUNT_STATE_CLEAN  1
 #define UMOUNT_STATE_DIRTY  2
 
+#define AG_SIZE_128M        (128*1024*1024/BLOCKSIZE)
+#define AG_SIZE_256M        (256*1024*1024/BLOCKSIZE)
+#define AG_SIZE_512M        (512*1024*1024/BLOCKSIZE)
+
 struct FsSuperblock {
     uint32_t s_block_count;
     uint32_t s_free_blocks;
@@ -400,6 +404,11 @@ public:
     /// checks if block is in reserved area, such as journal, sb, bitmap of first 64kiB
     bool blockReserved(uint32_t block_idx) const;
 
+    /// returns count of allocation groups
+    uint32_t AGCount() const;
+    /// sets size of each allocation group
+    void setAGSize(uint32_t size);
+
 private:
     FsBitmap *bitmap;
     FsJournal *journal;
@@ -413,6 +422,8 @@ private:
     uint32_t blocks_moved_unformatted;  //< counter used for moveMultipleBlocks
     std::vector<leaf_index_entry> leaf_index;
     uint32_t leaf_index_granularity;    //< size of each basket for leaf index
+    uint32_t ag_count;      //< number of allocation groups
+    uint32_t ag_size;       //< size of each allocation group, in blocks (last AG may be smaller)
 
     void readSuperblock();
     void writeSuperblock();
