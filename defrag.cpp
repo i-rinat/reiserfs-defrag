@@ -63,6 +63,8 @@ Defrag::treeThroughDefrag(uint32_t batch_size)
             free_idx = this->nextTargetBlock(free_idx);
             assert (free_idx != 0);
         }
+        if (movemap.size() == 0)    // don't need to cleanup if all internal nodes in their places
+            break;                  // already
         this->fs.cleanupRegionMoveDataDown(old_free_idx, free_idx - 1);
         free_idx = old_free_idx;
 
