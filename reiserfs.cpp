@@ -13,7 +13,6 @@ ReiserFs::ReiserFs()
     this->closed = true;
     this->use_data_journaling = false;
     this->leaf_index_granularity = 2000;
-    this->setAGSize(AG_SIZE_128M);
 }
 
 ReiserFs::~ReiserFs()
@@ -51,6 +50,7 @@ ReiserFs::open(const std::string &name, bool o_sync)
     this->journal = new FsJournal(this->fd, &this->sb);
     this->bitmap = new FsBitmap(this->journal, &this->sb);
     this->closed = false;
+    this->setAGSize(AG_SIZE_128M);
 
     // mark fs dirty
     this->sb.s_umount_state = UMOUNT_STATE_DIRTY;
