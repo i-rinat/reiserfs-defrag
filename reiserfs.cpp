@@ -710,6 +710,49 @@ ReiserFs::setAGSize(uint32_t size)
     this->ag_count = (this->sizeInBlocks() - 1) / size + 1;
 }
 
+void
+ReiserFs::squashDataBlocksInAG(uint32_t ag)
+{
+    assert (0 <= ag && ag < this->ag_count);
+    std::cout << "squashing AG #" << ag << std::endl;
+    const uint32_t block_begin = ag * this->ag_size;
+    const uint32_t block_end = (ag + 1) * this->ag_size - 1;
+    std::cout << "from " << block_begin << " to " << block_end << std::endl;
+
+    uint32_t packed_ptr = block_begin;  // end of packed area
+    uint32_t front_ptr = block_begin;   // frontier
+
+    while (this->blockReserved(packed_ptr)) packed_ptr ++;
+    while (this->blockReserved(front_ptr)) front_ptr ++;
+
+    // create desired move map
+    movemap_t movemap;
+    while (front_ptr <= block_end) {
+        if (this->blockUsed(front_ptr)) {
+            if (front_ptr != packed_ptr)
+                movemap[front_ptr] = packed_ptr;
+            do { packed_ptr++; } while (this->blockReserved(packed_ptr));
+        }
+        do { front_ptr++; } while (this->blockReserved(front_ptr));
+    }
+
+    // move map is likely to be degenerate, with cycles. We need to find way untangle it
+    uint32_t free_idx = this->findFreeBlockAfter(block_end);
+    movemap_t movemap2;
+    for (movemap_t::iterator iter = movemap.begin(); iter != movemap.end(); ++ iter) {
+        movemap2[free_idx] = iter->second;
+        iter->second = free_idx;
+        free_idx = this->findFreeBlockAfter(free_idx);
+        assert (free_idx != 0);
+    }
+    std::cout << "first stage" << std::endl;
+    this->moveBlocks(movemap);
+    std::cout << "second stage" << std::endl;
+    this->moveBlocks(movemap2);
+
+    std::cout << "end squash" << std::endl;
+}
+
 bool
 ReiserFs::blockIsBitmap(uint32_t block_idx) const
 {
