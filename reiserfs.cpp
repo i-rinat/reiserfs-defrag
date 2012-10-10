@@ -781,11 +781,8 @@ ReiserFs::squashDataBlocksInAG(uint32_t ag)
     }
     assert (free_ptr == free_blocks.end());
 
-
     // do actual moves
-    std::cout << "first stage" << std::endl;
     this->moveBlocks(movemap);
-    std::cout << "second stage" << std::endl;
     this->moveBlocks(movemap2);
 
     return RFSD_OK;
