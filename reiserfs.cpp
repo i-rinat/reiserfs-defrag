@@ -711,7 +711,7 @@ ReiserFs::setAGSize(uint32_t size)
 }
 
 int
-ReiserFs::squashDataBlocksInAG(uint32_t ag)
+ReiserFs::squeezeDataBlocksInAG(uint32_t ag)
 {
     assert (0 <= ag && ag < this->ag_count);
     const uint32_t block_begin = ag * this->ag_size;
