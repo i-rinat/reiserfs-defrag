@@ -710,15 +710,12 @@ ReiserFs::setAGSize(uint32_t size)
     this->ag_count = (this->sizeInBlocks() - 1) / size + 1;
 }
 
-void
+int
 ReiserFs::squashDataBlocksInAG(uint32_t ag)
 {
     assert (0 <= ag && ag < this->ag_count);
-    std::cout << "squashing AG #" << ag << std::endl;
     const uint32_t block_begin = ag * this->ag_size;
     const uint32_t block_end = (ag + 1) * this->ag_size - 1;
-    std::cout << "from " << block_begin << " to " << block_end << std::endl;
-
     uint32_t packed_ptr = block_begin;  // end of packed area
     uint32_t front_ptr = block_begin;   // frontier
 
@@ -736,21 +733,62 @@ ReiserFs::squashDataBlocksInAG(uint32_t ag)
         do { front_ptr++; } while (this->blockReserved(front_ptr));
     }
 
-    // move map is likely to be degenerate, with cycles. We need to find way untangle it
-    uint32_t free_idx = this->findFreeBlockAfter(block_end);
-    movemap_t movemap2;
-    for (movemap_t::iterator iter = movemap.begin(); iter != movemap.end(); ++ iter) {
-        movemap2[free_idx] = iter->second;
-        iter->second = free_idx;
-        free_idx = this->findFreeBlockAfter(free_idx);
-        assert (free_idx != 0);
+    if (0 == movemap.size())    // all blocks are on their position already
+        return RFSD_OK;
+
+    // move map is likely to be degenerate, with cycles. We need to find way untangle it.
+    // first, count how many free block we need
+    uint32_t free_block_count = 0;
+    for (movemap_t::const_iterator iter = movemap.begin(); iter != movemap.end(); ++ iter) {
+        if (this->blockUsed(iter->second))
+            free_block_count ++;
     }
+
+    // scan forward
+    std::vector<uint32_t> free_blocks;
+    uint32_t free_idx = this->findFreeBlockAfter(block_end);
+    while ((free_block_count > 0) && (0 != free_idx)) {
+        free_blocks.push_back(free_idx);
+        free_idx = this->findFreeBlockAfter(free_idx);
+        free_block_count --;
+    }
+    // run out of free blocks below, but we need some more. Scan backwards.
+    if (free_block_count > 0) {
+        free_idx = this->findFreeBlockBefore(block_begin);
+        while ((free_block_count > 0) && (0 != free_idx)) {
+            free_blocks.push_back(free_idx);
+            free_idx = this->findFreeBlockBefore(free_idx);
+            free_block_count --;
+        }
+    }
+
+    // give up if we haven't managed to find enough free blocks
+    if (free_block_count > 0)
+        return RFSD_FAIL;
+
+    // sort free block pointers
+    std::sort (free_blocks.begin(), free_blocks.end());
+
+    // fill movemap for second stage
+    movemap_t movemap2;
+    std::vector<uint32_t>::const_iterator free_ptr = free_blocks.begin();
+    for (movemap_t::iterator iter = movemap.begin(); iter != movemap.end(); ++ iter) {
+        if (this->blockUsed(iter->second)) {
+            movemap2[*free_ptr] = iter->second;
+            iter->second = *free_ptr;
+            ++ free_ptr;
+        }
+    }
+    assert (free_ptr == free_blocks.end());
+
+
+    // do actual moves
     std::cout << "first stage" << std::endl;
     this->moveBlocks(movemap);
     std::cout << "second stage" << std::endl;
     this->moveBlocks(movemap2);
 
-    std::cout << "end squash" << std::endl;
+    return RFSD_OK;
 }
 
 bool

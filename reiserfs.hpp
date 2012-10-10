@@ -408,7 +408,7 @@ public:
     uint32_t AGCount() const;
     /// sets size of each allocation group
     void setAGSize(uint32_t size);
-    void squashDataBlocksInAG(uint32_t ag);
+    int squashDataBlocksInAG(uint32_t ag);
 
 private:
     FsBitmap *bitmap;
