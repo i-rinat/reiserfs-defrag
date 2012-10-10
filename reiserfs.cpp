@@ -279,7 +279,7 @@ ReiserFs::updateLeafIndex()
 }
 
 bool
-ReiserFs::movemap_consistent(const movemap_t &movemap)
+ReiserFs::movemapConsistent(const movemap_t &movemap)
 {
     movemap_t revmap;
     movemap_t::const_iterator mapiter;
@@ -334,7 +334,7 @@ ReiserFs::movemap_consistent(const movemap_t &movemap)
 uint32_t
 ReiserFs::moveBlocks(movemap_t &movemap)
 {
-    if (! this->movemap_consistent(movemap)) {
+    if (! this->movemapConsistent(movemap)) {
         std::cerr << "error: movemap not consistent, " << this->err_string << std::endl;
         return 0;
     }

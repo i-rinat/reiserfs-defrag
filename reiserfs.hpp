@@ -428,7 +428,7 @@ private:
 
     void readSuperblock();
     void writeSuperblock();
-    bool movemap_consistent(const movemap_t &movemap);
+    bool movemapConsistent(const movemap_t &movemap);
     void collectLeafNodeIndices(uint32_t block_idx, std::vector<uint32_t> &lni);
     void recursivelyMoveInternalNodes(uint32_t block_idx, movemap_t &movemap,
         uint32_t target_level);
