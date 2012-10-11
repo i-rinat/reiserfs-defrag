@@ -788,6 +788,8 @@ ReiserFs::squeezeDataBlocksInAG(uint32_t ag)
     // do actual moves
     this->moveBlocks(movemap);
     this->moveBlocks(movemap2);
+    // as AG layout changed, we must rescan
+    this->rescanAGForFreeExtents(ag);
 
     return RFSD_OK;
 }
