@@ -938,6 +938,10 @@ ReiserFs::updateAGFreeExtents()
     }
 }
 
+static struct compare_by_extent_length {
+    bool operator() (const ReiserFs::extent_t a, const ReiserFs::extent_t b) { return a.len > b.len; }
+} compare_by_extent_length_obj;
+
 void
 ReiserFs::rescanAGForFreeExtents(uint32_t ag)
 {
@@ -961,4 +965,8 @@ ReiserFs::rescanAGForFreeExtents(uint32_t ag)
         this->ag_free_extents[ag].push_back(ex);
     } while (1);
     this->ag_free_extents[ag].need_update = false;
+
+    // sort by extent length, large
+    std::sort (this->ag_free_extents[ag].list.begin(), this->ag_free_extents[ag].list.end(),
+        compare_by_extent_length_obj);
 }
