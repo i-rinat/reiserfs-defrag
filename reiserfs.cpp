@@ -972,3 +972,40 @@ ReiserFs::rescanAGForFreeExtents(uint32_t ag)
     std::sort (this->ag_free_extents[ag].list.begin(), this->ag_free_extents[ag].list.end(),
         compare_by_extent_length_obj);
 }
+
+bool
+ReiserFs::allocateFreeExtent(uint32_t &ag, uint32_t required_size,
+                             std::vector<uint32_t> &blocks)
+{
+    uint32_t start_ag = ag;
+    do {
+        ag_entry &fe = this->ag_free_extents[ag];
+        uint32_t k = 0;
+        while (k < fe.size() && fe[k].len >= required_size) k ++;
+        if (k > 0) {    // there was least one appropriate extent:
+            k --;       // previous, use it
+            assert (0 <= k && k < fe.size());   // k mus point to some element in vector
+            assert (fe[k].len >= required_size); // ensure extent is large enough
+            blocks.clear();
+            // fill blocks vector, decreasing extent
+            while (required_size > 0) {
+                blocks.push_back(fe[k].start);
+                fe[k].start ++;
+                fe[k].len --;
+                required_size --;
+            }
+            assert (fe[k].len >= 0);    // length must stay non-negative
+            // if we used whole extent, its length is zero, and it should be removed
+            if (0 == fe[k].len) {
+                fe.list.erase(fe.list.begin() + k);
+            }
+            // sort by length
+            std::sort (fe.list.begin(), fe.list.end(), compare_by_extent_length_obj);
+
+            return true;
+        }
+        ag = (ag + 1) % this->AGCount();    // proceed with next, wrap is necessary
+    } while (ag != start_ag);
+
+    return false;
+}

@@ -425,6 +425,13 @@ public:
     /// sets size of each allocation group
     void setAGSize(uint32_t size);
     int squeezeDataBlocksInAG(uint32_t ag);
+    /// allocate free blocks, continuous
+    ///
+    /// \param  ag[in,out]          hint (for input), next hint (for output)
+    /// \param  required_size[in]   required size of extent
+    /// \param  blocks[out]         allocated blocks
+    /// \return true if allocation was successful, false otherwise
+    bool allocateFreeExtent(uint32_t &ag, uint32_t required_size, std::vector<uint32_t> &blocks);
 
 private:
     FsBitmap *bitmap;
