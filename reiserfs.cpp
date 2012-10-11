@@ -637,7 +637,9 @@ ReiserFs::findFreeBlockAfter(uint32_t block_idx) const
 uint32_t
 ReiserFs::findFreeBlockBefore(uint32_t block_idx) const
 {
-    // lost 0th block, but it's reserved anyway
+    if (block_idx == 0)     // there is no free blocks before 0. There is no block at all
+        return 0;
+    // losing 0th block, but it's reserved anyway
     for (uint32_t k = block_idx - 1; k > 0; k --)
         if (not this->bitmap->blockUsed(k) && not this->blockReserved(k))
             return k;
