@@ -358,6 +358,22 @@ public:
         std::set<uint32_t> leaves;
     };
     typedef std::map<uint32_t, uint32_t> movemap_t;
+    typedef struct {
+        uint32_t start;
+        uint32_t len;
+    } extent_t;
+    struct ag_entry {
+        std::vector<extent_t> list;
+        bool need_update;
+        ag_entry() {
+            need_update = true;
+        }
+        extent_t & operator [] (uint32_t k) { return this->list[k]; }
+        void push_back(const extent_t &ex) { this->list.push_back(ex); }
+        void clear() { this->list.clear(); }
+        std::vector<extent_t>::size_type size() { return this->list.size(); }
+    };
+    typedef struct ag_entry ag_entry;
 
     ReiserFs();
     ~ReiserFs();
@@ -425,6 +441,7 @@ private:
     uint32_t leaf_index_granularity;    //< size of each basket for leaf index
     uint32_t ag_count;      //< number of allocation groups
     uint32_t ag_size;       //< size of each allocation group, in blocks (last AG may be smaller)
+    std::vector<ag_entry> ag_free_extents; //< list of free extents in each AG
 
     void readSuperblock();
     void writeSuperblock();
@@ -464,6 +481,8 @@ private:
     void getLeavesForMovemap(std::vector<uint32_t> &leaves, const movemap_t &movemap);
     /// print movemap contents to stdout
     void dumpMovemap(const movemap_t &movemap) const;
+    void updateAGFreeExtents();
+    void rescanAGForFreeExtents(uint32_t ag);
 };
 
 int readBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size);

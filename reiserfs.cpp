@@ -708,6 +708,10 @@ ReiserFs::setAGSize(uint32_t size)
     assert (size == AG_SIZE_128M || size == AG_SIZE_256M || size == AG_SIZE_512M);
     this->ag_size = size;
     this->ag_count = (this->sizeInBlocks() - 1) / size + 1;
+    this->ag_free_extents.clear();
+    this->ag_free_extents.resize(this->ag_count);
+    // AG configuration changed, need to rescan for free extents
+    this->updateAGFreeExtents();
 }
 
 int
@@ -923,4 +927,38 @@ ReiserFs::enumerateLeaves(const Block::key_t &start_key, int soft_threshold,
     leaves.clear();
     this->recursivelyEnumerateLeaves(this->sb.s_root_block, start_key, soft_threshold,
                                      Block::zero_key, Block::largest_key, leaves, last_key);
+}
+
+void
+ReiserFs::updateAGFreeExtents()
+{
+    for (uint32_t ag = 0; ag < this->ag_count; ag ++) {
+        if (this->ag_free_extents[ag].need_update)
+            this->rescanAGForFreeExtents(ag);
+    }
+}
+
+void
+ReiserFs::rescanAGForFreeExtents(uint32_t ag)
+{
+    const uint32_t block_start = ag * this->ag_size;
+    const uint32_t block_end = (ag + 1) * this->ag_size - 1;
+
+    this->ag_free_extents[ag].clear();
+    // find first empty block
+    uint32_t ptr = block_start;
+    do {
+        while (ptr <= block_end && this->blockUsed(ptr)) ptr++;
+        if (ptr > block_end)    // exit if there is no any
+            break;
+
+        extent_t ex;
+        ex.start = ptr; ex.len = 0;
+        while (ptr <= block_end && not this->blockUsed(ptr)) {
+            ex.len ++;
+            ptr++;
+        }
+        this->ag_free_extents[ag].push_back(ex);
+    } while (1);
+    this->ag_free_extents[ag].need_update = false;
 }
