@@ -208,6 +208,13 @@ public:
             stream << this->offset_v1() << ", " << this->type_v1() << "}";
             if (need_endl) stream << std::endl;
         }
+        void dump(int key_version, std::ostream &stream, bool need_endl = false) const {
+            switch (key_version) {
+            case KEY_V0: this->dump_v0(stream, need_endl); break;
+            case KEY_V1: this->dump_v1(stream, need_endl); break;
+            default: assert("key_t::dump(): wrong key type" && false);
+            }
+        }
         static const char *type_name(int type) {
             switch (type) {
             case KEY_TYPE_STAT: return "stat"; break;
