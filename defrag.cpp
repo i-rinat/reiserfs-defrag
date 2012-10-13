@@ -18,6 +18,11 @@ private:
     uint32_t nextTargetBlock(uint32_t previous);
     void createMovemapFromListOfLeaves(movemap_t &movemap, const std::vector<uint32_t> &leaves,
                                        uint32_t &free_idx);
+    /// try to defragment block list
+    ///
+    /// \param      blocks      block list
+    /// \return RFSD_OK on partial success and RFSD_FAIL if all attempts failed
+    int defragmentBlocks(std::vector<uint32_t> &blocks);
 };
 
 Defrag::Defrag(ReiserFs &fs) : fs(fs)
@@ -149,6 +154,16 @@ Defrag::nextTargetBlock(uint32_t previous)
     else return 0; // no one found
 }
 
+int
+Defrag::defragmentBlocks(std::vector<uint32_t> &blocks)
+{
+    if (blocks.size() == 0) // zero-length file already defragmented
+        return RFSD_OK;
+
+    std::cout << "Defrag::defragmentBlocks stub, for " << blocks.size() << " block(s)" << std::endl;
+    return RFSD_FAIL;
+}
+
 void
 Defrag::experimental_v1()
 {
@@ -183,9 +198,7 @@ Defrag::experimental_v1()
                 }
                 if (current_obj.dir_id != ih.key.dir_id || current_obj.obj_id != ih.key.obj_id) {
                     // new file started, time to process previous one
-                    std::cout << "file ("<<current_obj.dir_id<<", "<<current_obj.obj_id<<") ended";
-                    std::cout << ",  " << file_blocks.size() << " blocks" << std::endl;
-
+                    this->defragmentBlocks(file_blocks);
                     // prepare structures for new file
                     current_obj.dir_id = ih.key.dir_id;
                     current_obj.obj_id = ih.key.obj_id;
@@ -207,8 +220,7 @@ Defrag::experimental_v1()
             fs.releaseBlock(block_obj);
         } // for (leaves)
 
-        std::cout << "file ("<<current_obj.dir_id<<", "<<current_obj.obj_id<<") ended";
-        std::cout << ",  " << file_blocks.size() << " blocks" << std::endl;
+        this->defragmentBlocks(file_blocks);
     }
 }
 
