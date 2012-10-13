@@ -23,6 +23,8 @@ private:
     /// \param      blocks      block list
     /// \return RFSD_OK on partial success and RFSD_FAIL if all attempts failed
     int defragmentBlocks(std::vector<uint32_t> &blocks);
+    void convertBlocksToExtents(const std::vector<uint32_t> &blocks,
+                                std::vector<ReiserFs::extent_t> &extents);
 };
 
 Defrag::Defrag(ReiserFs &fs) : fs(fs)
@@ -162,6 +164,31 @@ Defrag::defragmentBlocks(std::vector<uint32_t> &blocks)
 
     std::cout << "Defrag::defragmentBlocks stub, for " << blocks.size() << " block(s)" << std::endl;
     return RFSD_FAIL;
+}
+
+void
+Defrag::convertBlocksToExtents(const std::vector<uint32_t> &blocks,
+                               std::vector<ReiserFs::extent_t> &extents)
+{
+    ReiserFs::extent_t ex;
+
+    extents.clear();
+    ex.start = blocks[0];
+    ex.len = 1;
+    for (uint32_t k = 1; k < blocks.size(); k ++) {
+        if (0 == blocks[k])     // skip sparse blocks
+            continue;
+        if (ex.start + (ex.len - 1) + 1 == blocks[k]) {
+            // next block extends current extent
+            ex.len ++;
+        } else {
+            // remember current extent and start another
+            extents.push_back(ex);
+            ex.start = blocks[k];
+            ex.len = 1;
+        }
+    }
+    extents.push_back(ex);      // push last extent
 }
 
 void
