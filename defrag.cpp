@@ -23,6 +23,8 @@ private:
     /// \param      blocks      block list
     /// \return RFSD_OK on partial success and RFSD_FAIL if all attempts failed
     int defragmentBlocks(std::vector<uint32_t> &blocks);
+    void getDesiredExtentLengths(const std::vector<ReiserFs::extent_t> &extents,
+                                 std::vector<uint32_t> &lengths);
     void convertBlocksToExtents(const std::vector<uint32_t> &blocks,
                                 std::vector<ReiserFs::extent_t> &extents);
 };
@@ -164,6 +166,13 @@ Defrag::defragmentBlocks(std::vector<uint32_t> &blocks)
 
     std::cout << "Defrag::defragmentBlocks stub, for " << blocks.size() << " block(s)" << std::endl;
     return RFSD_FAIL;
+}
+
+void
+Defrag::getDesiredExtentLengths(const std::vector<ReiserFs::extent_t> &extents,
+                                std::vector<uint32_t> &lengths)
+{
+
 }
 
 void
