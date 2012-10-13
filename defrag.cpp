@@ -174,7 +174,15 @@ Defrag::defragmentBlocks(std::vector<uint32_t> &blocks)
         return RFSD_OK;
 
     // get ideal extent distribution
+    std::vector<uint32_t> lengths;
+    this->getDesiredExtentLengths(extents, lengths);
     // WIP
+    std::cout << "initial lengths: ";
+    for (uint32_t k = 0; k < extents.size(); k ++) std::cout << extents[k].len << ", ";
+    std::cout << std::endl;
+    std::cout << "desired lengths: ";
+    for (uint32_t k = 0; k < lengths.size(); k ++) std::cout << lengths[k] << ", ";
+    std::cout << std::endl;
 
     return RFSD_FAIL;
 }
@@ -183,7 +191,18 @@ void
 Defrag::getDesiredExtentLengths(const std::vector<ReiserFs::extent_t> &extents,
                                 std::vector<uint32_t> &lengths)
 {
-
+    assert (extents.size() >= 1);
+    const std::vector<ReiserFs::extent_t>::const_iterator iter;
+    lengths.clear();
+    lengths.push_back(extents[0].len);
+    for (uint32_t k = 1; k < extents.size(); k ++) {
+        uint32_t &last_length = lengths.back();
+        if (last_length < this->desired_extent_length) {
+            last_length += extents[k].len;
+        } else {
+            lengths.push_back(extents[k].len);
+        }
+    }
 }
 
 void
