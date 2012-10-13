@@ -14,6 +14,7 @@ public:
 
 private:
     ReiserFs &fs;
+    uint32_t desired_extent_length;
 
     uint32_t nextTargetBlock(uint32_t previous);
     void createMovemapFromListOfLeaves(movemap_t &movemap, const std::vector<uint32_t> &leaves,
@@ -31,7 +32,7 @@ private:
 
 Defrag::Defrag(ReiserFs &fs) : fs(fs)
 {
-
+    this->desired_extent_length = 2048;
 }
 
 void
