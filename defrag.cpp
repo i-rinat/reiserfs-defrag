@@ -165,6 +165,16 @@ Defrag::defragmentBlocks(std::vector<uint32_t> &blocks)
         return RFSD_OK;
 
     std::cout << "Defrag::defragmentBlocks stub, for " << blocks.size() << " block(s)" << std::endl;
+
+    std::vector<ReiserFs::extent_t> extents;
+    this->convertBlocksToExtents(blocks, extents);
+
+    if (extents.size() <= 1)    // no need to defragment file with only one extent
+        return RFSD_OK;
+
+    // get ideal extent distribution
+    // WIP
+
     return RFSD_FAIL;
 }
 
