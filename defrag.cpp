@@ -10,6 +10,7 @@ class Defrag {
 public:
     Defrag (ReiserFs &fs);
     void treeThroughDefrag(uint32_t batch_size = 16000);
+    void experimental_v1();
 
 private:
     ReiserFs &fs;
@@ -148,6 +149,69 @@ Defrag::nextTargetBlock(uint32_t previous)
     else return 0; // no one found
 }
 
+void
+Defrag::experimental_v1()
+{
+    std::vector<uint32_t> leaves;
+    Block::key_t start_key = Block::zero_key;
+    Block::key_t last_key = Block::zero_key;
+
+    fs.enumerateLeaves(start_key, 1000000, leaves, last_key);
+    std::cout << "leaves: " << leaves.size() << std::endl;
+
+    if (leaves.size() > 0) {
+        std::vector<uint32_t> file_blocks;
+        struct {
+            uint32_t dir_id;
+            uint32_t obj_id;
+        } current_obj;
+
+        bool first_leaf_in_batch = true;
+        std::vector<uint32_t>::const_iterator iter;
+        for (iter = leaves.begin(); iter != leaves.end(); ++ iter) {
+            const uint32_t leaf_idx = *iter;
+            //std::cout << "leaf: " << leaf_idx << std::endl;
+
+            Block *block_obj = fs.readBlock(leaf_idx);
+            bool first_indirect_in_leaf = true;
+            for (uint32_t item = 0; item < block_obj->itemCount(); item ++) {
+                const Block::item_header &ih = block_obj->itemHeader(item);
+                if (first_leaf_in_batch) {  // initialize one time per batch
+                    current_obj.dir_id = ih.key.dir_id;
+                    current_obj.obj_id = ih.key.obj_id;
+                    first_leaf_in_batch = false;
+                }
+                if (current_obj.dir_id != ih.key.dir_id || current_obj.obj_id != ih.key.obj_id) {
+                    // new file started, time to process previous one
+                    std::cout << "file ("<<current_obj.dir_id<<", "<<current_obj.obj_id<<") ended";
+                    std::cout << ",  " << file_blocks.size() << " blocks" << std::endl;
+
+                    // prepare structures for new file
+                    current_obj.dir_id = ih.key.dir_id;
+                    current_obj.obj_id = ih.key.obj_id;
+                    file_blocks.clear();
+                }
+
+                ih.key.dump(ih.version, std::cout, true);
+
+                if (KEY_TYPE_INDIRECT == ih.type()) {
+                    // only add leaf block if first indirect item refers to current file
+                    if (first_indirect_in_leaf)
+                        file_blocks.push_back(leaf_idx);
+                    for (uint32_t idx = 0; idx < ih.length / 4; idx ++) {
+                        file_blocks.push_back(block_obj->indirectItemRef(ih.offset, idx));
+                    }
+                    first_indirect_in_leaf = false;
+                }
+            }
+            fs.releaseBlock(block_obj);
+        } // for (leaves)
+
+        std::cout << "file ("<<current_obj.dir_id<<", "<<current_obj.obj_id<<") ended";
+        std::cout << ",  " << file_blocks.size() << " blocks" << std::endl;
+    }
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -163,7 +227,8 @@ main (int argc, char *argv[])
     fs.useDataJournaling(false);
 
     Defrag defrag(fs);
-    defrag.treeThroughDefrag(8000);
+    // defrag.treeThroughDefrag(8000);
+    defrag.experimental_v1();
 
     fs.close();
     return 0;
