@@ -165,24 +165,58 @@ Defrag::defragmentBlocks(std::vector<uint32_t> &blocks)
     if (blocks.size() == 0) // zero-length file already defragmented
         return RFSD_OK;
 
-    std::cout << "Defrag::defragmentBlocks stub, for " << blocks.size() << " block(s)" << std::endl;
-
     std::vector<ReiserFs::extent_t> extents;
     this->convertBlocksToExtents(blocks, extents);
 
     if (extents.size() <= 1)    // no need to defragment file with only one extent
         return RFSD_OK;
 
+    std::cout << "Defrag::defragmentBlocks stub, for " << blocks.size() << " block(s)" << std::endl;
+
     // get ideal extent distribution
     std::vector<uint32_t> lengths;
-    this->getDesiredExtentLengths(extents, lengths);
-    // WIP
+    this->getDesiredExtentLengths(extents, lengths, 2048);
+    // TODO: remove debug prints
     std::cout << "initial lengths: ";
     for (uint32_t k = 0; k < extents.size(); k ++) std::cout << extents[k].len << ", ";
     std::cout << std::endl;
     std::cout << "desired lengths: ";
     for (uint32_t k = 0; k < lengths.size(); k ++) std::cout << lengths[k] << ", ";
     std::cout << std::endl;
+    // ======
+
+    //  b_begin      b_end
+    //    ↓           ↓
+    //  b |===========|=======|=|===================|
+    //  c |====|====|====|====|====|====|====|====|=|
+    //         ↑    ↑
+    //     c_begin  c_end
+
+    std::vector<ReiserFs::extent_t>::const_iterator b_cur = extents.begin();
+    std::vector<uint32_t>::const_iterator c_cur = lengths.begin();
+    uint32_t b_begin = 0;
+    uint32_t b_end = b_cur->len;
+    uint32_t c_begin = 0;
+    uint32_t c_end = *c_cur;
+
+    while (1) {
+        while ((c_end <= b_end) && (++c_cur != lengths.end())) { // advance c
+            c_begin = c_end;
+            c_end = c_begin + *c_cur;
+        }
+        if (lengths.end() == c_cur)
+            break;
+
+        std::cout << "move " << c_begin << "-" << c_end - 1 << ", ";
+        while ((b_end <= c_end) && (++b_cur != extents.end())) { // advance b
+            b_begin = b_end;
+            b_end = b_begin + b_cur->len;
+        }
+        if (extents.end() == b_cur)
+            break;
+    }
+    std::cout << std::endl;
+
 
     return RFSD_FAIL;
 }
