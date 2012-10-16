@@ -24,8 +24,8 @@ private:
     /// \param      blocks      block list
     /// \return RFSD_OK on partial success and RFSD_FAIL if all attempts failed
     int defragmentBlocks(std::vector<uint32_t> &blocks);
-    void getDesiredExtentLengths(const std::vector<ReiserFs::extent_t> &extents,
-                                 std::vector<uint32_t> &lengths);
+    uint32_t getDesiredExtentLengths(const std::vector<ReiserFs::extent_t> &extents,
+                                     std::vector<uint32_t> &lengths, uint32_t target_length);
     void convertBlocksToExtents(const std::vector<uint32_t> &blocks,
                                 std::vector<ReiserFs::extent_t> &extents);
 };
@@ -187,22 +187,23 @@ Defrag::defragmentBlocks(std::vector<uint32_t> &blocks)
     return RFSD_FAIL;
 }
 
-void
+uint32_t
 Defrag::getDesiredExtentLengths(const std::vector<ReiserFs::extent_t> &extents,
-                                std::vector<uint32_t> &lengths)
+                                std::vector<uint32_t> &lengths, uint32_t target_length)
 {
-    assert (extents.size() >= 1);
-    const std::vector<ReiserFs::extent_t>::const_iterator iter;
+    target_length = std::max(128u, target_length);
+    uint32_t total_length = 0;
+    for (uint32_t k = 0; k < extents.size(); k ++) total_length += extents[k].len;
+
+    uint32_t remaining = total_length;
     lengths.clear();
-    lengths.push_back(extents[0].len);
-    for (uint32_t k = 1; k < extents.size(); k ++) {
-        uint32_t &last_length = lengths.back();
-        if (last_length < this->desired_extent_length) {
-            last_length += extents[k].len;
-        } else {
-            lengths.push_back(extents[k].len);
-        }
+    while (remaining > target_length) {
+        lengths.push_back(target_length);
+        remaining -= target_length;
     }
+    if (remaining > 0) lengths.push_back(remaining);
+
+    return total_length;
 }
 
 void
