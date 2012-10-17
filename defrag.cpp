@@ -28,6 +28,8 @@ private:
                                      std::vector<uint32_t> &lengths, uint32_t target_length);
     void convertBlocksToExtents(const std::vector<uint32_t> &blocks,
                                 std::vector<ReiserFs::extent_t> &extents);
+    /// filters out sparse blocks from \param blocks by eliminating all zeros
+    void filterOutSparseBlocks(std::vector<uint32_t> &blocks);
 };
 
 Defrag::Defrag(ReiserFs &fs) : fs(fs)
@@ -238,6 +240,21 @@ Defrag::getDesiredExtentLengths(const std::vector<ReiserFs::extent_t> &extents,
     if (remaining > 0) lengths.push_back(remaining);
 
     return total_length;
+}
+
+void
+Defrag::filterOutSparseBlocks(std::vector<uint32_t> &blocks)
+{
+    std::vector<uint32_t>::iterator iter_front = blocks.begin();
+    std::vector<uint32_t>::iterator iter_back = blocks.begin();
+
+    for (; iter_front != blocks.end(); ++ iter_front) {
+        if (0 != *iter_front) {
+            *iter_back = *iter_front;
+            iter_back ++;
+        }
+    }
+    blocks.erase(iter_back, blocks.end());
 }
 
 void
