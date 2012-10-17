@@ -197,33 +197,41 @@ Defrag::defragmentBlocks(std::vector<uint32_t> &blocks)
     //         ↑    ↑
     //     c_begin  c_end
 
+    movemap_t movemap;
+    std::vector<uint32_t> free_blocks;
     std::vector<ReiserFs::extent_t>::const_iterator b_cur = extents.begin();
     std::vector<uint32_t>::const_iterator c_cur = lengths.begin();
     uint32_t b_begin = 0;
-    uint32_t b_end = b_cur->len;
+    uint32_t b_end = 0;
     uint32_t c_begin = 0;
-    uint32_t c_end = *c_cur;
+    uint32_t c_end = 0;
 
-    while (1) {
-        while ((c_end <= b_end) && (++c_cur != lengths.end())) { // advance c
+    while (c_cur != lengths.end()) {
+        if (c_end < b_end) {
             c_begin = c_end;
             c_end = c_begin + *c_cur;
-        }
-        if (lengths.end() == c_cur)
-            break;
-
-        std::cout << "move " << c_begin << "-" << c_end - 1 << ", ";
-        while ((b_end <= c_end) && (++b_cur != extents.end())) { // advance b
+            if (b_begin > c_begin || c_end > b_end) {
+                uint32_t ag = 0;
+                if (this->fs.allocateFreeExtent(ag, c_end - c_begin, free_blocks)) {
+                    for (uint32_t k = c_begin; k < c_end; k ++) {
+                        movemap[blocks[k]] = free_blocks[k - c_begin];
+                    }
+                }
+            }
+            c_cur ++;
+        } else {
             b_begin = b_end;
             b_end = b_begin + b_cur->len;
+            b_cur ++;
         }
-        if (extents.end() == b_cur)
-            break;
     }
+
     std::cout << std::endl;
 
+    std::cout << "movemap size = " << movemap.size() << std::endl;
+    std::cout << this->fs.moveBlocks(movemap) << " blocks moved" << std::endl;
 
-    return RFSD_FAIL;
+    return RFSD_OK;
 }
 
 uint32_t
