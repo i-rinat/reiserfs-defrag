@@ -327,6 +327,8 @@ Defrag::experimental_v1()
                 }
                 if (current_obj.dir_id != ih.key.dir_id || current_obj.obj_id != ih.key.obj_id) {
                     // new file started, time to process previous one
+                    // delete references to sparse blocks
+                    this->filterOutSparseBlocks(file_blocks);
                     this->defragmentBlocks(file_blocks);
                     // prepare structures for new file
                     current_obj.dir_id = ih.key.dir_id;
