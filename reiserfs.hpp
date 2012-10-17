@@ -439,6 +439,8 @@ public:
     /// \param  blocks[out]         allocated blocks
     /// \return true if allocation was successful, false otherwise
     bool allocateFreeExtent(uint32_t &ag, uint32_t required_size, std::vector<uint32_t> &blocks);
+    /// print movemap contents to stdout
+    void dumpMovemap(const movemap_t &movemap) const;
 
 private:
     FsBitmap *bitmap;
@@ -493,8 +495,6 @@ private:
                                     const std::set<Block::key_t> &key_list, bool all_keys = false);
     void getLeavesForBlockRange(std::vector<uint32_t> &leaves, uint32_t from, uint32_t to);
     void getLeavesForMovemap(std::vector<uint32_t> &leaves, const movemap_t &movemap);
-    /// print movemap contents to stdout
-    void dumpMovemap(const movemap_t &movemap) const;
     void updateAGFreeExtents();
     void rescanAGForFreeExtents(uint32_t ag);
 };
