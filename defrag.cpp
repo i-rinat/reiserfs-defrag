@@ -164,7 +164,7 @@ Defrag::nextTargetBlock(uint32_t previous)
 int
 Defrag::defragmentBlocks(std::vector<uint32_t> &blocks)
 {
-    if (blocks.size() == 0) // zero-length file already defragmented
+    if (blocks.size() == 0) // zero-length file is defragmented already
         return RFSD_OK;
 
     std::vector<ReiserFs::extent_t> extents;
