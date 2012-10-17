@@ -173,7 +173,10 @@ Defrag::defragmentBlocks(std::vector<uint32_t> &blocks)
     if (extents.size() <= 1)    // no need to defragment file with only one extent
         return RFSD_OK;
 
-    std::cout << "Defrag::defragmentBlocks stub, for " << blocks.size() << " block(s)" << std::endl;
+    std::cout << "extents.size() == " << extents.size() << std::endl;
+    for (uint32_t k = 0; k < extents.size(); k ++) {
+        std::cout << extents[k].start << "(" << extents[k].len << ") " << std::endl;
+    }
 
     // get ideal extent distribution
     std::vector<uint32_t> lengths;
