@@ -304,7 +304,9 @@ Defrag::experimental_v1()
     std::cout << "leaves: " << leaves.size() << std::endl;
 
     if (leaves.size() > 0) {
-        std::vector<uint32_t> file_blocks;
+        std::vector<std::vector<uint32_t> > defrag_task(1);
+        std::vector<uint32_t> *file_blocks = &(defrag_task[0]);
+
         struct {
             uint32_t dir_id;
             uint32_t obj_id;
@@ -328,12 +330,13 @@ Defrag::experimental_v1()
                 if (current_obj.dir_id != ih.key.dir_id || current_obj.obj_id != ih.key.obj_id) {
                     // new file started, time to process previous one
                     // delete references to sparse blocks
-                    this->filterOutSparseBlocks(file_blocks);
-                    this->defragmentBlocks(file_blocks);
+                    this->filterOutSparseBlocks(*file_blocks);
                     // prepare structures for new file
                     current_obj.dir_id = ih.key.dir_id;
                     current_obj.obj_id = ih.key.obj_id;
-                    file_blocks.clear();
+                    // increase defrag_task by one element, with default constructor
+                    defrag_task.resize(defrag_task.size() + 1);
+                    file_blocks = &(defrag_task.back()); // point to newly created element
                 }
 
                 ih.key.dump(ih.version, std::cout, true);
@@ -341,9 +344,9 @@ Defrag::experimental_v1()
                 if (KEY_TYPE_INDIRECT == ih.type()) {
                     // only add leaf block if first indirect item refers to current file
                     if (first_indirect_in_leaf)
-                        file_blocks.push_back(leaf_idx);
+                        file_blocks->push_back(leaf_idx);
                     for (uint32_t idx = 0; idx < ih.length / 4; idx ++) {
-                        file_blocks.push_back(block_obj->indirectItemRef(ih.offset, idx));
+                        file_blocks->push_back(block_obj->indirectItemRef(ih.offset, idx));
                     }
                     first_indirect_in_leaf = false;
                 }
@@ -351,7 +354,9 @@ Defrag::experimental_v1()
             fs.releaseBlock(block_obj);
         } // for (leaves)
 
-        this->defragmentBlocks(file_blocks);
+        for (uint32_t k = 0; k < defrag_task.size(); k ++) {
+            this->defragmentBlocks(defrag_task[k]);
+        }
     }
 }
 
