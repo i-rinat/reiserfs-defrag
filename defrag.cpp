@@ -363,8 +363,6 @@ Defrag::experimental_v1()
                     // previous file data remains in defrag_task
                 }
 
-                //ih.key.dump(ih.version, std::cout, true);
-
                 if (KEY_TYPE_INDIRECT == ih.type()) {
                     // only add leaf block if first indirect item refers to current file
                     if (first_indirect_in_leaf)
