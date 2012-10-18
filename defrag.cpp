@@ -424,6 +424,13 @@ main (int argc, char *argv[])
 
     Defrag defrag(fs);
     // defrag.treeThroughDefrag(8000);
+
+    for (uint32_t k = 0; k < fs.AGCount(); k ++) {
+        std::cout << "AG #" << k << ", " << fs.AGExtentCount(k) << std::endl;
+        if (fs.AGExtentCount(k) >= 7)
+            fs.squeezeDataBlocksInAG(k);
+    }
+
     defrag.experimental_v1();
 
     fs.close();
