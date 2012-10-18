@@ -190,7 +190,7 @@ Defrag::defragmentBlocks(std::vector<uint32_t> &blocks)
     std::cout << std::endl;
     // ======
 
-    //  b_begin      b_end
+    //  b_begin      b_end (points to the next block after extent last one)
     //    ↓           ↓
     //  b |===========|=======|=|===================|
     //  c |====|====|====|====|====|====|====|====|=|
@@ -210,6 +210,7 @@ Defrag::defragmentBlocks(std::vector<uint32_t> &blocks)
         if (c_end < b_end) {
             c_begin = c_end;
             c_end = c_begin + *c_cur;
+            // defragment if [c_begin, c_end-1] ⊈ [b_begin, b_end-1]
             if (b_begin > c_begin || c_end > b_end) {
                 uint32_t ag = 0;
                 if (this->fs.allocateFreeExtent(ag, c_end - c_begin, free_blocks)) {
