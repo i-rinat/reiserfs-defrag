@@ -704,6 +704,12 @@ ReiserFs::AGCount() const
     return this->ag_count;
 }
 
+uint32_t
+ReiserFs::AGExtentCount(uint32_t ag)
+{
+    return this->ag_free_extents[ag].size();
+}
+
 void
 ReiserFs::setAGSize(uint32_t size)
 {

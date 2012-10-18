@@ -431,6 +431,8 @@ public:
     uint32_t AGCount() const;
     /// sets size of each allocation group
     void setAGSize(uint32_t size);
+
+    uint32_t AGExtentCount(uint32_t ag);
     int squeezeDataBlocksInAG(uint32_t ag);
     /// allocate free blocks, continuous
     ///
