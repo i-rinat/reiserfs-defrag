@@ -30,6 +30,13 @@ private:
                                 std::vector<ReiserFs::extent_t> &extents);
     /// filters out sparse blocks from \param blocks by eliminating all zeros
     void filterOutSparseBlocks(std::vector<uint32_t> &blocks);
+
+    /// merges \param dest and \param src to \param dest
+    ///
+    /// \param  dest[in,out]    first source and destination
+    /// \param  src[in]         second source
+    /// \return RFSD_OK if merge successful, RFSD_FAIL if there was some overlappings
+    int mergeMovemap(movemap_t &dest, const movemap_t &src);
 };
 
 Defrag::Defrag(ReiserFs &fs) : fs(fs)
@@ -292,6 +299,19 @@ Defrag::convertBlocksToExtents(const std::vector<uint32_t> &blocks,
         }
     }
     extents.push_back(ex);      // push last extent
+}
+
+int
+Defrag::mergeMovemap(movemap_t &dest, const movemap_t &src)
+{
+    const uint32_t prev_dest_size = dest.size();
+
+    dest.insert(src.begin(), src.end());
+    // if new dest size equals to sum of previous dest and src sizes, there was
+    if (dest.size() == prev_dest_size + src.size())     // no intersections.
+        return RFSD_OK;
+    else
+        return RFSD_FAIL;   // Otherwise they was. And it's bad.
 }
 
 void
