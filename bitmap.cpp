@@ -37,6 +37,8 @@ FsBitmap::markBlockUsed(uint32_t block_idx)
 
     c = c | (static_cast<uint8_t>(1) << inbyte_idx);
     bb.markDirty();
+    // mark AG dirty
+    this->ag_free_extents[block_idx / this->ag_size].need_update = true;
 }
 
 void
@@ -51,6 +53,8 @@ FsBitmap::markBlockFree(uint32_t block_idx)
 
     c = c & ~(static_cast<uint8_t>(1) << inbyte_idx);
     bb.markDirty();
+    // mark AG dirty
+    this->ag_free_extents[block_idx / this->ag_size].need_update = true;
 }
 
 void
