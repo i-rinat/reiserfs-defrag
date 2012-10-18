@@ -27,10 +27,10 @@ private:
     /// \param  movemap[out]    resulting movement map
     /// \return RFSD_OK on partial success and RFSD_FAIL if all attempts failed
     int prepareDefragTask(std::vector<uint32_t> &blocks, movemap_t &movemap);
-    uint32_t getDesiredExtentLengths(const std::vector<ReiserFs::extent_t> &extents,
+    uint32_t getDesiredExtentLengths(const std::vector<FsBitmap::extent_t> &extents,
                                      std::vector<uint32_t> &lengths, uint32_t target_length);
     void convertBlocksToExtents(const std::vector<uint32_t> &blocks,
-                                std::vector<ReiserFs::extent_t> &extents);
+                                std::vector<FsBitmap::extent_t> &extents);
     /// filters out sparse blocks from \param blocks by eliminating all zeros
     void filterOutSparseBlocks(std::vector<uint32_t> &blocks);
 
@@ -178,7 +178,7 @@ Defrag::prepareDefragTask(std::vector<uint32_t> &blocks, movemap_t &movemap)
     if (blocks.size() == 0) // zero-length file is defragmented already
         return RFSD_OK;
 
-    std::vector<ReiserFs::extent_t> extents;
+    std::vector<FsBitmap::extent_t> extents;
     this->convertBlocksToExtents(blocks, extents);
 
     if (extents.size() <= 1)    // no need to defragment file with only one extent
@@ -209,7 +209,7 @@ Defrag::prepareDefragTask(std::vector<uint32_t> &blocks, movemap_t &movemap)
     //     c_begin  c_end
 
     std::vector<uint32_t> free_blocks;
-    std::vector<ReiserFs::extent_t>::const_iterator b_cur = extents.begin();
+    std::vector<FsBitmap::extent_t>::const_iterator b_cur = extents.begin();
     std::vector<uint32_t>::const_iterator c_cur = lengths.begin();
     uint32_t b_begin = 0;
     uint32_t b_end = 0;
@@ -223,7 +223,7 @@ Defrag::prepareDefragTask(std::vector<uint32_t> &blocks, movemap_t &movemap)
             // defragment if [c_begin, c_end-1] ⊈ [b_begin, b_end-1]
             if (b_begin > c_begin || c_end > b_end) {
                 uint32_t ag = 0;
-                if (this->fs.allocateFreeExtent(ag, c_end - c_begin, free_blocks)) {
+                if (this->fs.bitmap->allocateFreeExtent(ag, c_end - c_begin, free_blocks)) {
                     for (uint32_t k = c_begin; k < c_end; k ++) {
                         movemap[blocks[k]] = free_blocks[k - c_begin];
                     }
@@ -244,7 +244,7 @@ Defrag::prepareDefragTask(std::vector<uint32_t> &blocks, movemap_t &movemap)
 }
 
 uint32_t
-Defrag::getDesiredExtentLengths(const std::vector<ReiserFs::extent_t> &extents,
+Defrag::getDesiredExtentLengths(const std::vector<FsBitmap::extent_t> &extents,
                                 std::vector<uint32_t> &lengths, uint32_t target_length)
 {
     target_length = std::max(128u, target_length);
@@ -279,9 +279,9 @@ Defrag::filterOutSparseBlocks(std::vector<uint32_t> &blocks)
 
 void
 Defrag::convertBlocksToExtents(const std::vector<uint32_t> &blocks,
-                               std::vector<ReiserFs::extent_t> &extents)
+                               std::vector<FsBitmap::extent_t> &extents)
 {
-    ReiserFs::extent_t ex;
+    FsBitmap::extent_t ex;
 
     extents.clear();
     ex.start = blocks[0];
@@ -425,9 +425,9 @@ main (int argc, char *argv[])
     Defrag defrag(fs);
     // defrag.treeThroughDefrag(8000);
 
-    for (uint32_t k = 0; k < fs.AGCount(); k ++) {
-        std::cout << "AG #" << k << ", " << fs.AGExtentCount(k) << std::endl;
-        if (fs.AGExtentCount(k) >= 7)
+    for (uint32_t k = 0; k < fs.bitmap->AGCount(); k ++) {
+        std::cout << "AG #" << k << ", " << fs.bitmap->AGExtentCount(k) << std::endl;
+        if (fs.bitmap->AGExtentCount(k) >= 7)
             fs.squeezeDataBlocksInAG(k);
     }
 

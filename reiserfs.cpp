@@ -50,7 +50,7 @@ ReiserFs::open(const std::string &name, bool o_sync)
     this->journal = new FsJournal(this->fd, &this->sb);
     this->bitmap = new FsBitmap(this->journal, &this->sb);
     this->closed = false;
-    this->setAGSize(AG_SIZE_128M);
+    this->bitmap->setAGSize(AG_SIZE_128M);
 
     // mark fs dirty
     this->sb.s_umount_state = UMOUNT_STATE_DIRTY;
@@ -698,36 +698,12 @@ ReiserFs::getLeavesForMovemap(std::vector<uint32_t> &leaves, const movemap_t &mo
     leaves.erase(std::unique(leaves.begin(), leaves.end()), leaves.end());
 }
 
-uint32_t
-ReiserFs::AGCount() const
-{
-    return this->ag_count;
-}
-
-uint32_t
-ReiserFs::AGExtentCount(uint32_t ag)
-{
-    return this->ag_free_extents[ag].size();
-}
-
-void
-ReiserFs::setAGSize(uint32_t size)
-{
-    assert (size == AG_SIZE_128M || size == AG_SIZE_256M || size == AG_SIZE_512M);
-    this->ag_size = size;
-    this->ag_count = (this->sizeInBlocks() - 1) / size + 1;
-    this->ag_free_extents.clear();
-    this->ag_free_extents.resize(this->ag_count);
-    // AG configuration changed, need to rescan for free extents
-    this->updateAGFreeExtents();
-}
-
 int
 ReiserFs::squeezeDataBlocksInAG(uint32_t ag)
 {
-    assert (0 <= ag && ag < this->ag_count);
-    const uint32_t block_begin = ag * this->ag_size;
-    const uint32_t block_end = (ag + 1) * this->ag_size - 1;
+    assert (0 <= ag && ag < this->bitmap->AGCount());
+    const uint32_t block_begin = ag * this->bitmap->AGSize();
+    const uint32_t block_end = (ag + 1) * this->bitmap->AGSize() - 1;
     uint32_t packed_ptr = block_begin;  // end of packed area
     uint32_t front_ptr = block_begin;   // frontier
 
@@ -797,7 +773,7 @@ ReiserFs::squeezeDataBlocksInAG(uint32_t ag)
     this->moveBlocks(movemap);
     this->moveBlocks(movemap2);
     // as AG layout changed, we must rescan
-    this->rescanAGForFreeExtents(ag);
+    this->bitmap->rescanAGForFreeExtents(ag);
 
     return RFSD_OK;
 }
@@ -937,83 +913,4 @@ ReiserFs::enumerateLeaves(const Block::key_t &start_key, int soft_threshold,
     leaves.clear();
     this->recursivelyEnumerateLeaves(this->sb.s_root_block, start_key, soft_threshold,
                                      Block::zero_key, Block::largest_key, leaves, last_key);
-}
-
-void
-ReiserFs::updateAGFreeExtents()
-{
-    for (uint32_t ag = 0; ag < this->ag_count; ag ++) {
-        if (this->ag_free_extents[ag].need_update)
-            this->rescanAGForFreeExtents(ag);
-    }
-}
-
-static struct compare_by_extent_length {
-    bool operator() (const ReiserFs::extent_t a, const ReiserFs::extent_t b) { return a.len > b.len; }
-} compare_by_extent_length_obj;
-
-void
-ReiserFs::rescanAGForFreeExtents(uint32_t ag)
-{
-    const uint32_t block_start = ag * this->ag_size;
-    const uint32_t block_end = (ag + 1) * this->ag_size - 1;
-
-    this->ag_free_extents[ag].clear();
-    // find first empty block
-    uint32_t ptr = block_start;
-    do {
-        while (ptr <= block_end && this->blockUsed(ptr)) ptr++;
-        if (ptr > block_end)    // exit if there is no any
-            break;
-
-        extent_t ex;
-        ex.start = ptr; ex.len = 0;
-        while (ptr <= block_end && not this->blockUsed(ptr)) {
-            ex.len ++;
-            ptr++;
-        }
-        this->ag_free_extents[ag].push_back(ex);
-    } while (1);
-    this->ag_free_extents[ag].need_update = false;
-
-    // sort by extent length, large
-    std::sort (this->ag_free_extents[ag].list.begin(), this->ag_free_extents[ag].list.end(),
-        compare_by_extent_length_obj);
-}
-
-bool
-ReiserFs::allocateFreeExtent(uint32_t &ag, uint32_t required_size,
-                             std::vector<uint32_t> &blocks)
-{
-    uint32_t start_ag = ag;
-    do {
-        ag_entry &fe = this->ag_free_extents[ag];
-        uint32_t k = 0;
-        while (k < fe.size() && fe[k].len >= required_size) k ++;
-        if (k > 0) {    // there was least one appropriate extent:
-            k --;       // previous, use it
-            assert (0 <= k && k < fe.size());   // k mus point to some element in vector
-            assert (fe[k].len >= required_size); // ensure extent is large enough
-            blocks.clear();
-            // fill blocks vector, decreasing extent
-            while (required_size > 0) {
-                blocks.push_back(fe[k].start);
-                fe[k].start ++;
-                fe[k].len --;
-                required_size --;
-            }
-            assert (fe[k].len >= 0);    // length must stay non-negative
-            // if we used whole extent, its length is zero, and it should be removed
-            if (0 == fe[k].len) {
-                fe.list.erase(fe.list.begin() + k);
-            }
-            // sort by length
-            std::sort (fe.list.begin(), fe.list.end(), compare_by_extent_length_obj);
-
-            return true;
-        }
-        ag = (ag + 1) % this->AGCount();    // proceed with next, wrap is necessary
-    } while (ag != start_ag);
-
-    return false;
 }

@@ -339,6 +339,23 @@ private:
 
 class FsBitmap {
 public:
+    typedef struct {
+        uint32_t start;
+        uint32_t len;
+    } extent_t;
+    struct ag_entry {
+        std::vector<extent_t> list;
+        bool need_update;
+        ag_entry() {
+            need_update = true;
+        }
+        extent_t & operator [] (uint32_t k) { return this->list[k]; }
+        void push_back(const extent_t &ex) { this->list.push_back(ex); }
+        void clear() { this->list.clear(); }
+        std::vector<extent_t>::size_type size() const { return this->list.size(); }
+    };
+    typedef struct ag_entry ag_entry;
+
     FsBitmap(FsJournal *journal, const FsSuperblock *sb);
     ~FsBitmap();
     bool blockUsed(uint32_t block_idx) const;
@@ -346,11 +363,31 @@ public:
     void markBlockFree(uint32_t block_idx);
     void markBlock(uint32_t block_idx, bool used);
     void writeChangedBitmapBlocks();
+    void updateAGFreeExtents();
+    void rescanAGForFreeExtents(uint32_t ag);
+    /// returns count of allocation groups
+    uint32_t AGCount() const { return this->ag_free_extents.size(); }
+    uint32_t AGSize() const { return this->ag_size; }
+    uint32_t AGExtentCount(uint32_t ag) const { return this->ag_free_extents[ag].size(); }
+    /// sets size of each allocation group
+    void setAGSize(uint32_t size);
+
+    /// allocate free blocks, continuous
+    ///
+    /// \param  ag[in,out]          hint (for input), next hint (for output)
+    /// \param  required_size[in]   required size of extent
+    /// \param  blocks[out]         allocated blocks
+    /// \return true if allocation was successful, false otherwise
+    bool allocateFreeExtent(uint32_t &ag, uint32_t required_size, std::vector<uint32_t> &blocks);
 
 private:
     FsJournal *journal;
     const FsSuperblock *sb;
     std::vector<Block> bitmap_blocks;
+    uint32_t ag_size;       //< size of each allocation group, in blocks (last AG may be smaller)
+    std::vector<ag_entry> ag_free_extents; //< list of free extents in each AG
+
+    uint32_t sizeInBlocks() const { return this->sb->s_block_count; }
 };
 
 class ReiserFs {
@@ -365,22 +402,6 @@ public:
         std::set<uint32_t> leaves;
     };
     typedef std::map<uint32_t, uint32_t> movemap_t;
-    typedef struct {
-        uint32_t start;
-        uint32_t len;
-    } extent_t;
-    struct ag_entry {
-        std::vector<extent_t> list;
-        bool need_update;
-        ag_entry() {
-            need_update = true;
-        }
-        extent_t & operator [] (uint32_t k) { return this->list[k]; }
-        void push_back(const extent_t &ex) { this->list.push_back(ex); }
-        void clear() { this->list.clear(); }
-        std::vector<extent_t>::size_type size() { return this->list.size(); }
-    };
-    typedef struct ag_entry ag_entry;
 
     ReiserFs();
     ~ReiserFs();
@@ -427,25 +448,13 @@ public:
     /// checks if block is in reserved area, such as journal, sb, bitmap of first 64kiB
     bool blockReserved(uint32_t block_idx) const;
 
-    /// returns count of allocation groups
-    uint32_t AGCount() const;
-    /// sets size of each allocation group
-    void setAGSize(uint32_t size);
-
-    uint32_t AGExtentCount(uint32_t ag);
     int squeezeDataBlocksInAG(uint32_t ag);
-    /// allocate free blocks, continuous
-    ///
-    /// \param  ag[in,out]          hint (for input), next hint (for output)
-    /// \param  required_size[in]   required size of extent
-    /// \param  blocks[out]         allocated blocks
-    /// \return true if allocation was successful, false otherwise
-    bool allocateFreeExtent(uint32_t &ag, uint32_t required_size, std::vector<uint32_t> &blocks);
     /// print movemap contents to stdout
     void dumpMovemap(const movemap_t &movemap) const;
 
-private:
     FsBitmap *bitmap;
+
+private:
     FsJournal *journal;
     FsSuperblock sb;
     std::string fname;
@@ -457,9 +466,6 @@ private:
     uint32_t blocks_moved_unformatted;  //< counter used for moveMultipleBlocks
     std::vector<leaf_index_entry> leaf_index;
     uint32_t leaf_index_granularity;    //< size of each basket for leaf index
-    uint32_t ag_count;      //< number of allocation groups
-    uint32_t ag_size;       //< size of each allocation group, in blocks (last AG may be smaller)
-    std::vector<ag_entry> ag_free_extents; //< list of free extents in each AG
 
     void readSuperblock();
     void writeSuperblock();
@@ -497,8 +503,6 @@ private:
                                     const std::set<Block::key_t> &key_list, bool all_keys = false);
     void getLeavesForBlockRange(std::vector<uint32_t> &leaves, uint32_t from, uint32_t to);
     void getLeavesForMovemap(std::vector<uint32_t> &leaves, const movemap_t &movemap);
-    void updateAGFreeExtents();
-    void rescanAGForFreeExtents(uint32_t ag);
 };
 
 int readBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size);

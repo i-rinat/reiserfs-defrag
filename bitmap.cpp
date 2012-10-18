@@ -1,5 +1,6 @@
 #include "reiserfs.hpp"
 #include <iostream>
+#include <algorithm>
 
 FsBitmap::FsBitmap(FsJournal *journal_, const FsSuperblock *sb_)
 {
@@ -85,4 +86,95 @@ FsBitmap::writeChangedBitmapBlocks()
         if (it->dirty)
             this->journal->writeBlock(&*it);
     }
+}
+
+void
+FsBitmap::setAGSize(uint32_t size)
+{
+    assert (size == AG_SIZE_128M || size == AG_SIZE_256M || size == AG_SIZE_512M);
+    this->ag_size = size;
+    uint32_t ag_count = (this->sizeInBlocks() - 1) / size + 1;
+    this->ag_free_extents.clear();
+    this->ag_free_extents.resize(ag_count);
+    // AG configuration changed, need to rescan for free extents
+    this->updateAGFreeExtents();
+}
+
+void
+FsBitmap::updateAGFreeExtents()
+{
+    for (uint32_t ag = 0; ag < this->AGCount(); ag ++) {
+        if (this->ag_free_extents[ag].need_update)
+            this->rescanAGForFreeExtents(ag);
+    }
+}
+
+static struct compare_by_extent_length {
+    bool operator() (const FsBitmap::extent_t a, const FsBitmap::extent_t b) { return a.len > b.len; }
+} compare_by_extent_length_obj;
+
+bool
+FsBitmap::allocateFreeExtent(uint32_t &ag, uint32_t required_size,
+                             std::vector<uint32_t> &blocks)
+{
+    uint32_t start_ag = ag;
+    do {
+        ag_entry &fe = this->ag_free_extents[ag];
+        uint32_t k = 0;
+        while (k < fe.size() && fe[k].len >= required_size) k ++;
+        if (k > 0) {    // there was least one appropriate extent:
+            k --;       // previous, use it
+            assert (0 <= k && k < fe.size());   // k mus point to some element in vector
+            assert (fe[k].len >= required_size); // ensure extent is large enough
+            blocks.clear();
+            // fill blocks vector, decreasing extent
+            while (required_size > 0) {
+                blocks.push_back(fe[k].start);
+                fe[k].start ++;
+                fe[k].len --;
+                required_size --;
+            }
+            assert (fe[k].len >= 0);    // length must stay non-negative
+            // if we used whole extent, its length is zero, and it should be removed
+            if (0 == fe[k].len) {
+                fe.list.erase(fe.list.begin() + k);
+            }
+            // sort by length
+            std::sort (fe.list.begin(), fe.list.end(), compare_by_extent_length_obj);
+
+            return true;
+        }
+        ag = (ag + 1) % this->AGCount();    // proceed with next, wrap is necessary
+    } while (ag != start_ag);
+
+    return false;
+}
+
+void
+FsBitmap::rescanAGForFreeExtents(uint32_t ag)
+{
+    const uint32_t block_start = ag * this->ag_size;
+    const uint32_t block_end = (ag + 1) * this->ag_size - 1;
+
+    this->ag_free_extents[ag].clear();
+    // find first empty block
+    uint32_t ptr = block_start;
+    do {
+        while (ptr <= block_end && this->blockUsed(ptr)) ptr++;
+        if (ptr > block_end)    // exit if there is no any
+            break;
+
+        extent_t ex;
+        ex.start = ptr; ex.len = 0;
+        while (ptr <= block_end && not this->blockUsed(ptr)) {
+            ex.len ++;
+            ptr++;
+        }
+        this->ag_free_extents[ag].push_back(ex);
+    } while (1);
+    this->ag_free_extents[ag].need_update = false;
+
+    // sort by extent length, large
+    std::sort (this->ag_free_extents[ag].list.begin(), this->ag_free_extents[ag].list.end(),
+        compare_by_extent_length_obj);
 }
