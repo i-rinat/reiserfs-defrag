@@ -21,11 +21,12 @@ private:
     uint32_t nextTargetBlock(uint32_t previous);
     void createMovemapFromListOfLeaves(movemap_t &movemap, const std::vector<uint32_t> &leaves,
                                        uint32_t &free_idx);
-    /// try to defragment block list
+    /// prepare movement map that defragments file specified by \param blocks
     ///
-    /// \param      blocks      block list
+    /// \param  blocks[in]      block list
+    /// \param  movemap[out]    resulting movement map
     /// \return RFSD_OK on partial success and RFSD_FAIL if all attempts failed
-    int defragmentBlocks(std::vector<uint32_t> &blocks);
+    int prepareDefragTask(std::vector<uint32_t> &blocks, movemap_t &movemap);
     uint32_t getDesiredExtentLengths(const std::vector<ReiserFs::extent_t> &extents,
                                      std::vector<uint32_t> &lengths, uint32_t target_length);
     void convertBlocksToExtents(const std::vector<uint32_t> &blocks,
@@ -171,8 +172,9 @@ Defrag::nextTargetBlock(uint32_t previous)
 }
 
 int
-Defrag::defragmentBlocks(std::vector<uint32_t> &blocks)
+Defrag::prepareDefragTask(std::vector<uint32_t> &blocks, movemap_t &movemap)
 {
+    movemap.clear();    // may not be empty, need to clear
     if (blocks.size() == 0) // zero-length file is defragmented already
         return RFSD_OK;
 
@@ -206,7 +208,6 @@ Defrag::defragmentBlocks(std::vector<uint32_t> &blocks)
     //         ↑    ↑
     //     c_begin  c_end
 
-    movemap_t movemap;
     std::vector<uint32_t> free_blocks;
     std::vector<ReiserFs::extent_t>::const_iterator b_cur = extents.begin();
     std::vector<uint32_t>::const_iterator c_cur = lengths.begin();
@@ -238,11 +239,6 @@ Defrag::defragmentBlocks(std::vector<uint32_t> &blocks)
             b_cur ++;
         }
     }
-
-    std::cout << std::endl;
-
-    std::cout << "movemap size = " << movemap.size() << std::endl;
-    std::cout << this->fs.moveBlocks(movemap) << " blocks moved" << std::endl;
 
     return RFSD_OK;
 }
@@ -322,6 +318,7 @@ Defrag::mergeMovemap(movemap_t &dest, const movemap_t &src)
 void
 Defrag::experimental_v1()
 {
+    movemap_t movemap;
     std::vector<uint32_t> leaves;
     Block::key_t start_key = Block::zero_key;
     Block::key_t last_key = Block::zero_key;
@@ -357,18 +354,16 @@ Defrag::experimental_v1()
                     first_leaf_in_batch = false;
                 }
                 if (current_obj.dir_id != ih.key.dir_id || current_obj.obj_id != ih.key.obj_id) {
-                    // new file started, time to process previous one
-                    // delete references to sparse blocks
-                    this->filterOutSparseBlocks(*file_blocks);
                     // prepare structures for new file
                     current_obj.dir_id = ih.key.dir_id;
                     current_obj.obj_id = ih.key.obj_id;
                     // increase defrag_task by one element, with default constructor
                     defrag_task.resize(defrag_task.size() + 1);
                     file_blocks = &(defrag_task.back()); // point to newly created element
+                    // previous file data remains in defrag_task
                 }
 
-                ih.key.dump(ih.version, std::cout, true);
+                //ih.key.dump(ih.version, std::cout, true);
 
                 if (KEY_TYPE_INDIRECT == ih.type()) {
                     // only add leaf block if first indirect item refers to current file
@@ -381,12 +376,38 @@ Defrag::experimental_v1()
                 }
             }
             fs.releaseBlock(block_obj);
+
+            // std::cout << "defrag task vector consist of " << defrag_task.size() << " elements" << std::endl;
+            for (uint32_t k = 0; k < defrag_task.size(); k ++) {
+                // delete references to sparse blocks
+                this->filterOutSparseBlocks(defrag_task[k]);
+                // determine blocks to move
+                movemap_t part;
+                this->prepareDefragTask(defrag_task[k], part);
+                // this->fs.dumpMovemap(movemap);
+                if (RFSD_OK != this->mergeMovemap(movemap, part))
+                    std::cout << "error: mergeMovemap encoutered intersections" << std::endl;
+            }
+            // reset defrag_task
+            defrag_task.clear();
+            defrag_task.resize(1);
+            file_blocks = &(defrag_task.back());
+
+            if (movemap.size() > 8000) {
+                std::cout << "merged movemap size = " << movemap.size() << std::endl;
+                this->fs.moveBlocks(movemap);
+                movemap.clear(); // just in case
+            }
         } // for (leaves)
 
-        for (uint32_t k = 0; k < defrag_task.size(); k ++) {
-            this->defragmentBlocks(defrag_task[k]);
+        if (movemap.size() > 0) {
+            std::cout << "merged movemap (last) size = " << movemap.size() << std::endl;
+            this->fs.moveBlocks(movemap);
+            movemap.clear(); // just in case
         }
     }
+    std::cout << "moves succeeded: " << this->success_count << std::endl;
+    std::cout << "moves failed:    " << this->failure_count << std::endl;
 }
 
 int
