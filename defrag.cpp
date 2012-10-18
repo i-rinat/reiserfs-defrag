@@ -323,7 +323,7 @@ Defrag::experimental_v1()
     Block::key_t start_key = Block::zero_key;
     Block::key_t last_key = Block::zero_key;
 
-    fs.enumerateLeaves(start_key, 1000000, leaves, last_key);
+    fs.enumerateLeaves(start_key, fs.sizeInBlocks(), leaves, last_key);
     std::cout << "leaves: " << leaves.size() << std::endl;
 
     this->success_count = 0;
