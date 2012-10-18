@@ -377,8 +377,8 @@ public:
     /// \param  ag[in,out]          hint (for input), next hint (for output)
     /// \param  required_size[in]   required size of extent
     /// \param  blocks[out]         allocated blocks
-    /// \return true if allocation was successful, false otherwise
-    bool allocateFreeExtent(uint32_t &ag, uint32_t required_size, std::vector<uint32_t> &blocks);
+    /// \return RFSD_OK if allocation was successful, RFSD_FAIL otherwise
+    int allocateFreeExtent(uint32_t &ag, uint32_t required_size, std::vector<uint32_t> &blocks);
 
 private:
     FsJournal *journal;

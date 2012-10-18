@@ -117,7 +117,7 @@ static struct compare_by_extent_length {
     bool operator() (const FsBitmap::extent_t a, const FsBitmap::extent_t b) { return a.len > b.len; }
 } compare_by_extent_length_obj;
 
-bool
+int
 FsBitmap::allocateFreeExtent(uint32_t &ag, uint32_t required_size,
                              std::vector<uint32_t> &blocks)
 {
@@ -146,12 +146,12 @@ FsBitmap::allocateFreeExtent(uint32_t &ag, uint32_t required_size,
             // sort by length
             std::sort (fe.list.begin(), fe.list.end(), compare_by_extent_length_obj);
 
-            return true;
+            return RFSD_OK;
         }
         ag = (ag + 1) % this->AGCount();    // proceed with next, wrap is necessary
     } while (ag != start_ag);
 
-    return false;
+    return RFSD_FAIL;
 }
 
 void
