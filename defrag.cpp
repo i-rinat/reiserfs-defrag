@@ -15,6 +15,8 @@ public:
 private:
     ReiserFs &fs;
     uint32_t desired_extent_length;
+    uint32_t success_count;     //< statistics
+    uint32_t failure_count;     //< statistics
 
     uint32_t nextTargetBlock(uint32_t previous);
     void createMovemapFromListOfLeaves(movemap_t &movemap, const std::vector<uint32_t> &leaves,
@@ -224,6 +226,9 @@ Defrag::defragmentBlocks(std::vector<uint32_t> &blocks)
                     for (uint32_t k = c_begin; k < c_end; k ++) {
                         movemap[blocks[k]] = free_blocks[k - c_begin];
                     }
+                    this->success_count ++;
+                } else {
+                    this->failure_count ++;
                 }
             }
             c_cur ++;
@@ -323,6 +328,9 @@ Defrag::experimental_v1()
 
     fs.enumerateLeaves(start_key, 1000000, leaves, last_key);
     std::cout << "leaves: " << leaves.size() << std::endl;
+
+    this->success_count = 0;
+    this->failure_count = 0;
 
     if (leaves.size() > 0) {
         std::vector<std::vector<uint32_t> > defrag_task(1);
