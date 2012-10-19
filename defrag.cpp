@@ -311,6 +311,10 @@ Defrag::experimental_v1()
     Block::key_t start_key = Block::zero_key;
     Block::key_t last_key = Block::zero_key;
 
+    // get all leaf blocks at once. That can be trouble if there will be too much of them.
+    // Almost entire fs can consist of leaf blocks at worst. But in general fs contains much
+    // more unformatted data blocks, so that assumption should be reasonable enough.
+    // TODO: rearrange things in a way that does not require storing all leaf blocks.
     fs.enumerateLeaves(start_key, fs.sizeInBlocks(), leaves, last_key);
 
     this->success_count = 0;
