@@ -382,6 +382,8 @@ ReiserFs::moveBlocks(movemap_t &movemap)
     this->journal->flushTransactionCache();
     // wipe obsolete entries out of leaf index
     this->updateLeafIndex();
+    // rescan changed allocation groups
+    this->bitmap->updateAGFreeExtents();
 
     return (this->blocks_moved_unformatted + this->blocks_moved_formatted);
 }
@@ -772,8 +774,7 @@ ReiserFs::squeezeDataBlocksInAG(uint32_t ag)
     // do actual moves
     this->moveBlocks(movemap);
     this->moveBlocks(movemap2);
-    // as AG layout changed, we must rescan
-    this->bitmap->rescanAGForFreeExtents(ag);
+    // free extents in touched AGs rescanned in ->moveBlocks
 
     return RFSD_OK;
 }
