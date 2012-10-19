@@ -184,22 +184,9 @@ Defrag::prepareDefragTask(std::vector<uint32_t> &blocks, movemap_t &movemap)
     if (extents.size() <= 1)    // no need to defragment file with only one extent
         return RFSD_OK;
 
-    std::cout << "extents.size() == " << extents.size() << std::endl;
-    for (uint32_t k = 0; k < extents.size(); k ++) {
-        std::cout << extents[k].start << "(" << extents[k].len << ") " << std::endl;
-    }
-
     // get ideal extent distribution
     std::vector<uint32_t> lengths;
     this->getDesiredExtentLengths(extents, lengths, 2048);
-    // TODO: remove debug prints
-    std::cout << "initial lengths: ";
-    for (uint32_t k = 0; k < extents.size(); k ++) std::cout << extents[k].len << ", ";
-    std::cout << std::endl;
-    std::cout << "desired lengths: ";
-    for (uint32_t k = 0; k < lengths.size(); k ++) std::cout << lengths[k] << ", ";
-    std::cout << std::endl;
-    // ======
 
     //  b_begin      b_end (points to the next block after extent last one)
     //    ↓           ↓
@@ -325,7 +312,6 @@ Defrag::experimental_v1()
     Block::key_t last_key = Block::zero_key;
 
     fs.enumerateLeaves(start_key, fs.sizeInBlocks(), leaves, last_key);
-    std::cout << "leaves: " << leaves.size() << std::endl;
 
     this->success_count = 0;
     this->failure_count = 0;
@@ -347,7 +333,6 @@ Defrag::experimental_v1()
     std::vector<uint32_t>::const_iterator iter;
     for (iter = leaves.begin(); iter != leaves.end(); ++ iter) {
         const uint32_t leaf_idx = *iter;
-        //std::cout << "leaf: " << leaf_idx << std::endl;
 
         Block *block_obj = fs.readBlock(leaf_idx);
         bool first_indirect_in_leaf = true;
@@ -380,7 +365,6 @@ Defrag::experimental_v1()
         }
         fs.releaseBlock(block_obj);
 
-        // std::cout << "defrag task vector consist of " << defrag_task.size() << " elements" << std::endl;
         for (uint32_t k = 0; k < defrag_task.size(); k ++) {
             // delete references to sparse blocks
             this->filterOutSparseBlocks(defrag_task[k]);
