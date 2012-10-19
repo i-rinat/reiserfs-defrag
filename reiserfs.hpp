@@ -378,7 +378,8 @@ public:
     /// \param  required_size[in]   required size of extent
     /// \param  blocks[out]         allocated blocks
     /// \return RFSD_OK if allocation was successful, RFSD_FAIL otherwise
-    int allocateFreeExtent(uint32_t &ag, uint32_t required_size, std::vector<uint32_t> &blocks);
+    int allocateFreeExtent(uint32_t &ag, uint32_t required_size, std::vector<uint32_t> &blocks,
+                           uint32_t forbidden_ag = -1);
 
 private:
     FsJournal *journal;

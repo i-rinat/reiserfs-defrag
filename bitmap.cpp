@@ -119,11 +119,15 @@ static struct compare_by_extent_length {
 
 int
 FsBitmap::allocateFreeExtent(uint32_t &ag, uint32_t required_size,
-                             std::vector<uint32_t> &blocks)
+                             std::vector<uint32_t> &blocks, uint32_t forbidden_ag)
 {
     ag = ag % this->AGCount();  // [0, AGCount()-1]
     uint32_t start_ag = ag;
     do {
+        if (forbidden_ag == ag) {   // avoid forbidden ag
+            ag = (ag + 1) % this->AGCount();    // next
+            continue;
+        }
         ag_entry &fe = this->ag_free_extents[ag];
         uint32_t k = 0;
         while (k < fe.size() && fe[k].len >= required_size) k ++;
