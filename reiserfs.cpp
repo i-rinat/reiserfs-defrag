@@ -734,22 +734,20 @@ ReiserFs::squeezeDataBlocksInAG(uint32_t ag)
             free_block_count ++;
     }
 
-    // scan forward
+    // allocate free blocks in large chunks
     std::vector<uint32_t> free_blocks;
-    uint32_t free_idx = this->findFreeBlockAfter(block_end);
-    while ((free_block_count > 0) && (0 != free_idx)) {
-        free_blocks.push_back(free_idx);
-        free_idx = this->findFreeBlockAfter(free_idx);
-        free_block_count --;
-    }
-    // run out of free blocks below, but we need some more. Scan backwards.
-    if (free_block_count > 0) {
-        free_idx = this->findFreeBlockBefore(block_begin);
-        while ((free_block_count > 0) && (0 != free_idx)) {
-            free_blocks.push_back(free_idx);
-            free_idx = this->findFreeBlockBefore(free_idx);
-            free_block_count --;
+    uint32_t ext_size = 2048;
+    while (free_block_count > 0) {
+        uint32_t wag = ag + 1;
+        std::vector<uint32_t> w_blocks;
+        const uint32_t count = std::min(ext_size, free_block_count);
+        while (RFSD_FAIL == this->bitmap->allocateFreeExtent(wag, count, w_blocks)) {
+            ext_size /= 2;
+            if (0 == ext_size)
+                return RFSD_FAIL;
         }
+        free_block_count -= count;
+        free_blocks.insert(free_blocks.end(), w_blocks.begin(), w_blocks.end());
     }
 
     // give up if we haven't managed to find enough free blocks
