@@ -741,7 +741,7 @@ ReiserFs::squeezeDataBlocksInAG(uint32_t ag)
         uint32_t wag = ag + 1;
         std::vector<uint32_t> w_blocks;
         const uint32_t count = std::min(ext_size, free_block_count);
-        while (RFSD_FAIL == this->bitmap->allocateFreeExtent(wag, count, w_blocks)) {
+        while (RFSD_FAIL == this->bitmap->allocateFreeExtent(wag, count, w_blocks, ag)) {
             ext_size /= 2;
             if (0 == ext_size)
                 return RFSD_FAIL;
