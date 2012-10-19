@@ -121,6 +121,7 @@ int
 FsBitmap::allocateFreeExtent(uint32_t &ag, uint32_t required_size,
                              std::vector<uint32_t> &blocks)
 {
+    ag = ag % this->AGCount();  // [0, AGCount()-1]
     uint32_t start_ag = ag;
     do {
         ag_entry &fe = this->ag_free_extents[ag];
