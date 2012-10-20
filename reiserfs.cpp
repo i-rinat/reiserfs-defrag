@@ -334,6 +334,9 @@ ReiserFs::movemapConsistent(const movemap_t &movemap)
 uint32_t
 ReiserFs::moveBlocks(movemap_t &movemap)
 {
+    if (0 == movemap.size())
+        return 0;
+
     if (! this->movemapConsistent(movemap)) {
         std::cerr << "error: movemap not consistent, " << this->err_string << std::endl;
         return 0;
