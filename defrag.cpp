@@ -203,13 +203,14 @@ Defrag::prepareDefragTask(std::vector<uint32_t> &blocks, movemap_t &movemap)
     uint32_t c_begin = 0;
     uint32_t c_end = 0;
 
+    uint32_t ag = blocks[0] / this->fs.bitmap->AGSize();
+
     while (c_cur != lengths.end()) {
         if (c_end < b_end) {
             c_begin = c_end;
             c_end = c_begin + *c_cur;
             // defragment if [c_begin, c_end-1] ⊈ [b_begin, b_end-1]
             if (b_begin > c_begin || c_end > b_end) {
-                uint32_t ag = 0;
                 const uint32_t c_len = c_end - c_begin;
                 if (RFSD_OK == this->fs.bitmap->allocateFreeExtent(ag, c_len, free_blocks)) {
                     for (uint32_t k = c_begin; k < c_end; k ++) {
