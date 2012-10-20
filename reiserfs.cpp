@@ -712,8 +712,10 @@ ReiserFs::squeezeDataBlocksInAG(uint32_t ag)
     uint32_t packed_ptr = block_begin;  // end of packed area
     uint32_t front_ptr = block_begin;   // frontier
 
-    while (this->blockReserved(packed_ptr)) packed_ptr ++;
-    while (this->blockReserved(front_ptr)) front_ptr ++;
+    while (this->blockReserved(front_ptr)) {
+        front_ptr ++;
+        packed_ptr ++;
+    }
 
     // create desired move map
     movemap_t movemap;
