@@ -335,6 +335,7 @@ Defrag::experimental_v1()
     } current_obj;
 
     bool first_leaf_in_batch = true;
+    bool first_indirect_of_file = true;
     std::vector<uint32_t>::const_iterator iter;
     for (iter = leaves.begin(); iter != leaves.end(); ++ iter) {
         const uint32_t leaf_idx = *iter;
@@ -356,16 +357,19 @@ Defrag::experimental_v1()
                 defrag_task.resize(defrag_task.size() + 1);
                 file_blocks = &(defrag_task.back()); // point to newly created element
                 // previous file data remains in defrag_task
+                first_indirect_of_file = true;
             }
 
             if (KEY_TYPE_INDIRECT == ih.type()) {
                 // only add leaf block if first indirect item refers to current file
-                if (first_indirect_in_leaf)
+                // but avoid adding leaf with very first indirect item
+                if (first_indirect_in_leaf && !first_indirect_of_file)
                     file_blocks->push_back(leaf_idx);
                 for (uint32_t idx = 0; idx < ih.length / 4; idx ++) {
                     file_blocks->push_back(block_obj->indirectItemRef(ih.offset, idx));
                 }
                 first_indirect_in_leaf = false;
+                first_indirect_of_file = false;
             }
         }
         fs.releaseBlock(block_obj);
