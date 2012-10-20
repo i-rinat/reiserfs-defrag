@@ -775,7 +775,7 @@ ReiserFs::squeezeDataBlocksInAG(uint32_t ag)
     // do actual moves
     this->moveBlocks(movemap);
     this->moveBlocks(movemap2);
-    // free extents in touched AGs rescanned in ->moveBlocks
+    // free extents in touched AGs are rescanned in ->moveBlocks
 
     return RFSD_OK;
 }
