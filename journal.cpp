@@ -282,7 +282,7 @@ FsJournal::readBlock(uint32_t block_idx, bool caching)
 {
     // check if cache have this block
     if (this->blockInCache(block_idx)) {
-        if (caching) this->cache_hits ++;
+        this->cache_hits ++;
         this->touchCacheEntry(block_idx);
         this->block_cache[block_idx].block_obj->ref_count ++;
         return this->block_cache[block_idx].block_obj;
