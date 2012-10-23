@@ -30,12 +30,12 @@ FsBitmap::markBlockUsed(uint32_t block_idx)
 {
     uint32_t bitmap_block_idx = block_idx / BLOCKS_PER_BITMAP;
     uint32_t inblock_bit_idx = block_idx % BLOCKS_PER_BITMAP;
-    uint32_t inblock_byte_idx = inblock_bit_idx / 8;
-    uint32_t inbyte_idx = inblock_bit_idx % 8;
+    uint32_t inblock_dword_idx = inblock_bit_idx / 32;
+    uint32_t indword_idx = inblock_bit_idx % 32;
     Block &bb = this->bitmap_blocks[bitmap_block_idx];
-    uint8_t &c = reinterpret_cast<uint8_t&>(bb.buf[inblock_byte_idx]);
+    uint32_t &c = reinterpret_cast<uint32_t&>(bb.buf[4*inblock_dword_idx]);
 
-    c = c | (static_cast<uint8_t>(1) << inbyte_idx);
+    c = c | (static_cast<uint32_t>(1) << indword_idx);
     bb.markDirty();
     // mark AG dirty
     this->ag_free_extents[block_idx / this->ag_size].need_update = true;
@@ -46,12 +46,12 @@ FsBitmap::markBlockFree(uint32_t block_idx)
 {
     uint32_t bitmap_block_idx = block_idx / BLOCKS_PER_BITMAP;
     uint32_t inblock_bit_idx = block_idx % BLOCKS_PER_BITMAP;
-    uint32_t inblock_byte_idx = inblock_bit_idx / 8;
-    uint32_t inbyte_idx = inblock_bit_idx % 8;
+    uint32_t inblock_dword_idx = inblock_bit_idx / 32;
+    uint32_t indword_idx = inblock_bit_idx % 32;
     Block &bb = this->bitmap_blocks[bitmap_block_idx];
-    uint8_t &c = reinterpret_cast<uint8_t&>(bb.buf[inblock_byte_idx]);
+    uint32_t &c = reinterpret_cast<uint32_t&>(bb.buf[4*inblock_dword_idx]);
 
-    c = c & ~(static_cast<uint8_t>(1) << inbyte_idx);
+    c = c & ~(static_cast<uint32_t>(1) << indword_idx);
     bb.markDirty();
     // mark AG dirty
     this->ag_free_extents[block_idx / this->ag_size].need_update = true;
