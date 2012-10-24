@@ -336,6 +336,9 @@ FsJournal::moveRawBlock(uint32_t from, uint32_t to, bool factor_into_trasaction)
     assert (block_obj->ref_count == 1 || block_obj->ref_count == 2);
     block_obj->block = to;
     block_obj->markDirty();
+    // as we moving to free position, there can be no block
+    assert (this->block_cache.count(block_obj->block) == 0);
+    this->pushToCache(block_obj);
 
     if (factor_into_trasaction) {
         if (this->transaction.blocks.count(block_obj) == 0) {
