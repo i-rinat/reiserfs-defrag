@@ -166,6 +166,7 @@ FsBitmap::rescanAGForFreeExtents(uint32_t ag)
     const uint32_t block_end = (ag + 1) * this->ag_size - 1;
 
     this->ag_free_extents[ag].clear();
+    this->ag_free_extents[ag].used_blocks = this->AGSize();
     // find first empty block
     uint32_t ptr = block_start;
     do {
@@ -180,6 +181,7 @@ FsBitmap::rescanAGForFreeExtents(uint32_t ag)
             ptr++;
         }
         this->ag_free_extents[ag].push_back(ex);
+        this->ag_free_extents[ag].used_blocks -= ex.len;
     } while (1);
     this->ag_free_extents[ag].need_update = false;
 

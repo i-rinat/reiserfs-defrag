@@ -346,6 +346,7 @@ public:
     struct ag_entry {
         std::vector<extent_t> list;
         bool need_update;
+        uint32_t used_blocks;
         ag_entry() {
             need_update = true;
         }
@@ -369,6 +370,7 @@ public:
     uint32_t AGCount() const { return this->ag_free_extents.size(); }
     uint32_t AGSize() const { return this->ag_size; }
     uint32_t AGExtentCount(uint32_t ag) const { return this->ag_free_extents[ag].size(); }
+    uint32_t AGUsedBlockCount(uint32_t ag) const { return this->ag_free_extents[ag].used_blocks; }
     /// sets size of each allocation group
     void setAGSize(uint32_t size);
 
