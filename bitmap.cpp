@@ -226,6 +226,9 @@ FsBitmap::rescanAGForFreeExtents(uint32_t ag)
     // sort by extent length, large
     std::sort (this->ag_free_extents[ag].list.begin(), this->ag_free_extents[ag].list.end(),
         compare_by_extent_length_obj);
+
+    // As we subtracted free block count from total AG lengthexclude reserved blocks
+    this->ag_free_extents[ag].used_blocks -= this->reservedBlockCount(ag);
 }
 
 uint32_t
