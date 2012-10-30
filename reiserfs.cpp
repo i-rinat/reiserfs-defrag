@@ -782,7 +782,54 @@ ReiserFs::squeezeDataBlocksInAG(uint32_t ag)
     return RFSD_OK;
 }
 
+int
+ReiserFs::sweepOutAG(uint32_t ag)
+{
+    assert (0 <= ag && ag < this->bitmap->AGCount());
 
+    uint32_t blocks_needed = this->bitmap->AGUsedBlockCount(ag);
+    if (0 == blocks_needed) // no need to do anything
+        return RFSD_OK;
+
+    // allocate free blocks in other AGs
+    std::vector<uint32_t> free_blocks;
+    uint32_t segment_size = 4096;
+    uint32_t temp_ag = ag;
+    while (blocks_needed > 0) {
+        uint32_t cnt = std::min(segment_size, blocks_needed);
+        std::vector<uint32_t> w_blocks;
+        while (RFSD_FAIL == this->bitmap->allocateFreeExtent(temp_ag, cnt, w_blocks, ag)) {
+            segment_size /= 2;
+            if (0 == segment_size)  // can't allocate 0 blocks. That means we failed to allocate
+                return RFSD_FAIL;   // single block. There is no sense to continue.
+            cnt = std::min(segment_size, blocks_needed);
+        }
+        blocks_needed -= cnt;
+        free_blocks.insert(free_blocks.end(), w_blocks.begin(), w_blocks.end());
+    }
+
+    // sort free block pointers
+    std::sort (free_blocks.begin(), free_blocks.end());
+
+    // fill move map
+    movemap_t movemap;
+    std::cout << "free_blocks_size = " << free_blocks.size() << std::endl;
+    uint32_t qqq = 0;
+    std::vector<uint32_t>::const_iterator free_ptr = free_blocks.begin();
+    for (uint32_t k = ag * this->bitmap->AGSize(); k < (ag + 1) * this->bitmap->AGSize(); k ++) {
+        if (this->blockUsed(k) && !this->bitmap->blockReserved(k)) {
+            movemap[k] = *free_ptr;
+            ++ free_ptr;
+            qqq ++;
+        }
+    }
+    assert (free_ptr == free_blocks.end());
+
+    // perform move
+    this->moveBlocks(movemap);
+
+    return RFSD_OK;
+}
 
 void
 ReiserFs::recursivelyEnumerateNodes(uint32_t block_idx, std::vector<ReiserFs::tree_element> &tree,

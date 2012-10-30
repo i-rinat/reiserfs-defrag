@@ -469,6 +469,9 @@ public:
     /// print movemap contents to stdout
     void dumpMovemap(const movemap_t &movemap) const;
 
+    /// moves all movable blocks outside AG
+    int sweepOutAG(uint32_t ag);
+
     /// \return true if \param block_idx points to reserved block
     bool blockReserved(uint32_t block_idx) const { return this->bitmap->blockReserved(block_idx); }
 
