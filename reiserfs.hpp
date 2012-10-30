@@ -241,7 +241,10 @@ public:
             default: // TODO: add code for this case
                 return 16;
             }
-
+        }
+        bool sameObjectAs(const struct key_struct &another) const {
+            return ((this->dir_id == another.dir_id)
+                    && (this->obj_id == another.obj_id));
         }
     } __attribute__ ((__packed__));
     typedef struct key_struct key_t;
