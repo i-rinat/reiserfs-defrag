@@ -25,6 +25,44 @@ FsBitmap::~FsBitmap()
 {
 }
 
+bool
+FsBitmap::blockIsBitmap(uint32_t block_idx) const
+{
+    if (block_idx == FIRST_BITMAP_BLOCK)
+        return true;
+    if ((block_idx/BLOCKS_PER_BITMAP)*BLOCKS_PER_BITMAP == block_idx)
+        return true;
+    return false;
+}
+
+bool
+FsBitmap::blockIsJournal(uint32_t block_idx) const
+{
+    uint32_t journal_start = this->sb->jp_journal_1st_block;
+    // journal has one additional block for its 'header'
+    uint32_t journal_end = journal_start + (this->sb->jp_journal_size - 1) + 1;
+    return (journal_start <= block_idx) && (block_idx <= journal_end);
+}
+
+bool
+FsBitmap::blockIsFirst64k(uint32_t block_idx) const
+{
+    return block_idx < 65536/BLOCKSIZE;
+}
+
+bool
+FsBitmap::blockIsSuperblock(uint32_t block_idx) const
+{
+    return block_idx == SUPERBLOCK_BLOCK;
+}
+
+bool
+FsBitmap::blockReserved(uint32_t block_idx) const
+{
+    return blockIsBitmap(block_idx) || blockIsJournal(block_idx) || blockIsFirst64k(block_idx)
+        || blockIsSuperblock(block_idx);
+}
+
 void
 FsBitmap::markBlockUsed(uint32_t block_idx)
 {

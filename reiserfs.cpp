@@ -198,7 +198,7 @@ ReiserFs::cleanupRegionMoveDataDown(uint32_t from, uint32_t to)
     // create movemap
     movemap.clear();
     for (uint32_t c_idx = from; c_idx <= to; c_idx ++) {
-        if (this->blockReserved(c_idx)) continue;
+        if (this->bitmap->blockReserved(c_idx)) continue;
         if (not this->bitmap->blockUsed(c_idx)) continue;
         movemap[c_idx] = free_idx;
         free_idx = this->findFreeBlockAfter(free_idx);
@@ -634,7 +634,7 @@ uint32_t
 ReiserFs::findFreeBlockAfter(uint32_t block_idx) const
 {
     for (uint32_t k = block_idx + 1; k < this->sb.s_block_count; k ++)
-        if (not this->bitmap->blockUsed(k) && not this->blockReserved(k))
+        if (not this->bitmap->blockUsed(k) && not this->bitmap->blockReserved(k))
             return k;
     return 0;
 }
@@ -646,7 +646,7 @@ ReiserFs::findFreeBlockBefore(uint32_t block_idx) const
         return 0;
     // losing 0th block, but it's reserved anyway
     for (uint32_t k = block_idx - 1; k > 0; k --)
-        if (not this->bitmap->blockUsed(k) && not this->blockReserved(k))
+        if (not this->bitmap->blockUsed(k) && not this->bitmap->blockReserved(k))
             return k;
     return 0;
 }
@@ -712,7 +712,7 @@ ReiserFs::squeezeDataBlocksInAG(uint32_t ag)
     uint32_t packed_ptr = block_begin;  // end of packed area
     uint32_t front_ptr = block_begin;   // frontier
 
-    while (this->blockReserved(front_ptr)) {
+    while (this->bitmap->blockReserved(front_ptr)) {
         front_ptr ++;
         packed_ptr ++;
     }
@@ -723,9 +723,9 @@ ReiserFs::squeezeDataBlocksInAG(uint32_t ag)
         if (this->blockUsed(front_ptr)) {
             if (front_ptr != packed_ptr)
                 movemap[front_ptr] = packed_ptr;
-            do { packed_ptr++; } while (this->blockReserved(packed_ptr));
+            do { packed_ptr++; } while (this->bitmap->blockReserved(packed_ptr));
         }
-        do { front_ptr++; } while (this->blockReserved(front_ptr));
+        do { front_ptr++; } while (this->bitmap->blockReserved(front_ptr));
     }
 
     if (0 == movemap.size())    // all blocks are on their position already
@@ -782,43 +782,7 @@ ReiserFs::squeezeDataBlocksInAG(uint32_t ag)
     return RFSD_OK;
 }
 
-bool
-ReiserFs::blockIsBitmap(uint32_t block_idx) const
-{
-    if (block_idx == FIRST_BITMAP_BLOCK)
-        return true;
-    if ((block_idx/BLOCKS_PER_BITMAP)*BLOCKS_PER_BITMAP == block_idx)
-        return true;
-    return false;
-}
 
-bool
-ReiserFs::blockIsJournal(uint32_t block_idx) const
-{
-    uint32_t journal_start = this->sb.jp_journal_1st_block;
-    // journal has one additional block for its 'header'
-    uint32_t journal_end = journal_start + (this->sb.jp_journal_size - 1) + 1;
-    return (journal_start <= block_idx) && (block_idx <= journal_end);
-}
-
-bool
-ReiserFs::blockIsFirst64k(uint32_t block_idx) const
-{
-    return block_idx < 65536/BLOCKSIZE;
-}
-
-bool
-ReiserFs::blockIsSuperblock(uint32_t block_idx) const
-{
-    return block_idx == SUPERBLOCK_BLOCK;
-}
-
-bool
-ReiserFs::blockReserved(uint32_t block_idx) const
-{
-    return blockIsBitmap(block_idx) || blockIsJournal(block_idx) || blockIsFirst64k(block_idx)
-        || blockIsSuperblock(block_idx);
-}
 
 void
 ReiserFs::recursivelyEnumerateNodes(uint32_t block_idx, std::vector<ReiserFs::tree_element> &tree,

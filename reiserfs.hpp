@@ -360,6 +360,10 @@ public:
     FsBitmap(FsJournal *journal, const FsSuperblock *sb);
     ~FsBitmap();
     bool blockUsed(uint32_t block_idx) const;
+
+    /// checks if block is in reserved area, such as journal, sb, bitmap of first 64kiB
+    bool blockReserved(uint32_t block_idx) const;
+
     void markBlockUsed(uint32_t block_idx);
     void markBlockFree(uint32_t block_idx);
     void markBlock(uint32_t block_idx, bool used);
@@ -391,6 +395,18 @@ private:
     std::vector<ag_entry> ag_free_extents; //< list of free extents in each AG
 
     uint32_t sizeInBlocks() const { return this->sb->s_block_count; }
+
+    /// \return true if \param block_idx points to bitmap
+    bool blockIsBitmap(uint32_t block_idx) const;
+
+    /// \return true if \param block_idx points journal
+    bool blockIsJournal(uint32_t block_idx) const;
+
+    /// \return true if \param block_idx points to first 64k
+    bool blockIsFirst64k(uint32_t block_idx) const;
+
+    /// \return true if \param block_idx points to superblock
+    bool blockIsSuperblock(uint32_t block_idx) const;
 };
 
 class ReiserFs {
@@ -443,17 +459,12 @@ public:
     /// move movable blocks of range [ @from, @to] (borders included) below @to
     void cleanupRegionMoveDataDown(uint32_t from, uint32_t to);
 
-    /// checks if block is bitmap
-    bool blockIsBitmap(uint32_t block_idx) const;
-    bool blockIsJournal(uint32_t block_idx) const;
-    bool blockIsFirst64k(uint32_t block_idx) const;
-    bool blockIsSuperblock(uint32_t block_idx) const;
-    /// checks if block is in reserved area, such as journal, sb, bitmap of first 64kiB
-    bool blockReserved(uint32_t block_idx) const;
-
     int squeezeDataBlocksInAG(uint32_t ag);
     /// print movemap contents to stdout
     void dumpMovemap(const movemap_t &movemap) const;
+
+    /// \return true if \param block_idx points to reserved block
+    bool blockReserved(uint32_t block_idx) const { return this->bitmap->blockReserved(block_idx); }
 
     FsBitmap *bitmap;
 
