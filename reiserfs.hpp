@@ -396,6 +396,12 @@ private:
 
     uint32_t sizeInBlocks() const { return this->sb->s_block_count; }
 
+    /// \return count of reserved blocks in specified AG
+    uint32_t reservedBlockCount(uint32_t ag) const;
+
+    /// \return count of reserved blocks in [from, to] segment
+    uint32_t reservedBlockCount(uint32_t from, uint32_t to) const;
+
     /// \return true if \param block_idx points to bitmap
     bool blockIsBitmap(uint32_t block_idx) const;
 

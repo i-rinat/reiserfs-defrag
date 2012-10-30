@@ -227,3 +227,22 @@ FsBitmap::rescanAGForFreeExtents(uint32_t ag)
     std::sort (this->ag_free_extents[ag].list.begin(), this->ag_free_extents[ag].list.end(),
         compare_by_extent_length_obj);
 }
+
+uint32_t
+FsBitmap::reservedBlockCount(uint32_t ag) const
+{
+    return this->reservedBlockCount(ag * this->AGSize(), (ag + 1) * this->AGSize() - 1);
+}
+
+uint32_t
+FsBitmap::reservedBlockCount(uint32_t from, uint32_t to) const
+{
+    // TODO: use interval arithmetics to speed up following code
+    uint32_t rc = 0;
+    for (uint32_t k = from; k <= to; k ++) {
+        if (this->blockReserved(k))
+            rc ++;
+    }
+
+    return rc;
+}
