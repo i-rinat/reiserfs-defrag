@@ -929,3 +929,54 @@ ReiserFs::enumerateLeaves(const Block::key_t &start_key, int soft_threshold,
     this->recursivelyEnumerateLeaves(this->sb.s_root_block, start_key, soft_threshold,
                                      Block::zero_key, Block::largest_key, leaves, last_key);
 }
+
+void
+ReiserFs::recursivelyGetLeavesOfObject(uint32_t leaf_idx, const Block::key_t &start_key,
+                                       Block::key_t left, Block::key_t right,
+                                       std::vector<uint32_t> &leaves,
+                                       Block::key_t &next_key) const
+{
+    Block *block_obj = this->journal->readBlock(leaf_idx);
+    uint32_t level = block_obj->level();
+    if (level > TREE_LEVEL_LEAF) {
+        // internal node
+        for (uint32_t k = 0; k < block_obj->ptrCount(); k ++) {
+            const Block::key_t new_left = (k > 0) ? block_obj->key(k-1) : left;
+            const Block::key_t new_right = (k < block_obj->keyCount()) ? block_obj->key(k) : right;
+            if (new_right >= start_key) {
+                this->recursivelyGetLeavesOfObject(block_obj->ptr(k).block, start_key,
+                                                   new_left, new_right, leaves, next_key);
+                if (! start_key.sameObjectAs(next_key))
+                    break;
+            }
+        }
+    } else {
+        // leaf node
+        bool touch_leaf = false;
+        for (uint32_t item_idx = 0; item_idx < block_obj->itemCount(); item_idx ++) {
+            const Block::item_header &ih = block_obj->itemHeader(item_idx);
+            if (ih.key < start_key)     // skip items with inappropriate keys
+                continue;
+            next_key = ih.key;          // update next_key
+            // exit if current item belongs to another another object
+            if (! start_key.sameObjectAs(next_key))
+                break;
+            // if we are here, current item relates to object processed, set flag
+            touch_leaf = true;
+        }
+        if (touch_leaf)
+            leaves.push_back(leaf_idx);
+    }
+
+    this->journal->releaseBlock(block_obj);
+}
+
+void
+ReiserFs::getLeavesOfObject(const Block::key_t &start_key, Block::key_t &next_key,
+                            std::vector<uint32_t> &leaves) const
+{
+    next_key = start_key;
+    leaves.clear();
+    this->recursivelyGetLeavesOfObject(this->sb.s_root_block, start_key,
+                                       Block::zero_key, Block::largest_key, leaves, next_key);
+}

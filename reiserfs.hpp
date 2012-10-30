@@ -465,6 +465,14 @@ public:
     void enumerateLeaves(const Block::key_t &start_key, int soft_threshold,
                          std::vector<uint32_t> &leaves, Block::key_t &last_key) const;
 
+    /// get leaves relevant to object
+    ///
+    /// \param start_key[in]    object to be dumped
+    /// \param next_key[out]    receives next object key (dir_id, obj_id pair)
+    /// \param leaves[out]      receives vector of leaves
+    void getLeavesOfObject(const Block::key_t &start_key, Block::key_t &next_key,
+                           std::vector<uint32_t> &leaves) const;
+
     /// move movable blocks of range [ @from, @to] (borders included) below @to
     void cleanupRegionMoveDataDown(uint32_t from, uint32_t to);
 
@@ -529,6 +537,12 @@ private:
                                     const std::set<Block::key_t> &key_list, bool all_keys = false);
     void getLeavesForBlockRange(std::vector<uint32_t> &leaves, uint32_t from, uint32_t to);
     void getLeavesForMovemap(std::vector<uint32_t> &leaves, const movemap_t &movemap);
+
+    /// inner worker function for getLeavesOfObject
+    void recursivelyGetLeavesOfObject(uint32_t leaf_idx, const Block::key_t &start_key,
+                                      Block::key_t left, Block::key_t right,
+                                      std::vector<uint32_t> &leaves,
+                                      Block::key_t &next_key) const;
 };
 
 int readBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size);
