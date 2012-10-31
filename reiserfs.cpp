@@ -943,7 +943,7 @@ ReiserFs::recursivelyGetLeavesOfObject(uint32_t leaf_idx, const Block::key_t &st
         for (uint32_t k = 0; k < block_obj->ptrCount(); k ++) {
             const Block::key_t new_left = (k > 0) ? block_obj->key(k-1) : left;
             const Block::key_t new_right = (k < block_obj->keyCount()) ? block_obj->key(k) : right;
-            if (new_right >= start_key) {
+            if (new_right > start_key) {
                 this->recursivelyGetLeavesOfObject(block_obj->ptr(k).block, start_key,
                                                    new_left, new_right, leaves, next_key);
                 if (! start_key.sameObjectAs(next_key))
