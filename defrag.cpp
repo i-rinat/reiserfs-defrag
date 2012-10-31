@@ -11,6 +11,7 @@ public:
     Defrag (ReiserFs &fs);
     void treeThroughDefrag(uint32_t batch_size = 16000);
     void experimental_v1();
+    void experimental_v2();
 
 private:
     ReiserFs &fs;
@@ -406,6 +407,32 @@ Defrag::experimental_v1()
     std::cout << "moves failed:    " << this->failure_count << std::endl;
 }
 
+void
+Defrag::experimental_v2()
+{
+    std::vector<uint32_t> leaves;
+    Block::key_t start_key = Block::zero_key;
+    Block::key_t next_key;
+
+    while (1) {
+        fs.getLeavesOfObject(start_key, next_key, leaves);
+
+        // DEBUG: dump keys
+        start_key.dump_v1(std::cout, false);
+        std::cout << " [";
+        for (uint32_t k = 0; k < leaves.size(); k ++) {
+            if (0 != k) std::cout << ", ";
+            std::cout << leaves[k];
+        }
+        std::cout << "]" << std::endl;
+        // ===========
+        if (start_key == next_key)
+            break;
+        start_key = next_key;
+    }
+
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -421,15 +448,7 @@ main (int argc, char *argv[])
     fs.useDataJournaling(false);
 
     Defrag defrag(fs);
-    // defrag.treeThroughDefrag(8000);
-
-    for (uint32_t k = 0; k < fs.bitmap->AGCount(); k ++) {
-        std::cout << "AG #" << k << ", " << fs.bitmap->AGExtentCount(k) << std::endl;
-        if (fs.bitmap->AGExtentCount(k) >= 7)
-            fs.squeezeDataBlocksInAG(k);
-    }
-
-    defrag.experimental_v1();
+    defrag.experimental_v2();
 
     fs.close();
     return 0;
