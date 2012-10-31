@@ -58,9 +58,7 @@ ReiserFs::open(const std::string &name, bool o_sync)
     this->writeSuperblock();
     this->journal->commitTransaction();
 
-    std::cout << "creating leaf index ... " << std::flush;
     this->createLeafIndex();
-    std::cout << "done" << std::endl;
 
     return RFSD_OK;
 }
@@ -219,7 +217,11 @@ ReiserFs::createLeafIndex()
     std::vector<tree_element> tree;
     recursivelyEnumerateNodes(this->sb.s_root_block, tree, false);
 
+    Progress progress(tree.size());
+    progress.setName("[leaf index]");
+
     for (std::vector<tree_element>::iterator it = tree.begin(); it != tree.end(); ++ it) {
+        progress.inc();
         if (it->type != BLOCKTYPE_LEAF)
             continue;
         Block *block_obj = this->journal->readBlock(it->idx, false);
@@ -239,6 +241,7 @@ ReiserFs::createLeafIndex()
         this->journal->releaseBlock(block_obj);
     }
 
+    progress.show100();
     return;
 }
 
