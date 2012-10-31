@@ -4,7 +4,6 @@
 #include <vector>
 #include <set>
 
-typedef ReiserFs::movemap_t movemap_t;
 
 class Defrag {
 public:

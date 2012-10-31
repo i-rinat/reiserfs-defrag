@@ -45,6 +45,9 @@
 #define AG_SIZE_256M        (256*1024*1024/BLOCKSIZE)
 #define AG_SIZE_512M        (512*1024*1024/BLOCKSIZE)
 
+typedef std::vector<uint32_t> blocklist_t;
+typedef std::map<uint32_t, uint32_t> movemap_t;
+
 struct FsSuperblock {
     uint32_t s_block_count;
     uint32_t s_free_blocks;
@@ -429,7 +432,6 @@ public:
         bool changed;
         std::set<uint32_t> leaves;
     };
-    typedef std::map<uint32_t, uint32_t> movemap_t;
 
     ReiserFs();
     ~ReiserFs();
