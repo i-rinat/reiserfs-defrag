@@ -1,5 +1,6 @@
 #include "reiserfs.hpp"
 #include <assert.h>
+#include <stdlib.h>
 #include <iostream>
 #include <vector>
 #include <set>
@@ -41,7 +42,10 @@ private:
     /// \return RFSD_OK if merge successful, RFSD_FAIL if there was some overlappings
     int mergeMovemap(movemap_t &dest, const movemap_t &src);
 
-    void defragFreeSpace();
+    /// frees at least one AG by moving it contents out
+    ///
+    /// \return RFSD_OK on success, RFSD_FAIL otherwise
+    int freeOneAG();
 };
 
 Defrag::Defrag(ReiserFs &fs) : fs(fs)
@@ -410,16 +414,18 @@ Defrag::experimental_v1()
     std::cout << "moves failed:    " << this->failure_count << std::endl;
 }
 
-void
-Defrag::defragFreeSpace()
+int
+Defrag::freeOneAG()
 {
-    for (uint32_t ag = 0; ag < fs.bitmap->AGCount(); ag ++) {
+    const uint32_t offset = rand() % fs.bitmap->AGCount();
+    for (uint32_t k = 0; k < fs.bitmap->AGCount(); k ++) {
+        uint32_t ag = (k + offset) % fs.bitmap->AGCount();
         if (fs.bitmap->AGUsedBlockCount(ag) < fs.bitmap->AGSize()/2) {
-            // sparse AG
-            std::cout << "sweeping out AG #" << ag << std::endl;
-            fs.sweepOutAG(ag);
+            if (RFSD_OK == fs.sweepOutAG(ag))
+                return RFSD_OK;
         }
     }
+    return RFSD_FAIL;
 }
 
 void
@@ -430,8 +436,6 @@ Defrag::experimental_v2()
     Block::key_t next_key;
     blocklist_t file_blocks;
     movemap_t movemap;
-
-    this->defragFreeSpace();
 
     while (1) {
         fs.getLeavesOfObject(start_key, next_key, leaves);
@@ -464,13 +468,13 @@ Defrag::experimental_v2()
             movemap_t partial_movemap;
             if (RFSD_FAIL == this->prepareDefragTask(file_blocks, partial_movemap)) {
                 std::cout << "temporal failure" << std::endl;
+                this->freeOneAG();
             }
             this->mergeMovemap(movemap, partial_movemap);
             if (movemap.size() > 8000) {
                 std::cout << "merged movemap size = " << movemap.size() << std::endl;
                 fs.moveBlocks(movemap);
                 movemap.clear();
-                this->defragFreeSpace();
             }
         }
 
@@ -483,7 +487,6 @@ Defrag::experimental_v2()
         std::cout << "merged movemap size (last) = " << movemap.size() << std::endl;
         fs.moveBlocks(movemap);
         movemap.clear();
-        this->defragFreeSpace();
     }
 }
 
