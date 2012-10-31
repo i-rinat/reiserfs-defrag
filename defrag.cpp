@@ -396,12 +396,17 @@ Defrag::squeezeAllAGsWithThreshold(uint32_t threshold)
             ags_to_squeeze ++;
     }
 
+    Progress progress(ags_to_squeeze);
     for (uint32_t ag = 0; ag < this->fs.bitmap->AGCount(); ag ++) {
         if (this->fs.bitmap->AGExtentCount(ag) > threshold) {
-            if (RFSD_FAIL == this->fs.squeezeDataBlocksInAG(ag))
+            if (RFSD_FAIL == this->fs.squeezeDataBlocksInAG(ag)) {
+                progress.abort();
                 return RFSD_FAIL;
+            }
+            progress.inc();
         }
     }
+    progress.show100();
     return RFSD_OK;
 }
 
