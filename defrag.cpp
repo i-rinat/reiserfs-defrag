@@ -429,18 +429,12 @@ Defrag::experimental_v2()
     Block::key_t start_key = Block::zero_key;
     Block::key_t next_key;
     blocklist_t file_blocks;
+    movemap_t movemap;
+
+    this->defragFreeSpace();
 
     while (1) {
         fs.getLeavesOfObject(start_key, next_key, leaves);
-        // DEBUG: dump keys
-        start_key.dump_v1(std::cout, false);
-        std::cout << " [";
-        for (uint32_t k = 0; k < leaves.size(); k ++) {
-            if (0 != k) std::cout << ", ";
-            std::cout << leaves[k];
-        }
-        std::cout << "]" << std::endl;
-        // ===========
 
         bool first_indirect_of_file = true;
         file_blocks.clear();
@@ -467,14 +461,17 @@ Defrag::experimental_v2()
 
         this->filterOutSparseBlocks(file_blocks);
         if (0 != file_blocks.size()) {
-            std::vector<FsBitmap::extent_t> extents;
-            this->convertBlocksToExtents(file_blocks, extents);
-
-            for (uint32_t k = 0; k < extents.size(); k ++) {
-                if (0 != k) std::cout << ", ";
-                std::cout << extents[k].start << "(" << extents[k].len << ")";
+            movemap_t partial_movemap;
+            if (RFSD_FAIL == this->prepareDefragTask(file_blocks, partial_movemap)) {
+                std::cout << "temporal failure" << std::endl;
             }
-            std::cout << std::endl;
+            this->mergeMovemap(movemap, partial_movemap);
+            if (movemap.size() > 8000) {
+                std::cout << "merged movemap size = " << movemap.size() << std::endl;
+                fs.moveBlocks(movemap);
+                movemap.clear();
+                this->defragFreeSpace();
+            }
         }
 
         if (next_key.sameObjectAs(start_key))
@@ -482,6 +479,12 @@ Defrag::experimental_v2()
         start_key = next_key;
     }
 
+    if (movemap.size() > 0) {
+        std::cout << "merged movemap size (last) = " << movemap.size() << std::endl;
+        fs.moveBlocks(movemap);
+        movemap.clear();
+        this->defragFreeSpace();
+    }
 }
 
 int
