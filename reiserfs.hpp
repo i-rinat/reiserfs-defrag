@@ -549,3 +549,45 @@ private:
 
 int readBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size);
 int writeBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size);
+
+class Defrag {
+public:
+    Defrag (ReiserFs &fs);
+    void treeThroughDefrag(uint32_t batch_size = 16000);
+    void experimental_v1();
+    void experimental_v2();
+
+private:
+    ReiserFs &fs;
+    uint32_t desired_extent_length;
+    uint32_t success_count;     //< statistics
+    uint32_t failure_count;     //< statistics
+
+    uint32_t nextTargetBlock(uint32_t previous);
+    void createMovemapFromListOfLeaves(movemap_t &movemap, const std::vector<uint32_t> &leaves,
+                                       uint32_t &free_idx);
+    /// prepare movement map that defragments file specified by \param blocks
+    ///
+    /// \param  blocks[in]      block list
+    /// \param  movemap[out]    resulting movement map
+    /// \return RFSD_OK on partial success and RFSD_FAIL if all attempts failed
+    int prepareDefragTask(std::vector<uint32_t> &blocks, movemap_t &movemap);
+    uint32_t getDesiredExtentLengths(const std::vector<FsBitmap::extent_t> &extents,
+                                     std::vector<uint32_t> &lengths, uint32_t target_length);
+    void convertBlocksToExtents(const std::vector<uint32_t> &blocks,
+                                std::vector<FsBitmap::extent_t> &extents);
+    /// filters out sparse blocks from \param blocks by eliminating all zeros
+    void filterOutSparseBlocks(std::vector<uint32_t> &blocks);
+
+    /// merges \param dest and \param src to \param dest
+    ///
+    /// \param  dest[in,out]    first source and destination
+    /// \param  src[in]         second source
+    /// \return RFSD_OK if merge successful, RFSD_FAIL if there was some overlappings
+    int mergeMovemap(movemap_t &dest, const movemap_t &src);
+
+    /// frees at least one AG by moving it contents out
+    ///
+    /// \return RFSD_OK on success, RFSD_FAIL otherwise
+    int freeOneAG();
+};
