@@ -590,4 +590,7 @@ private:
     ///
     /// \return RFSD_OK on success, RFSD_FAIL otherwise
     int freeOneAG();
+
+    /// squeezes all AGs having more than \param threshold free extents
+    int squeezeAllAGsWithThreshold(uint32_t threshold);
 };

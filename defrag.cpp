@@ -388,6 +388,24 @@ Defrag::freeOneAG()
 }
 
 int
+Defrag::squeezeAllAGsWithThreshold(uint32_t threshold)
+{
+    uint32_t ags_to_squeeze = 0;
+    for (uint32_t ag = 0; ag < this->fs.bitmap->AGCount(); ag ++) {
+        if (this->fs.bitmap->AGExtentCount(ag) > threshold)
+            ags_to_squeeze ++;
+    }
+
+    for (uint32_t ag = 0; ag < this->fs.bitmap->AGCount(); ag ++) {
+        if (this->fs.bitmap->AGExtentCount(ag) > threshold) {
+            if (RFSD_FAIL == this->fs.squeezeDataBlocksInAG(ag))
+                return RFSD_FAIL;
+        }
+    }
+    return RFSD_OK;
+}
+
+int
 Defrag::experimental_v2()
 {
     std::vector<uint32_t> leaves;
