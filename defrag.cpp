@@ -413,9 +413,23 @@ Defrag::experimental_v2()
     Block::key_t next_key;
     blocklist_t file_blocks;
     movemap_t movemap;
+    Progress progress;
+
+    // estimate run time
+    uint32_t obj_count = 0;
+    while (1) {
+        fs.getLeavesOfObject(start_key, next_key, leaves);
+        if (next_key.sameObjectAs(start_key)) break;
+        obj_count ++;
+        start_key = next_key;
+    }
+
+    start_key = Block::zero_key;
+    progress.setMaxValue(obj_count);
 
     while (1) {
         fs.getLeavesOfObject(start_key, next_key, leaves);
+        progress.inc();
 
         bool first_indirect_of_file = true;
         file_blocks.clear();
@@ -454,7 +468,6 @@ Defrag::experimental_v2()
             }
             this->mergeMovemap(movemap, partial_movemap);
             if (movemap.size() > 8000) {
-                std::cout << "merged movemap size = " << movemap.size() << std::endl;
                 fs.moveBlocks(movemap);
                 movemap.clear();
             }
@@ -468,10 +481,11 @@ Defrag::experimental_v2()
     }
 
     if (movemap.size() > 0) {
-        std::cout << "merged movemap size (last) = " << movemap.size() << std::endl;
         fs.moveBlocks(movemap);
         movemap.clear();
     }
+    progress.show100();
+
 
     return RFSD_OK;
 }
