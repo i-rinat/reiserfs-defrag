@@ -600,10 +600,11 @@ public:
     Progress(uint32_t mv = 100);
     ~Progress();
 
-    void setMaxValue(uint32_t value) { this->max_value = value; }
+    void setMaxValue(uint32_t value) { this->max_value = std::max(1u, value); }
     void update(uint32_t value);
     void inc();
     void show100();
+    void abort();
 
     void showRawValues(bool v) { this->show_raw_values = v; }
     void showPercentage(bool v) { this->show_percentage = v; }

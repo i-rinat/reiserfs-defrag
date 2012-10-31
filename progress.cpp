@@ -55,6 +55,12 @@ Progress::show100()
 }
 
 void
+Progress::abort()
+{
+    printf("\n");   fflush(stdout);
+}
+
+void
 Progress::inc()
 {
     this->update(this->prev_value + 1);
