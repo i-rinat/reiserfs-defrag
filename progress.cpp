@@ -7,6 +7,7 @@ Progress::Progress(uint32_t mv)
     this->show_percentage = true;
     this->show_raw_values = true;
     this->show_progress_bar = true;
+    this->show_name = false;
     this->setMaxValue(mv);
     this->prev_ppt = 1001;
     this->prev_value = 0;
@@ -34,6 +35,10 @@ Progress::update(uint32_t value)
     }
 
     printf("\r");
+    if (this->show_name) {
+        int ret = printf("%s ", this->name.c_str());
+        if (ret > 0) width -= ret;
+    }
     if (this->show_percentage) {
         int ret = printf("%5.1f%% ", 100.0*value/this->max_value);
         if (ret > 0) width -= ret;
