@@ -1,5 +1,6 @@
 #include "reiserfs.hpp"
 #include <stdio.h>
+#include <sys/ioctl.h>
 
 Progress::Progress(uint32_t mv)
 {
@@ -18,13 +19,19 @@ Progress::~Progress()
 void
 Progress::update(uint32_t value)
 {
-    uint32_t width = 79;
     value = std::min(value, this->max_value);
     this->prev_value = value;
     uint32_t ppt = 1000.0*value/this->max_value;
     if (ppt == this->prev_ppt)  // no visble changes
         return;
     this->prev_ppt = ppt;
+
+    // determine terminal width
+    uint32_t width = 79;
+    struct winsize ws;
+    if (0 == ioctl(1, TIOCGWINSZ, &ws)) {
+        width = ws.ws_col - 1;
+    }
 
     printf("\r");
     if (this->show_percentage) {
