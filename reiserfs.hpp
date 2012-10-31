@@ -594,3 +594,26 @@ private:
     /// squeezes all AGs having more than \param threshold free extents
     int squeezeAllAGsWithThreshold(uint32_t threshold);
 };
+
+class Progress {
+public:
+    Progress(uint32_t mv = 100);
+    ~Progress();
+
+    void setMaxValue(uint32_t value) { this->max_value = value; }
+    void update(uint32_t value);
+    void inc();
+    void show100();
+
+    void showRawValues(bool v) { this->show_raw_values = v; }
+    void showPercentage(bool v) { this->show_percentage = v; }
+    void showProgressBar(bool v) { this->show_progress_bar = v; }
+
+private:
+    uint32_t max_value;
+    uint32_t prev_ppt;
+    uint32_t prev_value;
+    bool show_raw_values;
+    bool show_percentage;
+    bool show_progress_bar;
+};

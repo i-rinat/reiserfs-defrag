@@ -8,4 +8,5 @@ add_executable (rfsd
 	journal.cpp
 	bitmap.cpp
 	block.cpp
+	progress.cpp
 )
