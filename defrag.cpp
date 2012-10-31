@@ -387,7 +387,7 @@ Defrag::freeOneAG()
     return RFSD_FAIL;
 }
 
-void
+int
 Defrag::experimental_v2()
 {
     std::vector<uint32_t> leaves;
@@ -427,7 +427,12 @@ Defrag::experimental_v2()
             movemap_t partial_movemap;
             if (RFSD_FAIL == this->prepareDefragTask(file_blocks, partial_movemap)) {
                 std::cout << "temporal failure" << std::endl;
-                this->freeOneAG();
+                // we get here if free extent allocation failed. That may mean we have too
+                // fragmented free space. So try to free one of the AG.
+                if (RFSD_FAIL == this->freeOneAG())
+                    return RFSD_FAIL;
+                if (RFSD_FAIL == this->prepareDefragTask(file_blocks, partial_movemap))
+                    return RFSD_FAIL;
             }
             this->mergeMovemap(movemap, partial_movemap);
             if (movemap.size() > 8000) {
@@ -449,6 +454,8 @@ Defrag::experimental_v2()
         fs.moveBlocks(movemap);
         movemap.clear();
     }
+
+    return RFSD_OK;
 }
 
 int
