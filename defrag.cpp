@@ -40,6 +40,8 @@ private:
     /// \param  src[in]         second source
     /// \return RFSD_OK if merge successful, RFSD_FAIL if there was some overlappings
     int mergeMovemap(movemap_t &dest, const movemap_t &src);
+
+    void defragFreeSpace();
 };
 
 Defrag::Defrag(ReiserFs &fs) : fs(fs)
@@ -406,6 +408,18 @@ Defrag::experimental_v1()
 
     std::cout << "moves succeeded: " << this->success_count << std::endl;
     std::cout << "moves failed:    " << this->failure_count << std::endl;
+}
+
+void
+Defrag::defragFreeSpace()
+{
+    for (uint32_t ag = 0; ag < fs.bitmap->AGCount(); ag ++) {
+        if (fs.bitmap->AGUsedBlockCount(ag) < fs.bitmap->AGSize()/2) {
+            // sparse AG
+            std::cout << "sweeping out AG #" << ag << std::endl;
+            fs.sweepOutAG(ag);
+        }
+    }
 }
 
 void
