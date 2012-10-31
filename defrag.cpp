@@ -270,108 +270,6 @@ Defrag::mergeMovemap(movemap_t &dest, const movemap_t &src)
         return RFSD_FAIL;   // Otherwise they was. And it's bad.
 }
 
-void
-Defrag::experimental_v1()
-{
-    movemap_t movemap;
-    std::vector<uint32_t> leaves;
-    Block::key_t start_key = Block::zero_key;
-    Block::key_t last_key = Block::zero_key;
-
-    // get all leaf blocks at once. That can be trouble if there will be too much of them.
-    // Almost entire fs can consist of leaf blocks at worst. But in general fs contains much
-    // more unformatted data blocks, so that assumption should be reasonable enough.
-    // TODO: rearrange things in a way that does not require storing all leaf blocks.
-    fs.enumerateLeaves(start_key, fs.sizeInBlocks(), leaves, last_key);
-
-    this->success_count = 0;
-    this->failure_count = 0;
-
-    if (leaves.size() == 0) {
-        std::cout << "No leaves found on fs. That's really strange." << std::endl;
-        return;
-    }
-
-    std::vector<std::vector<uint32_t> > defrag_task(1);
-    std::vector<uint32_t> *file_blocks = &(defrag_task[0]);
-
-    struct {
-        uint32_t dir_id;
-        uint32_t obj_id;
-    } current_obj;
-
-    bool first_leaf_in_batch = true;
-    bool first_indirect_of_file = true;
-    std::vector<uint32_t>::const_iterator iter;
-    for (iter = leaves.begin(); iter != leaves.end(); ++ iter) {
-        const uint32_t leaf_idx = *iter;
-
-        Block *block_obj = fs.readBlock(leaf_idx);
-        bool first_indirect_in_leaf = true;
-        for (uint32_t item = 0; item < block_obj->itemCount(); item ++) {
-            const Block::item_header &ih = block_obj->itemHeader(item);
-            if (first_leaf_in_batch) {  // initialize one time per batch
-                current_obj.dir_id = ih.key.dir_id;
-                current_obj.obj_id = ih.key.obj_id;
-                first_leaf_in_batch = false;
-            }
-            if (current_obj.dir_id != ih.key.dir_id || current_obj.obj_id != ih.key.obj_id) {
-                // prepare structures for new file
-                current_obj.dir_id = ih.key.dir_id;
-                current_obj.obj_id = ih.key.obj_id;
-                // increase defrag_task by one element, with default constructor
-                defrag_task.resize(defrag_task.size() + 1);
-                file_blocks = &(defrag_task.back()); // point to newly created element
-                // previous file data remains in defrag_task
-                first_indirect_of_file = true;
-            }
-
-            if (KEY_TYPE_INDIRECT == ih.type()) {
-                // only add leaf block if first indirect item refers to current file
-                // but avoid adding leaf with very first indirect item
-                if (first_indirect_in_leaf && !first_indirect_of_file)
-                    file_blocks->push_back(leaf_idx);
-                for (uint32_t idx = 0; idx < ih.length / 4; idx ++) {
-                    file_blocks->push_back(block_obj->indirectItemRef(ih.offset, idx));
-                }
-                first_indirect_in_leaf = false;
-                first_indirect_of_file = false;
-            }
-        }
-        fs.releaseBlock(block_obj);
-
-        for (uint32_t k = 0; k < defrag_task.size(); k ++) {
-            // delete references to sparse blocks
-            this->filterOutSparseBlocks(defrag_task[k]);
-            // determine blocks to move
-            movemap_t part;
-            this->prepareDefragTask(defrag_task[k], part);
-            // this->fs.dumpMovemap(movemap);
-            if (RFSD_OK != this->mergeMovemap(movemap, part))
-                std::cout << "error: mergeMovemap encoutered intersections" << std::endl;
-        }
-        // reset defrag_task
-        defrag_task.clear();
-        defrag_task.resize(1);
-        file_blocks = &(defrag_task.back());
-
-        if (movemap.size() > 8000) {
-            std::cout << "merged movemap size = " << movemap.size() << std::endl;
-            this->fs.moveBlocks(movemap);
-            movemap.clear(); // just in case
-        }
-    } // for (leaves)
-
-    if (movemap.size() > 0) {
-        std::cout << "merged movemap (last) size = " << movemap.size() << std::endl;
-        this->fs.moveBlocks(movemap);
-        movemap.clear(); // just in case
-    }
-
-    std::cout << "moves succeeded: " << this->success_count << std::endl;
-    std::cout << "moves failed:    " << this->failure_count << std::endl;
-}
-
 int
 Defrag::freeOneAG()
 {
@@ -492,7 +390,6 @@ Defrag::experimental_v2()
         movemap.clear();
     }
     progress.show100();
-
 
     return RFSD_OK;
 }
