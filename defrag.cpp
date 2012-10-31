@@ -417,6 +417,7 @@ Defrag::experimental_v1()
 int
 Defrag::freeOneAG()
 {
+    // randomly select AG to sweep out
     const uint32_t offset = rand() % fs.bitmap->AGCount();
     for (uint32_t k = 0; k < fs.bitmap->AGCount(); k ++) {
         uint32_t ag = (k + offset) % fs.bitmap->AGCount();
@@ -478,6 +479,8 @@ Defrag::experimental_v2()
             }
         }
 
+        // next_key's and start_key's reference to the same object means we are done
+        // with tree enumeration and may exit
         if (next_key.sameObjectAs(start_key))
             break;
         start_key = next_key;
