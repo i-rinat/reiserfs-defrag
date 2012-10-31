@@ -414,10 +414,10 @@ Defrag::experimental_v2()
     std::vector<uint32_t> leaves;
     Block::key_t start_key = Block::zero_key;
     Block::key_t next_key;
+    blocklist_t file_blocks;
 
     while (1) {
         fs.getLeavesOfObject(start_key, next_key, leaves);
-
         // DEBUG: dump keys
         start_key.dump_v1(std::cout, false);
         std::cout << " [";
@@ -427,6 +427,42 @@ Defrag::experimental_v2()
         }
         std::cout << "]" << std::endl;
         // ===========
+
+        bool first_indirect_of_file = true;
+        file_blocks.clear();
+        for (blocklist_t::iterator it = leaves.begin(); it != leaves.end(); ++ it) {
+            Block *block_obj = fs.readBlock(*it);
+            bool first_indirect_in_leaf = true;
+            for (uint32_t item = 0; item < block_obj->itemCount(); item ++) {
+                const Block::item_header &ih = block_obj->itemHeader(item);
+                if (not ih.key.sameObjectAs(start_key)) continue;
+                if (KEY_TYPE_INDIRECT == ih.type()) {
+                    // only add leaf block if first indirect item refers to current file
+                    // but avoid adding leaf with very first indirect item
+                    if (first_indirect_in_leaf && !first_indirect_of_file)
+                        file_blocks.push_back(*it);
+                    for (uint32_t idx = 0; idx < ih.length / 4; idx ++) {
+                        file_blocks.push_back(block_obj->indirectItemRef(ih.offset, idx));
+                    }
+                    first_indirect_in_leaf = false;
+                    first_indirect_of_file = false;
+                }
+            }
+            fs.releaseBlock(block_obj);
+        }
+
+        this->filterOutSparseBlocks(file_blocks);
+        if (0 != file_blocks.size()) {
+            std::vector<FsBitmap::extent_t> extents;
+            this->convertBlocksToExtents(file_blocks, extents);
+
+            for (uint32_t k = 0; k < extents.size(); k ++) {
+                if (0 != k) std::cout << ", ";
+                std::cout << extents[k].start << "(" << extents[k].len << ")";
+            }
+            std::cout << std::endl;
+        }
+
         if (next_key.sameObjectAs(start_key))
             break;
         start_key = next_key;
