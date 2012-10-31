@@ -273,6 +273,8 @@ Defrag::convertBlocksToExtents(const std::vector<uint32_t> &blocks,
     FsBitmap::extent_t ex;
 
     extents.clear();
+    if (0 == blocks.size())         // no blocks -- no extents
+        return;
     ex.start = blocks[0];
     ex.len = 1;
     for (uint32_t k = 1; k < blocks.size(); k ++) {
