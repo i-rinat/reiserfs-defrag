@@ -397,6 +397,7 @@ Defrag::squeezeAllAGsWithThreshold(uint32_t threshold)
     }
 
     Progress progress(ags_to_squeeze);
+    progress.setName("[squeeze]");
     for (uint32_t ag = 0; ag < this->fs.bitmap->AGCount(); ag ++) {
         if (this->fs.bitmap->AGExtentCount(ag) > threshold) {
             if (RFSD_FAIL == this->fs.squeezeDataBlocksInAG(ag)) {
@@ -431,6 +432,7 @@ Defrag::experimental_v2()
 
     start_key = Block::zero_key;
     progress.setMaxValue(obj_count);
+    progress.setName("[incremental]");
 
     while (1) {
         fs.getLeavesOfObject(start_key, next_key, leaves);
