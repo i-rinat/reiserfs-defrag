@@ -427,7 +427,7 @@ Defrag::experimental_v2()
         }
         std::cout << "]" << std::endl;
         // ===========
-        if (start_key == next_key)
+        if (next_key.sameObjectAs(start_key))
             break;
         start_key = next_key;
     }
