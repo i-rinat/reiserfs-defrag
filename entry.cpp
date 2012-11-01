@@ -1,6 +1,10 @@
 #include "reiserfs.hpp"
 #include <getopt.h>
 #include <stdio.h>
+#include <iostream>
+
+const int DEFRAG_TYPE_INCREMENTAL = 0;
+const int DEFRAG_TYPE_TREETHROUGH = 1;
 
 static const char *opt_string = "t:h";
 static const struct option long_opts[] = {
@@ -9,11 +13,20 @@ static const struct option long_opts[] = {
     { 0, 0, 0, 0}
 };
 
+struct {
+    int defrag_type;
+} params;
+
 void
 display_usage()
 {
     printf("Usage: reiserfs-defrag [options] <reiserfs partition>\n");
     printf("\n");
+}
+
+void default_params()
+{
+    params.defrag_type = DEFRAG_TYPE_INCREMENTAL;
 }
 
 int
@@ -25,7 +38,17 @@ main (int argc, char *argv[])
     while (-1 != opt) {
         switch (opt) {
         case 't':
-
+            if (std::string("incremental") == optarg ||
+                std::string("inc") == optarg)
+            {
+                params.defrag_type = DEFRAG_TYPE_INCREMENTAL;
+            }
+            if (std::string("treethrough") == optarg ||
+                std::string("tree-through") == optarg ||
+                std::string("tree") == optarg)
+            {
+                params.defrag_type = DEFRAG_TYPE_TREETHROUGH;
+            }
             break;
         case 'h':
             display_usage();
@@ -48,7 +71,17 @@ main (int argc, char *argv[])
     fs.useDataJournaling(false);
 
     Defrag defrag(fs);
-    defrag.experimental_v2();
+
+    switch (params.defrag_type) {
+    case DEFRAG_TYPE_INCREMENTAL:
+        std::cout << "defrag type: incremental" << std::endl;
+        defrag.experimental_v2();
+        break;
+    case DEFRAG_TYPE_TREETHROUGH:
+        std::cout << "defrag type: treethrough" << std::endl;
+        defrag.treeThroughDefrag(8000);
+        break;
+    }
 
     fs.close();
     return 0;
