@@ -11,6 +11,9 @@ Progress::Progress(uint32_t mv)
     this->setMaxValue(mv);
     this->prev_ppt = 1001;
     this->prev_value = 0;
+    this->unknown_mode = false;
+    this->start_time = time(NULL);
+    this->unknown_interval = 1;
 }
 
 Progress::~Progress()
@@ -20,19 +23,64 @@ Progress::~Progress()
 void
 Progress::update(uint32_t value)
 {
-    value = std::min(value, this->max_value);
-    this->prev_value = value;
-    uint32_t ppt = 1000.0*value/this->max_value;
-    if (ppt == this->prev_ppt)  // no visble changes
-        return;
-    this->prev_ppt = ppt;
+    if (this->unknown_mode) {
+        this->prev_value = value;
+        this->displayUnknown(value);
+    } else {
+        value = std::min(value, this->max_value);
+        this->prev_value = value;
+        uint32_t ppt = 1000.0*value/this->max_value;
+        if (ppt == this->prev_ppt)  // no visble changes
+            return;
+        this->prev_ppt = ppt;
+        this->displayKnown(value);
+    }
+}
 
-    // determine terminal width
+uint32_t
+Progress::getWidth()
+{
     uint32_t width = 79;
     struct winsize ws;
-    if (0 == ioctl(1, TIOCGWINSZ, &ws)) {
-        width = ws.ws_col - 1;
+    if (0 == ioctl(1, TIOCGWINSZ, &ws)) width = ws.ws_col - 1;
+    return width;
+}
+
+void
+Progress::displayUnknown(uint32_t value)
+{
+    if (0 == (value % this->unknown_interval)) {
+        uint32_t width = this->getWidth();
+        time_t now = time(NULL);
+        uint32_t delta = now - this->start_time;
+
+        printf("\r");
+        if (this->show_name) {
+            int ret = printf("%s ", this->name.c_str());
+            if (ret > 0) width -= ret;
+        }
+        if (this->show_raw_values) {
+            int ret = printf("%d/? ", value);
+            if (ret > 0) width -= ret;
+        }
+        if (this->show_progress_bar) {
+            const uint32_t pos = delta % (width - 2 - 3);
+            const uint32_t fill = (width - 2 - 3 - pos);
+
+            printf("[");
+            for (uint32_t k = 0; k < pos; k ++) printf("-");
+            printf("<=>");
+            for (uint32_t k = 0; k < fill; k ++) printf("-");
+            printf("]");
+        }
+        fflush(stdout);
     }
+}
+
+void
+Progress::displayKnown(uint32_t value)
+{
+    uint32_t width = this->getWidth();
 
     printf("\r");
     if (this->show_name) {
@@ -54,8 +102,8 @@ Progress::update(uint32_t value)
         for (uint32_t k = 0; k < completed; k ++) printf("=");
         for (uint32_t k = 0; k < rest; k ++) printf("-");
         printf("]");
-        fflush(stdout);
     }
+    fflush(stdout);
 }
 
 void

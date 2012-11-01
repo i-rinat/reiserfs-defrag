@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <assert.h>
+#include <time.h>
 
 #define RFSD_OK     0
 #define RFSD_FAIL   -1
@@ -610,6 +611,10 @@ public:
     void showPercentage(bool v) { this->show_percentage = v; }
     void showProgressBar(bool v) { this->show_progress_bar = v; }
     void showName(bool v) { this->show_name = v; }
+    void enableUnknownMode(bool v, uint32_t interval) {
+        this->unknown_mode = v;
+        if (v) this->unknown_interval = interval;
+    }
 
 private:
     uint32_t max_value;
@@ -619,5 +624,13 @@ private:
     bool show_percentage;
     bool show_progress_bar;
     bool show_name;
+    bool unknown_mode;
     std::string name;
+    time_t start_time;
+    uint32_t unknown_interval;
+
+    void displayKnown(uint32_t value);
+    void displayUnknown(uint32_t value);
+    /// determine terminal width
+    uint32_t getWidth();
 };
