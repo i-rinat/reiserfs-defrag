@@ -38,16 +38,16 @@ main (int argc, char *argv[])
     while (-1 != opt) {
         switch (opt) {
         case 't':
-            if (std::string("incremental") == optarg ||
-                std::string("inc") == optarg)
+            if (std::string("incremental") == optarg || std::string("inc") == optarg)
             {
                 params.defrag_type = DEFRAG_TYPE_INCREMENTAL;
-            }
-            if (std::string("treethrough") == optarg ||
-                std::string("tree-through") == optarg ||
-                std::string("tree") == optarg)
+            } else if (std::string("treethrough") == optarg ||
+                std::string("tree-through") == optarg || std::string("tree") == optarg)
             {
                 params.defrag_type = DEFRAG_TYPE_TREETHROUGH;
+            } else {
+                std::cout << "wrong defrag algorithm: " << optarg << std::endl;
+                return 2;
             }
             break;
         case 'h':
