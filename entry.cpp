@@ -62,7 +62,7 @@ main (int argc, char *argv[])
     ReiserFs fs;
 
     if (argc - optind >= 1) {
-        if (RFSD_OK != fs.open(argv[argc - optind], false))
+        if (RFSD_OK != fs.open(argv[optind], false))
             return 1;
     } else {
         if (RFSD_OK != fs.open("../image/reiserfs.image", false))
