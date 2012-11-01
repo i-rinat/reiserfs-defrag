@@ -317,20 +317,25 @@ Defrag::experimental_v2()
     Block::key_t next_key;
     blocklist_t file_blocks;
     movemap_t movemap;
-    Progress progress;
+
 
     // estimate run time
+    Progress estimation;
+    estimation.enableUnknownMode(true, 10000);
+    estimation.setName("[estimate]");
     uint32_t obj_count = 0;
     while (1) {
         fs.getLeavesOfObject(start_key, next_key, leaves);
         if (next_key.sameObjectAs(start_key)) break;
         obj_count ++;
         start_key = next_key;
+        estimation.inc();
     }
 
-    start_key = Block::zero_key;
+    Progress progress;
     progress.setMaxValue(obj_count);
     progress.setName("[incremental]");
+    start_key = Block::zero_key;
 
     while (1) {
         fs.getLeavesOfObject(start_key, next_key, leaves);
