@@ -7,7 +7,7 @@ main (int argc, char *argv[])
     ReiserFs fs;
     fs.open("../image/reiserfs.image", false);
 
-    ReiserFs::movemap_t movemap;
+    movemap_t movemap;
     uint32_t freeblock = fs.sizeInBlocks();
 
     uint32_t block_idx = 16 + 1 + 8192 + 1 + 1;

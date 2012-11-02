@@ -7,6 +7,8 @@ add_library (mrfsu STATIC
 	../journal.cpp
 	../bitmap.cpp
 	../block.cpp
+	../defrag.cpp
+	../progress.cpp
 )
 
 add_executable (tuxonizer tuxonizer.cpp)

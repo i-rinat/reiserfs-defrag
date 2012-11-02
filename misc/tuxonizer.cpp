@@ -8,7 +8,7 @@ main (int argc, char *argv[])
 
     fs.open("../image/reiserfs.image", false);
 
-    ReiserFs::movemap_t movemap;
+    movemap_t movemap;
     const uint32_t mapwidth = 111;
     const uint32_t y_shift = 300;
     uint32_t freeblock = 0;

@@ -27,7 +27,7 @@ main (int argc, char *argv[])
     std::random_shuffle (free_blocks.begin(), free_blocks.end());
     std::random_shuffle (occupied_blocks.begin(), occupied_blocks.end());
 
-    ReiserFs::movemap_t movemap;
+    movemap_t movemap;
 
     for(std::vector<uint32_t>::const_iterator
             from = occupied_blocks.begin(), to = free_blocks.begin();
