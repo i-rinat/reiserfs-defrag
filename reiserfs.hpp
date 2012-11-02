@@ -571,8 +571,9 @@ public:
 private:
     ReiserFs &fs;
     uint32_t desired_extent_length;
-    uint32_t success_count;     //< statistics
-    uint32_t failure_count;     //< statistics
+    uint32_t success_count;         //< statistics
+    uint32_t partial_success_count; //< statistics
+    uint32_t failure_count;         //< statistics
 
     uint32_t nextTargetBlock(uint32_t previous);
     void createMovemapFromListOfLeaves(movemap_t &movemap, const std::vector<uint32_t> &leaves,

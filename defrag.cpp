@@ -169,6 +169,9 @@ Defrag::prepareDefragTask(std::vector<uint32_t> &blocks, movemap_t &movemap)
 
     uint32_t ag = blocks[0] / this->fs.bitmap->AGSize();
 
+    bool some_extents_failed = false;
+    bool some_extents_succeeded = false;
+    bool some_extents_touched = false;
     while (c_cur != lengths.end()) {
         if (c_end < b_end) {
             c_begin = c_end;
@@ -180,10 +183,11 @@ Defrag::prepareDefragTask(std::vector<uint32_t> &blocks, movemap_t &movemap)
                     for (uint32_t k = c_begin; k < c_end; k ++) {
                         movemap[blocks[k]] = free_blocks[k - c_begin];
                     }
-                    this->success_count ++;
+                    some_extents_succeeded = true;
                 } else {
-                    this->failure_count ++;
+                    some_extents_failed = true;
                 }
+                some_extents_touched = true;
             }
             c_cur ++;
         } else {
@@ -193,7 +197,18 @@ Defrag::prepareDefragTask(std::vector<uint32_t> &blocks, movemap_t &movemap)
         }
     }
 
-    return RFSD_OK;
+    if (!some_extents_touched)      // all extents already defragmented
+        return RFSD_OK;
+
+    if (some_extents_succeeded) {
+        if (some_extents_failed) this->partial_success_count ++;
+        else this->success_count ++;
+
+        return RFSD_OK;
+    }
+
+    this->failure_count ++;
+    return RFSD_FAIL;
 }
 
 uint32_t
@@ -340,6 +355,7 @@ Defrag::experimental_v2()
     progress.setName("[incremental]");
     start_key = Block::zero_key;
     this->success_count = 0;
+    this->partial_success_count = 0;
     this->failure_count = 0;
 
     uint32_t segments_total = 0;
@@ -386,6 +402,7 @@ Defrag::experimental_v2()
     progress.show100();
 
     std::cout << "success_count = " << this->success_count;
+    std::cout << ", partial_success_count = " << this->partial_success_count;
     std::cout << ", failure_count = " << this->failure_count << std::endl;
 
     std::cout << "segments total = " << segments_total;
