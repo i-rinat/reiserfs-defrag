@@ -475,16 +475,17 @@ public:
     void enumerateLeaves(const Block::key_t &start_key, int soft_threshold,
                          std::vector<uint32_t> &leaves, Block::key_t &last_key) const;
 
-    /// get leaves relevant to object
+    /// get blocks relevant to object
     ///
     /// \param start_key[in]    object to be dumped
     /// \param start_offset[in] count of blocks to skip in first indirect item of first leaf
     /// \param next_key[out]    receives next object key (dir_id, obj_id pair)
     /// \param next_offset[out] receives saved position to restart easing
-    /// \param leaves[out]      receives vector of leaves
-    void getLeavesOfObject(const Block::key_t &start_key, uint32_t start_offset,
+    /// \param blocks[out]      receives vector of blocks
+    /// \param limit            hard limits on block count
+    void getBlocksOfObject(const Block::key_t &start_key, uint32_t start_offset,
                            Block::key_t &next_key, uint32_t &next_offset,
-                           std::vector<uint32_t> &leaves) const;
+                           blocklist_t &blocks, uint32_t limit) const;
 
     /// move movable blocks of range [ @from, @to] (borders included) below @to
     void cleanupRegionMoveDataDown(uint32_t from, uint32_t to);
@@ -552,10 +553,10 @@ private:
     void getLeavesForMovemap(std::vector<uint32_t> &leaves, const movemap_t &movemap);
 
     /// inner worker function for getLeavesOfObject
-    void recursivelyGetLeavesOfObject(uint32_t leaf_idx, const Block::key_t &start_key,
-                                      Block::key_t left, Block::key_t right,
-                                      std::vector<uint32_t> &leaves, Block::key_t &next_key,
-                                      uint32_t &offset, uint32_t &next_offset) const;
+    void recursivelyGetBlocksOfObject(uint32_t leaf_idx, const Block::key_t &start_key,
+                                      uint32_t &start_offset, Block::key_t left, Block::key_t right,
+                                      blocklist_t &blocks, Block::key_t &next_key,
+                                      uint32_t &next_offset, uint32_t &limit) const;
 };
 
 int readBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size);

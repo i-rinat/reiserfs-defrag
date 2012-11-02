@@ -934,11 +934,17 @@ ReiserFs::enumerateLeaves(const Block::key_t &start_key, int soft_threshold,
 }
 
 void
-ReiserFs::recursivelyGetLeavesOfObject(uint32_t leaf_idx, const Block::key_t &start_key,
-                                       Block::key_t left, Block::key_t right,
-                                       std::vector<uint32_t> &leaves, Block::key_t &next_key,
-                                       uint32_t &offset, uint32_t &next_offset) const
+ReiserFs::recursivelyGetBlocksOfObject(uint32_t leaf_idx, const Block::key_t &start_key,
+                                       uint32_t &start_offset, Block::key_t left,
+                                       Block::key_t right, blocklist_t &blocks,
+                                       Block::key_t &next_key, uint32_t &next_offset,
+                                       uint32_t &limit) const
 {
+    // you may find asking yourself, why does `limit' compare to 1, not to 0. That's because
+    // no one likes to get leaf block as the last block in a batch. Next call will add it anyway
+    // and we'll end up moving that block twice. Moreover, that move will result in one-block hole.
+    // So we compare `limit' to 1, not to 0.
+
     Block *block_obj = this->journal->readBlock(leaf_idx);
     uint32_t level = block_obj->level();
     if (level > TREE_LEVEL_LEAF) {
@@ -947,42 +953,60 @@ ReiserFs::recursivelyGetLeavesOfObject(uint32_t leaf_idx, const Block::key_t &st
             const Block::key_t new_left = (k > 0) ? block_obj->key(k-1) : left;
             const Block::key_t new_right = (k < block_obj->keyCount()) ? block_obj->key(k) : right;
             if (new_right > start_key) {
-                this->recursivelyGetLeavesOfObject(block_obj->ptr(k).block, start_key,
-                                                   new_left, new_right, leaves, next_key,
-                                                   start_offset, next_offset);
+                this->recursivelyGetBlocksOfObject(block_obj->ptr(k).block, start_key, start_offset,
+                                                   new_left, new_right, blocks,
+                                                   next_key, next_offset, limit);
                 if (! start_key.sameObjectAs(next_key))
                     break;
             }
+            if (limit <= 1)
+                break;
         }
     } else {
         // leaf node
-        bool touch_leaf = false;
+        uint32_t indirect_idx = 0;   //< indirect item index. 1-based
         for (uint32_t item_idx = 0; item_idx < block_obj->itemCount(); item_idx ++) {
             const Block::item_header &ih = block_obj->itemHeader(item_idx);
             if (ih.key < start_key)     // skip items with inappropriate keys
                 continue;
             next_key = ih.key;          // update next_key
+            if (limit <= 1)
+                break;
             // exit if current item belongs to another another object
             if (! start_key.sameObjectAs(next_key))
                 break;
-            // if we are here, current item relates to object processed, set flag
-            touch_leaf = true;
+            if (KEY_TYPE_INDIRECT == ih.type()) {
+                indirect_idx ++;
+                if (1 == indirect_idx && 0 == start_offset && limit > 1
+                    && (ih.key.offset(ih.version) != 1)) {
+                    blocks.push_back(leaf_idx);
+                    limit --;
+                }
+                uint32_t cnt = ih.length/4;
+                if (limit < cnt) cnt = limit;
+                for (uint32_t idx = start_offset; idx < cnt; idx ++) {
+                    blocks.push_back(block_obj->indirectItemRef(ih.offset, idx));
+                }
+                start_offset = 0;
+                limit -= cnt;
+                if (cnt < ih.length/4) next_offset = cnt;
+            }
+
         }
-        if (touch_leaf)
-            leaves.push_back(leaf_idx);
     }
 
     this->journal->releaseBlock(block_obj);
 }
 
 void
-ReiserFs::getLeavesOfObject(const Block::key_t &start_key, uint32_t start_offset,
+ReiserFs::getBlocksOfObject(const Block::key_t &start_key, uint32_t start_offset,
                             Block::key_t &next_key, uint32_t &next_offset,
-                            std::vector<uint32_t> &leaves) const
+                            blocklist_t &blocks, uint32_t limit) const
 {
     next_key = start_key;
-    leaves.clear();
-    this->recursivelyGetLeavesOfObject(this->sb.s_root_block, start_key,
-                                       Block::zero_key, Block::largest_key, leaves, next_key,
-                                       start_offset, next_offset);
+    next_offset = 0;
+    blocks.clear();
+    this->recursivelyGetBlocksOfObject(this->sb.s_root_block, start_key, start_offset,
+                                       Block::zero_key, Block::largest_key, blocks,
+                                       next_key, next_offset, limit);
 }

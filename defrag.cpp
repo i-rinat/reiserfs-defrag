@@ -312,13 +312,13 @@ Defrag::squeezeAllAGsWithThreshold(uint32_t threshold)
 int
 Defrag::experimental_v2()
 {
-    std::vector<uint32_t> leaves;
     Block::key_t start_key = Block::zero_key;
     Block::key_t next_key;
     blocklist_t file_blocks;
     movemap_t movemap;
     uint32_t start_offset;
     uint32_t next_offset;
+    uint32_t limit = 15*2048;
 
     // estimate run time
     Progress estimation;
@@ -327,8 +327,8 @@ Defrag::experimental_v2()
     uint32_t obj_count = 0;
     start_offset = 0;
     while (1) {
-        fs.getLeavesOfObject(start_key, start_offset, next_key, next_offset, leaves);
-        if (next_key.sameObjectAs(start_key)) break;
+        fs.getBlocksOfObject(start_key, start_offset, next_key, next_offset, file_blocks, limit);
+        if (next_key.sameObjectAs(start_key) && (next_offset == 0)) break;
         obj_count ++;
         start_key = next_key;
         start_offset = next_offset;
@@ -339,34 +339,16 @@ Defrag::experimental_v2()
     progress.setMaxValue(obj_count);
     progress.setName("[incremental]");
     start_key = Block::zero_key;
+    this->success_count = 0;
+    this->failure_count = 0;
+
+    uint32_t segments_total = 0;
+    uint32_t segments_moved = 0;
 
     start_offset = 0;
     while (1) {
-        fs.getLeavesOfObject(start_key, start_offset, next_key, next_offset, leaves);
+        fs.getBlocksOfObject(start_key, start_offset, next_key, next_offset, file_blocks, limit);
         progress.inc();
-
-        bool first_indirect_of_file = true;
-        file_blocks.clear();
-        for (blocklist_t::iterator it = leaves.begin(); it != leaves.end(); ++ it) {
-            Block *block_obj = fs.readBlock(*it);
-            bool first_indirect_in_leaf = true;
-            for (uint32_t item = 0; item < block_obj->itemCount(); item ++) {
-                const Block::item_header &ih = block_obj->itemHeader(item);
-                if (not ih.key.sameObjectAs(start_key)) continue;
-                if (KEY_TYPE_INDIRECT == ih.type()) {
-                    // only add leaf block if first indirect item refers to current file
-                    // but avoid adding leaf with very first indirect item
-                    if (first_indirect_in_leaf && !first_indirect_of_file)
-                        file_blocks.push_back(*it);
-                    for (uint32_t idx = 0; idx < ih.length / 4; idx ++) {
-                        file_blocks.push_back(block_obj->indirectItemRef(ih.offset, idx));
-                    }
-                    first_indirect_in_leaf = false;
-                    first_indirect_of_file = false;
-                }
-            }
-            fs.releaseBlock(block_obj);
-        }
 
         this->filterOutSparseBlocks(file_blocks);
         if (0 != file_blocks.size()) {
@@ -380,6 +362,8 @@ Defrag::experimental_v2()
                 if (RFSD_FAIL == this->prepareDefragTask(file_blocks, partial_movemap))
                     return RFSD_FAIL;
             }
+            segments_total ++;
+            if (partial_movemap.size() > 0) segments_moved ++;
             this->mergeMovemap(movemap, partial_movemap);
             if (movemap.size() > 8000) {
                 fs.moveBlocks(movemap);
@@ -389,7 +373,7 @@ Defrag::experimental_v2()
 
         // next_key's and start_key's reference to the same object means we are done
         // with tree enumeration and may exit
-        if (next_key.sameObjectAs(start_key))
+        if (next_key.sameObjectAs(start_key) && (next_offset == 0))
             break;
         start_key = next_key;
         start_offset = next_offset;
@@ -400,6 +384,12 @@ Defrag::experimental_v2()
         movemap.clear();
     }
     progress.show100();
+
+    std::cout << "success_count = " << this->success_count;
+    std::cout << ", failure_count = " << this->failure_count << std::endl;
+
+    std::cout << "segments total = " << segments_total;
+    std::cout << ", segments moved = " << segments_moved << std::endl;
 
     return RFSD_OK;
 }
