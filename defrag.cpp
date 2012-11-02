@@ -297,7 +297,10 @@ Defrag::freeOneAG()
                 return RFSD_OK;
         }
     }
-    return RFSD_FAIL;
+    // reaching this point means we failed to free any AG. Let's forcibly free one.
+    if (RFSD_FAIL == fs.sweepOutAG(offset))
+        return RFSD_FAIL;
+    return RFSD_OK;
 }
 
 int
