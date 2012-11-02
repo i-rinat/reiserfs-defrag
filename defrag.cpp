@@ -373,13 +373,11 @@ Defrag::experimental_v2()
         if (0 != file_blocks.size()) {
             movemap_t partial_movemap;
             if (RFSD_FAIL == this->prepareDefragTask(file_blocks, partial_movemap)) {
-                std::cout << "temporal failure" << std::endl;
                 // we get here if free extent allocation failed. That may mean we have too
                 // fragmented free space. So try to free one of the AG.
                 if (RFSD_FAIL == this->freeOneAG())
                     return RFSD_FAIL;
-                if (RFSD_FAIL == this->prepareDefragTask(file_blocks, partial_movemap))
-                    return RFSD_FAIL;
+                continue;   // restart with current parameters
             }
             segments_total ++;
             if (partial_movemap.size() > 0) segments_moved ++;
