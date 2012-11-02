@@ -13,7 +13,7 @@ static const struct option long_opts[] = {
     { 0, 0, 0, 0}
 };
 
-struct {
+struct params_struct {
     int defrag_type;
 } params;
 
