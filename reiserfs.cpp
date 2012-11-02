@@ -936,8 +936,8 @@ ReiserFs::enumerateLeaves(const Block::key_t &start_key, int soft_threshold,
 void
 ReiserFs::recursivelyGetLeavesOfObject(uint32_t leaf_idx, const Block::key_t &start_key,
                                        Block::key_t left, Block::key_t right,
-                                       std::vector<uint32_t> &leaves,
-                                       Block::key_t &next_key) const
+                                       std::vector<uint32_t> &leaves, Block::key_t &next_key,
+                                       uint32_t &offset, uint32_t &next_offset) const
 {
     Block *block_obj = this->journal->readBlock(leaf_idx);
     uint32_t level = block_obj->level();
@@ -948,7 +948,8 @@ ReiserFs::recursivelyGetLeavesOfObject(uint32_t leaf_idx, const Block::key_t &st
             const Block::key_t new_right = (k < block_obj->keyCount()) ? block_obj->key(k) : right;
             if (new_right > start_key) {
                 this->recursivelyGetLeavesOfObject(block_obj->ptr(k).block, start_key,
-                                                   new_left, new_right, leaves, next_key);
+                                                   new_left, new_right, leaves, next_key,
+                                                   start_offset, next_offset);
                 if (! start_key.sameObjectAs(next_key))
                     break;
             }
@@ -975,11 +976,13 @@ ReiserFs::recursivelyGetLeavesOfObject(uint32_t leaf_idx, const Block::key_t &st
 }
 
 void
-ReiserFs::getLeavesOfObject(const Block::key_t &start_key, Block::key_t &next_key,
+ReiserFs::getLeavesOfObject(const Block::key_t &start_key, uint32_t start_offset,
+                            Block::key_t &next_key, uint32_t &next_offset,
                             std::vector<uint32_t> &leaves) const
 {
     next_key = start_key;
     leaves.clear();
     this->recursivelyGetLeavesOfObject(this->sb.s_root_block, start_key,
-                                       Block::zero_key, Block::largest_key, leaves, next_key);
+                                       Block::zero_key, Block::largest_key, leaves, next_key,
+                                       start_offset, next_offset);
 }

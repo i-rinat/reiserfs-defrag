@@ -471,9 +471,12 @@ public:
     /// get leaves relevant to object
     ///
     /// \param start_key[in]    object to be dumped
+    /// \param start_offset[in] count of blocks to skip in first indirect item of first leaf
     /// \param next_key[out]    receives next object key (dir_id, obj_id pair)
+    /// \param next_offset[out] receives saved position to restart easing
     /// \param leaves[out]      receives vector of leaves
-    void getLeavesOfObject(const Block::key_t &start_key, Block::key_t &next_key,
+    void getLeavesOfObject(const Block::key_t &start_key, uint32_t start_offset,
+                           Block::key_t &next_key, uint32_t &next_offset,
                            std::vector<uint32_t> &leaves) const;
 
     /// move movable blocks of range [ @from, @to] (borders included) below @to
@@ -544,8 +547,8 @@ private:
     /// inner worker function for getLeavesOfObject
     void recursivelyGetLeavesOfObject(uint32_t leaf_idx, const Block::key_t &start_key,
                                       Block::key_t left, Block::key_t right,
-                                      std::vector<uint32_t> &leaves,
-                                      Block::key_t &next_key) const;
+                                      std::vector<uint32_t> &leaves, Block::key_t &next_key,
+                                      uint32_t &offset, uint32_t &next_offset) const;
 };
 
 int readBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size);
