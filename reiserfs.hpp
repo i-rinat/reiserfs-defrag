@@ -200,6 +200,13 @@ public:
         uint64_t offset_v1() const {
             return (static_cast<uint64_t>(offset_type_2 & 0x0FFFFFFF) << 32) + offset_type_1;
         }
+        uint64_t offset(int key_version) {
+            switch (key_version) {
+            case KEY_V0: return this->offset_v0(); break;
+            case KEY_V1: return this->offset_v1(); break;
+            default: assert("key_t::offset(): wrong key type" && false);
+            }
+        }
         uint32_t type_v0() const { return offset_type_2; }
         uint32_t type_v1() const { return (offset_type_2 & 0xF0000000) >> 28; }
         void dump_v0(std::ostream &stream, bool need_endl = false) const {
