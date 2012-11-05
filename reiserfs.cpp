@@ -29,7 +29,6 @@ ReiserFs::useDataJournaling(bool use)
 int
 ReiserFs::open(const std::string &name, bool o_sync)
 {
-    std::cout << "open " << name << std::endl;
     this->fname = name;
     if (o_sync) {
         fd = ::open(name.c_str(), O_RDWR | O_SYNC | O_LARGEFILE);
@@ -136,8 +135,6 @@ ReiserFs::close()
     this->journal->beginTransaction();
     this->writeSuperblock();
     this->journal->commitTransaction();
-
-    std::cout << "ReiserFs::close, " << this->fname << std::endl;
 
     // FsBitmap deletes its blocks itself, so if FsJournal desctructor will be called later
     // that FsBitmap's one, there can be case when block_cache have bitmap blocks, which
