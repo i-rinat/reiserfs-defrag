@@ -201,13 +201,17 @@ Defrag::prepareDefragTask(std::vector<uint32_t> &blocks, movemap_t &movemap)
         return RFSD_OK;
 
     if (some_extents_succeeded) {
-        if (some_extents_failed) this->partial_success_count ++;
-        else this->success_count ++;
+        if (some_extents_failed)
+            this->defrag_statistics.partial_success_count ++;
+        else
+            this->defrag_statistics.success_count ++;
 
+        this->defrag_statistics.total_count ++;
         return RFSD_OK;
     }
 
-    this->failure_count ++;
+    this->defrag_statistics.failure_count ++;
+    this->defrag_statistics.total_count ++;
     return RFSD_FAIL;
 }
 
@@ -357,14 +361,9 @@ Defrag::experimental_v2()
     progress.setMaxValue(obj_count);
     progress.setName("[incremental]");
     start_key = Block::zero_key;
-    this->success_count = 0;
-    this->partial_success_count = 0;
-    this->failure_count = 0;
-
-    uint32_t segments_total = 0;
-    uint32_t segments_moved = 0;
-
     start_offset = 0;
+    this->defrag_statistics.reset();
+
     while (1) {
         fs.getBlocksOfObject(start_key, start_offset, next_key, next_offset, file_blocks, limit);
         progress.inc();
@@ -383,8 +382,7 @@ Defrag::experimental_v2()
                     return RFSD_FAIL;
                 continue;   // restart with current parameters
             }
-            segments_total ++;
-            if (partial_movemap.size() > 0) segments_moved ++;
+
             this->mergeMovemap(movemap, partial_movemap);
             if (movemap.size() > 8000) {
                 fs.moveBlocks(movemap);
@@ -406,12 +404,12 @@ Defrag::experimental_v2()
     }
     progress.show100();
 
-    std::cout << "success_count = " << this->success_count;
-    std::cout << ", partial_success_count = " << this->partial_success_count;
-    std::cout << ", failure_count = " << this->failure_count << std::endl;
-
-    std::cout << "segments total = " << segments_total;
-    std::cout << ", segments moved = " << segments_moved << std::endl;
+    std::cout << "defrag statistics: ";
+    std::cout << this->defrag_statistics.total_count << "/";
+    std::cout << this->defrag_statistics.success_count << "/";
+    std::cout << this->defrag_statistics.partial_success_count << "/";
+    std::cout << this->defrag_statistics.failure_count;
+    std::cout << " (total/success/partialsuccess/failure)" << std::endl;
 
     return RFSD_OK;
 }

@@ -571,9 +571,19 @@ public:
 private:
     ReiserFs &fs;
     uint32_t desired_extent_length;
-    uint32_t success_count;         //< statistics
-    uint32_t partial_success_count; //< statistics
-    uint32_t failure_count;         //< statistics
+
+    struct defrag_statistics_struct {
+        uint32_t success_count;
+        uint32_t partial_success_count;
+        uint32_t failure_count;
+        uint32_t total_count;
+        void reset() {
+            total_count = 0;
+            success_count = 0;
+            partial_success_count = 0;
+            failure_count = 0;
+        }
+    } defrag_statistics;
 
     uint32_t nextTargetBlock(uint32_t previous);
     void createMovemapFromListOfLeaves(movemap_t &movemap, const std::vector<uint32_t> &leaves,
