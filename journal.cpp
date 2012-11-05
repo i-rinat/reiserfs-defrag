@@ -47,8 +47,9 @@ FsJournal::~FsJournal()
         std::cout << "error: FsJournal::block_cache is not empty" << std::endl;
         assert (false);
     }
-    std::cout << "cache hits = " << this->cache_hits <<
-        ", cache_misses = " << this->cache_misses << std::endl;
+
+    std::cout << "blockcache statistics: " << this->cache_hits << "/" << this->cache_misses;
+    std::cout << " (hits/misses)" << std::endl;
 }
 
 void
