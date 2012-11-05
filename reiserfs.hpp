@@ -566,11 +566,12 @@ class Defrag {
 public:
     Defrag (ReiserFs &fs);
     void treeThroughDefrag(uint32_t batch_size = 16000);
-    int incrementalDefrag(uint32_t batch_size = 8000);
+    int incrementalDefrag(uint32_t batch_size = 8000, bool use_previous_estimation = true);
 
 private:
     ReiserFs &fs;
     uint32_t desired_extent_length;
+    uint32_t previous_obj_count;
 
     struct defrag_statistics_struct {
         uint32_t success_count;

@@ -9,6 +9,7 @@
 Defrag::Defrag(ReiserFs &fs) : fs(fs)
 {
     this->desired_extent_length = 2048;
+    this->previous_obj_count = 0;
 }
 
 void
@@ -332,7 +333,7 @@ Defrag::squeezeAllAGsWithThreshold(uint32_t threshold)
 }
 
 int
-Defrag::incrementalDefrag(uint32_t batch_size)
+Defrag::incrementalDefrag(uint32_t batch_size, bool use_previous_estimation)
 {
     Block::key_t start_key = Block::zero_key;
     Block::key_t next_key;
@@ -341,20 +342,28 @@ Defrag::incrementalDefrag(uint32_t batch_size)
     uint32_t start_offset;
     uint32_t next_offset;
     uint32_t limit = 15*2048;
-
-    // estimate run time
-    Progress estimation;
-    estimation.enableUnknownMode(true, 10000);
-    estimation.setName("[estimate]");
     uint32_t obj_count = 0;
-    start_offset = 0;
-    while (1) {
-        fs.getBlocksOfObject(start_key, start_offset, next_key, next_offset, file_blocks, limit);
-        if (next_key.sameObjectAs(start_key) && (next_offset == 0)) break;
-        obj_count ++;
-        start_key = next_key;
-        start_offset = next_offset;
-        estimation.inc();
+
+
+    if (use_previous_estimation && (0 != this->previous_obj_count)) {
+        obj_count = this->previous_obj_count;
+    } else {
+        // estimate run time
+        Progress estimation;
+        estimation.enableUnknownMode(true, 10000);
+        estimation.setName("[estimate]");
+
+        start_offset = 0;
+        while (1) {
+            fs.getBlocksOfObject(start_key, start_offset, next_key, next_offset, file_blocks, limit);
+            if (next_key.sameObjectAs(start_key) && (next_offset == 0)) break;
+            obj_count ++;
+            start_key = next_key;
+            start_offset = next_offset;
+            estimation.inc();
+        }
+        // save obj_count for consequent passes
+        this->previous_obj_count = obj_count;
     }
 
     Progress progress;
