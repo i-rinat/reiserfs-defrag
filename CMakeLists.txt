@@ -11,3 +11,7 @@ add_executable (rfsd
 	progress.cpp
 	entry.cpp
 )
+
+target_link_libraries(rfsd
+	rt
+)

@@ -1,6 +1,8 @@
+#define _POSIX_C_SOURCE 199309L
 #include "reiserfs.hpp"
 #include <getopt.h>
 #include <stdio.h>
+#include <time.h>
 #include <iostream>
 
 const int DEFRAG_TYPE_INCREMENTAL = 0;
@@ -33,6 +35,12 @@ int
 main (int argc, char *argv[])
 {
     int opt, long_index;
+    struct timespec start_time, stop_time;
+    bool monotonic_clock_available = true;
+
+    // get start time
+    if (0 != clock_gettime(CLOCK_MONOTONIC, &start_time))
+        monotonic_clock_available = false;
 
     opt = getopt_long(argc, argv, opt_string, long_opts, &long_index);
     while (-1 != opt) {
@@ -84,5 +92,13 @@ main (int argc, char *argv[])
     }
 
     fs.close();
+
+    // print elapsed time
+    if (monotonic_clock_available) {
+        clock_gettime(CLOCK_MONOTONIC, &stop_time);
+        uint32_t elapsed_seconds = stop_time.tv_sec - start_time.tv_sec;
+        std::cout << "elapsed time: " << elapsed_seconds << " s" << std::endl;
+    }
+
     return 0;
 }
