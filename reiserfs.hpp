@@ -137,7 +137,7 @@ public:
 
     uint32_t block;
     int type;
-    char buf[BLOCKSIZE];
+    char __attribute__((may_alias)) buf[BLOCKSIZE];
     bool dirty;
     int32_t ref_count;
     FsJournal *journal;
