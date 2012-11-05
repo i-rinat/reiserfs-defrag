@@ -38,13 +38,13 @@ ReiserFs::open(const std::string &name, bool o_sync)
     }
 
     if (-1 == fd) {
-        std::cerr << "error: can't open file `" << name << "', errno = " << errno << std::endl;
+        std::cout << "error: can't open file `" << name << "', errno = " << errno << std::endl;
         return RFSD_FAIL;
     }
 
     this->readSuperblock();
     if (this->sb.s_umount_state != UMOUNT_STATE_CLEAN) {
-        std::cerr << "error: fs dirty, run fsck." << std::endl;
+        std::cout << "error: fs dirty, run fsck." << std::endl;
         return RFSD_FAIL;
     }
     this->journal = new FsJournal(this->fd, &this->sb);
@@ -341,7 +341,7 @@ ReiserFs::moveBlocks(movemap_t &movemap)
         return 0;
 
     if (! this->movemapConsistent(movemap)) {
-        std::cerr << "error: movemap not consistent, " << this->err_string << std::endl;
+        std::cout << "error: movemap not consistent, " << this->err_string << std::endl;
         return 0;
     }
 

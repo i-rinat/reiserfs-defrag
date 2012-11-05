@@ -8,7 +8,7 @@ FsBitmap::FsBitmap(FsJournal *journal_, const FsSuperblock *sb_)
     this->sb = sb_;
     uint32_t bitmap_block_count = (sb->s_block_count - 1) / BLOCKS_PER_BITMAP + 1;
     if (bitmap_block_count != sb->s_bmap_nr) {
-        std::cerr << "error: sb->s_bmap_nr doesn't correspond to filesystem size" << std::endl;
+        std::cout << "error: sb->s_bmap_nr doesn't correspond to filesystem size" << std::endl;
         // TODO: add error handling, exception would be fine
     }
 

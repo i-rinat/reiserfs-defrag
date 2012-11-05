@@ -23,8 +23,8 @@ FsJournal::FsJournal(int fd_, FsSuperblock *sb)
     int res = readBufAt (this->fd, this->sb->jp_journal_1st_block + this->sb->jp_journal_size,
                                 &journal_header, sizeof(journal_header));
     if (RFSD_OK != res) {
-        std::cerr << "error: can't read journal header" << std::endl;
-        std::cerr << "It's better now to immediately exit." << std::endl;
+        std::cout << "error: can't read journal header" << std::endl;
+        std::cout << "It's better now to immediately exit." << std::endl;
         _exit(1);
     }
 
@@ -44,7 +44,7 @@ FsJournal::~FsJournal()
         this->deleteFromCache(dit->first);
     }
     if (this->block_cache.size() > 0) {
-        std::cerr << "error: FsJournal::block_cache is not empty" << std::endl;
+        std::cout << "error: FsJournal::block_cache is not empty" << std::endl;
         assert (false);
     }
     std::cout << "cache hits = " << this->cache_hits <<
@@ -57,12 +57,12 @@ FsJournal::beginTransaction()
     if (not this->use_journaling) return;
 
     if (this->transaction.running) {
-        std::cerr << "error: nested transaction" << std::endl;
+        std::cout << "error: nested transaction" << std::endl;
         return; // TODO: error handling
     }
 
     if (this->transaction.blocks.size() != 0 && not this->transaction.batch_running) {
-        std::cerr << "error: there was writes outside transaction" << std::endl;
+        std::cout << "error: there was writes outside transaction" << std::endl;
         return; // TODO: error handling
     }
 
@@ -76,12 +76,12 @@ writeBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size)
     off_t ofs = static_cast<off_t>(block_idx) * BLOCKSIZE;
     off_t new_ofs = ::lseek (fd, ofs, SEEK_SET);
     if (static_cast<off_t>(-1) == new_ofs || new_ofs != ofs) {
-        std::cerr << "error: can't seek to " << ofs << "." << std::endl;
+        std::cout << "error: can't seek to " << ofs << "." << std::endl;
         return RFSD_FAIL;
     }
     ssize_t bytes_written = ::write (fd, buf, size);
     if (size != bytes_written) {
-        std::cerr << "error: can't write data at block " << block_idx << "." << std::endl;
+        std::cout << "error: can't write data at block " << block_idx << "." << std::endl;
         return RFSD_FAIL;
     }
     return RFSD_OK;
@@ -93,12 +93,12 @@ readBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size)
     off_t ofs = static_cast<off_t>(block_idx) * BLOCKSIZE;
     off_t new_ofs = ::lseek (fd, ofs, SEEK_SET);
     if (static_cast<off_t>(-1) == new_ofs || new_ofs != ofs) {
-        std::cerr << "error: can't seek to " << ofs << "." << std::endl;
+        std::cout << "error: can't seek to " << ofs << "." << std::endl;
         return RFSD_FAIL;
     }
     ssize_t bytes_read = ::read (fd, buf, size);
     if (size != bytes_read) {
-        std::cerr << "error: can't read data at block " << block_idx << "." << std::endl;
+        std::cout << "error: can't read data at block " << block_idx << "." << std::endl;
         return RFSD_FAIL;
     }
     return RFSD_OK;
@@ -248,7 +248,7 @@ FsJournal::commitTransaction()
 
     if (this->transaction.blocks.size() > this->max_batch_size) {
         if (this->transaction.blocks.size() > this->sb->jp_journal_trans_max) {
-            std::cerr << "warning: transaction max size exceeded" << std::endl;
+            std::cout << "warning: transaction max size exceeded" << std::endl;
             this->flag_transaction_max_size_exceeded = true;
         }
         if (RFSD_OK != this->doCommitTransaction())
