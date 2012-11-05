@@ -566,7 +566,7 @@ class Defrag {
 public:
     Defrag (ReiserFs &fs);
     void treeThroughDefrag(uint32_t batch_size = 16000);
-    int experimental_v2();
+    int incrementalDefrag();
 
 private:
     ReiserFs &fs;

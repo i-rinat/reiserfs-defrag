@@ -332,7 +332,7 @@ Defrag::squeezeAllAGsWithThreshold(uint32_t threshold)
 }
 
 int
-Defrag::experimental_v2()
+Defrag::incrementalDefrag()
 {
     Block::key_t start_key = Block::zero_key;
     Block::key_t next_key;

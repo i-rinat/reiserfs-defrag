@@ -83,7 +83,7 @@ main (int argc, char *argv[])
     switch (params.defrag_type) {
     case DEFRAG_TYPE_INCREMENTAL:
         std::cout << "defrag type: incremental" << std::endl;
-        defrag.experimental_v2();
+        defrag.incrementalDefrag();
         break;
     case DEFRAG_TYPE_TREETHROUGH:
         std::cout << "defrag type: treethrough" << std::endl;
