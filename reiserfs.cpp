@@ -816,7 +816,6 @@ ReiserFs::sweepOutAG(uint32_t ag)
 
     // fill move map
     movemap_t movemap;
-    std::cout << "free_blocks_size = " << free_blocks.size() << std::endl;
     uint32_t qqq = 0;
     std::vector<uint32_t>::const_iterator free_ptr = free_blocks.begin();
     for (uint32_t k = ag * this->bitmap->AGSize(); k < (ag + 1) * this->bitmap->AGSize(); k ++) {
