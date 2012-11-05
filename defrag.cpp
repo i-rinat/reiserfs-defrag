@@ -332,7 +332,7 @@ Defrag::squeezeAllAGsWithThreshold(uint32_t threshold)
 }
 
 int
-Defrag::incrementalDefrag()
+Defrag::incrementalDefrag(uint32_t batch_size)
 {
     Block::key_t start_key = Block::zero_key;
     Block::key_t next_key;
@@ -384,7 +384,7 @@ Defrag::incrementalDefrag()
             }
 
             this->mergeMovemap(movemap, partial_movemap);
-            if (movemap.size() > 8000) {
+            if (movemap.size() > batch_size) {
                 fs.moveBlocks(movemap);
                 movemap.clear();
             }
