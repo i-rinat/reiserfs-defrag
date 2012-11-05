@@ -373,6 +373,10 @@ Defrag::experimental_v2()
         if (0 != file_blocks.size()) {
             movemap_t partial_movemap;
             if (RFSD_FAIL == this->prepareDefragTask(file_blocks, partial_movemap)) {
+                // Before we do anything, we must process all pending moves as further moves may
+                // lead to inconsistency.
+                fs.moveBlocks(movemap);
+                movemap.clear();
                 // we get here if free extent allocation failed. That may mean we have too
                 // fragmented free space. So try to free one of the AG.
                 if (RFSD_FAIL == this->freeOneAG())
