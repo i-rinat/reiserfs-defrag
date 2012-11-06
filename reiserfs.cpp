@@ -239,6 +239,10 @@ ReiserFs::createLeafIndex()
             }
         }
         this->journal->releaseBlock(block_obj);
+        if (ReiserFs::userAskedForTermination()) {
+            progress.abort();
+            return RFSD_FAIL;
+        }
     }
 
     progress.show100();

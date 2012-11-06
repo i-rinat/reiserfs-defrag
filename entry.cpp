@@ -101,19 +101,22 @@ main (int argc, char *argv[])
     }
 
     ReiserFs fs;
+    Defrag defrag(fs);
 
     fs.setupInterruptSignalHandler();
-
     if (argc - optind >= 1) {
-        if (RFSD_OK != fs.open(argv[optind], false))
+        if (RFSD_OK != fs.open(argv[optind], false)) {
+            // User may ask to terminate while leaf index created
+            if (ReiserFs::userAskedForTermination())
+                goto termination_point;
+            // otherwise there was some error, we should quit now
             return 1;
+        }
     } else {
-        if (RFSD_OK != fs.open("../image/reiserfs.image", false))
-            return 1;
+        goto termination_point;
     }
-    fs.useDataJournaling(false);
 
-    Defrag defrag(fs);
+    fs.useDataJournaling(false);
 
     switch (params.defrag_type) {
     case DEFRAG_TYPE_INCREMENTAL:
