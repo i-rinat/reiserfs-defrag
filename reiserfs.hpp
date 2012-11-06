@@ -568,6 +568,9 @@ public:
     void treeThroughDefrag(uint32_t batch_size = 16000);
     int incrementalDefrag(uint32_t batch_size = 8000, bool use_previous_estimation = true);
 
+    /// returns how many failed or incomplete defragmentation tasks there was last time
+    uint32_t lastDefragImperfectCount();
+
 private:
     ReiserFs &fs;
     uint32_t desired_extent_length;

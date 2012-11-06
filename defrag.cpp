@@ -431,3 +431,9 @@ Defrag::showDefragStatistics()
     std::cout << this->defrag_statistics.failure_count;
     std::cout << " (total/success/partialsuccess/failure)" << std::endl;
 }
+
+uint32_t
+Defrag::lastDefragImperfectCount() {
+    return this->defrag_statistics.failure_count
+           + this->defrag_statistics.partial_success_count;
+}
