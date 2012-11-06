@@ -500,6 +500,8 @@ public:
     /// \return true if \param block_idx points to reserved block
     bool blockReserved(uint32_t block_idx) const { return this->bitmap->blockReserved(block_idx); }
 
+    void setupInterruptSignalHandler();
+
     FsBitmap *bitmap;
 
 private:
@@ -514,6 +516,7 @@ private:
     uint32_t blocks_moved_unformatted;  //< counter used for moveMultipleBlocks
     std::vector<leaf_index_entry> leaf_index;
     uint32_t leaf_index_granularity;    //< size of each basket for leaf index
+    static int interrupt_state;
 
     void readSuperblock();
     void writeSuperblock();
@@ -557,6 +560,8 @@ private:
                                       uint32_t &start_offset, Block::key_t left, Block::key_t right,
                                       blocklist_t &blocks, Block::key_t &next_key,
                                       uint32_t &next_offset, uint32_t &limit) const;
+
+    static void interruptSignalHandler(int arg);
 };
 
 int readBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size);

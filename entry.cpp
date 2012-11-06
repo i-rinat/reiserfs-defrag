@@ -102,6 +102,8 @@ main (int argc, char *argv[])
 
     ReiserFs fs;
 
+    fs.setupInterruptSignalHandler();
+
     if (argc - optind >= 1) {
         if (RFSD_OK != fs.open(argv[optind], false))
             return 1;

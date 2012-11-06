@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <string.h>
 #include <assert.h>
+#include <signal.h>
 
 ReiserFs::ReiserFs()
 {
@@ -701,6 +702,35 @@ ReiserFs::getLeavesForMovemap(std::vector<uint32_t> &leaves, const movemap_t &mo
     // remove duplicates
     std::sort(leaves.begin(), leaves.end());
     leaves.erase(std::unique(leaves.begin(), leaves.end()), leaves.end());
+}
+
+void
+ReiserFs::setupInterruptSignalHandler()
+{
+    struct sigaction sa;
+    memset(&sa, 0, sizeof (struct sigaction));
+    sa.sa_handler = &ReiserFs::interruptSignalHandler;
+    sigaction(SIGINT, &sa, NULL);
+}
+
+int ReiserFs::interrupt_state = 0;
+
+void
+ReiserFs::interruptSignalHandler(int arg)
+{
+    const char *msg1 = "\n\nInterrupting\n";
+    const char *msg2 = "\n\nI heard you first time! I need some time to wrap things up.\n";
+    const char *msg3 = "\n\nArgh!\n";
+
+    // incresing this variable should be enough
+    interrupt_state ++;
+
+    // interact with user
+    switch (interrupt_state) {
+        case 1: write(STDOUT_FILENO, msg1, strlen(msg1)); break;
+        case 2: write(STDOUT_FILENO, msg2, strlen(msg2)); break;
+        default: write(STDOUT_FILENO, msg3, strlen(msg3)); break;
+    }
 }
 
 int
