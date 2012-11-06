@@ -13,7 +13,6 @@ const int DEFRAG_TYPE_NONE = 2;
 static const char *opt_string = "p:t:h";
 static const struct option long_opts[] = {
     { "help",   no_argument,        NULL, 'h' },
-    { NULL,     required_argument,  NULL, 'p' },
     { "type",   required_argument,  NULL, 't' },
     { 0, 0, 0, 0}
 };
