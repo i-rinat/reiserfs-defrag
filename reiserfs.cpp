@@ -736,6 +736,12 @@ ReiserFs::interruptSignalHandler(int arg)
     }
 }
 
+bool
+ReiserFs::userAskedForTermination()
+{
+    return ReiserFs::interrupt_state > 0;
+}
+
 int
 ReiserFs::squeezeDataBlocksInAG(uint32_t ag)
 {

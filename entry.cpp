@@ -123,6 +123,10 @@ main (int argc, char *argv[])
             while (pass < params.pass_count) {
                 std::cout << "pass " << pass+1 << " of " << params.pass_count << std::endl;
                 if (RFSD_FAIL == defrag.incrementalDefrag(8000, true)) {
+                    if (ReiserFs::userAskedForTermination()) {
+                        std::cout << "user asked for termination" << std::endl;
+                        break;
+                    }
                     std::cout << "can't finish defragmentation. Perhaps free space is too low."
                         << std::endl;
                     break;

@@ -502,6 +502,8 @@ public:
 
     void setupInterruptSignalHandler();
 
+    static bool userAskedForTermination();
+
     FsBitmap *bitmap;
 
 private:

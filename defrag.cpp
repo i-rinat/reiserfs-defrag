@@ -361,6 +361,10 @@ Defrag::incrementalDefrag(uint32_t batch_size, bool use_previous_estimation)
             start_key = next_key;
             start_offset = next_offset;
             estimation.inc();
+            if (ReiserFs::userAskedForTermination()) {
+                estimation.abort();
+                return RFSD_FAIL;
+            }
         }
         // save obj_count for consequent passes
         this->previous_obj_count = obj_count;
@@ -408,6 +412,12 @@ Defrag::incrementalDefrag(uint32_t batch_size, bool use_previous_estimation)
             break;
         start_key = next_key;
         start_offset = next_offset;
+
+        if (ReiserFs::userAskedForTermination()) {
+            progress.abort();
+            this->showDefragStatistics();
+            return RFSD_FAIL;
+        }
     }
 
     if (movemap.size() > 0) {
