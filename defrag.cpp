@@ -120,11 +120,11 @@ Defrag::treeThroughDefrag(uint32_t batch_size)
         this->createMovemapFromListOfLeaves(movemap, leaves, free_idx);
         this->fs.moveBlocks(movemap);
         start_key = last_key;
-        progress.inc(leaves.size());
         if (ReiserFs::userAskedForTermination()) {
             progress.abort();
             return RFSD_FAIL;
         }
+        progress.inc(leaves.size());
     }
     progress.show100();
 
