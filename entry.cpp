@@ -113,6 +113,7 @@ main (int argc, char *argv[])
             return 1;
         }
     } else {
+        display_usage();
         goto termination_point;
     }
 
