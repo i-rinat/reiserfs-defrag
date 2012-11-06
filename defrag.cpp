@@ -327,6 +327,10 @@ Defrag::squeezeAllAGsWithThreshold(uint32_t threshold)
             }
             progress.inc();
         }
+        if (ReiserFs::userAskedForTermination()) {
+            progress.abort();
+            return RFSD_FAIL;
+        }
     }
     progress.show100();
     return RFSD_OK;
