@@ -641,7 +641,7 @@ public:
     void setMaxValue(uint32_t value) { this->max_value = std::max(1u, value); }
     void setName(const std::string &nm) { this->name = nm; this->show_name = true; }
     void update(uint32_t value);
-    void inc();
+    void inc(uint32_t delta = 1);
     void show100();
     void abort();
 

@@ -121,7 +121,7 @@ Progress::abort()
 }
 
 void
-Progress::inc()
+Progress::inc(uint32_t delta)
 {
-    this->update(this->prev_value + 1);
+    this->update(this->prev_value + delta);
 }
