@@ -710,7 +710,10 @@ ReiserFs::setupInterruptSignalHandler()
     struct sigaction sa;
     memset(&sa, 0, sizeof (struct sigaction));
     sa.sa_handler = &ReiserFs::interruptSignalHandler;
-    sigaction(SIGINT, &sa, NULL);
+    if (0 != sigaction(SIGINT, &sa, NULL)) {
+        std::cout << "Warning: can't install SIGTERM handler. You are slighly discouraged to " \
+            "interrupt defragmentation. Although no one can stop you." << std::endl;
+    }
 }
 
 int ReiserFs::interrupt_state = 0;
