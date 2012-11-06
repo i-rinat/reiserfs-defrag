@@ -131,6 +131,8 @@ ReiserFs::dumpMovemap(const movemap_t &movemap) const
 void
 ReiserFs::close()
 {
+    if (this->closed)   // don't do anything if fs already closed
+        return;
     // clean fs dirty flag
     this->sb.s_umount_state = UMOUNT_STATE_CLEAN;
     this->journal->beginTransaction();
