@@ -544,7 +544,9 @@ private:
                                     int &soft_threshold, Block::key_t left, Block::key_t right,
                                     std::vector<uint32_t> &leaves, Block::key_t &last_key) const;
     /// creates list of leaves that point to blocks in specific basket
-    void createLeafIndex();
+    ///
+    /// \return RFSD_OK on success and RFSD_FAIL on failure
+    int createLeafIndex();
     /// removes obsolete entries after block movement
     void updateLeafIndex();
 

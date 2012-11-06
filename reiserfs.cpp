@@ -207,7 +207,7 @@ ReiserFs::cleanupRegionMoveDataDown(uint32_t from, uint32_t to)
     this->updateLeafIndex();
 }
 
-void
+int
 ReiserFs::createLeafIndex()
 {
     uint32_t basket_count = (this->sizeInBlocks() - 1) / this->leaf_index_granularity + 1;
@@ -242,7 +242,7 @@ ReiserFs::createLeafIndex()
     }
 
     progress.show100();
-    return;
+    return RFSD_OK;
 }
 
 void
