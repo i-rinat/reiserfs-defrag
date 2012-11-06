@@ -149,10 +149,14 @@ main (int argc, char *argv[])
         break;
     }
 
-    if (params.do_squeeze) {
+    if (params.do_squeeze and not ReiserFs::userAskedForTermination()) {
         // do squeeze blocks
         if (RFSD_FAIL == defrag.squeezeAllAGsWithThreshold(params.squeeze_threshold)) {
-            std::cout << "can't squeeze" << std::endl;
+            if (ReiserFs::userAskedForTermination()) {
+                std::cout << "user asked for termination" << std::endl;
+            } else {
+                std::cout << "can't squeeze" << std::endl;
+            }
         }
     }
 
