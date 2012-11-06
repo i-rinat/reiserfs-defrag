@@ -18,7 +18,7 @@ Defrag::treeThroughDefrag(uint32_t batch_size)
     std::vector<uint32_t> leaves;
     movemap_t movemap;
     Block::key_t last_key;
-    Block::key_t start_key = Block::zero_key;
+    Block::key_t start_key;
     uint32_t free_idx = this->nextTargetBlock(0);
     assert (free_idx != 0);
 
@@ -36,12 +36,15 @@ Defrag::treeThroughDefrag(uint32_t batch_size)
 
     // pack internal nodes first
     do {
+        Progress progress_internal_nodes;
+        progress_internal_nodes.setMaxValue(4);
+        progress_internal_nodes.setName("[packing internal nodes]");
         uint32_t old_free_idx = free_idx;
-        std::cout << "--- packing internal nodes -----------" << std::endl;
         std::vector<ReiserFs::tree_element> internal_nodes;
 
         this->fs.enumerateInternalNodes(internal_nodes);
         movemap.clear();
+        progress_internal_nodes.inc();
         for (std::vector<ReiserFs::tree_element>::iterator it = internal_nodes.begin();
             it != internal_nodes.end(); ++ it)
         {
@@ -54,9 +57,11 @@ Defrag::treeThroughDefrag(uint32_t batch_size)
         if (movemap.size() == 0)    // don't need to cleanup if all internal nodes in their places
             break;                  // already
         this->fs.cleanupRegionMoveDataDown(old_free_idx, free_idx - 1);
+        progress_internal_nodes.inc();
         free_idx = old_free_idx;
 
         this->fs.enumerateInternalNodes(internal_nodes);
+        progress_internal_nodes.inc();
         movemap.clear();
         for (std::vector<ReiserFs::tree_element>::iterator it = internal_nodes.begin();
             it != internal_nodes.end(); ++ it)
@@ -68,11 +73,31 @@ Defrag::treeThroughDefrag(uint32_t batch_size)
             assert (free_idx != 0);
         }
         this->fs.moveBlocks(movemap);
+        progress_internal_nodes.show100();
     } while (0);
 
-    // process leaves and unformatted blocks
+    // estimate work amount
+    start_key = Block::zero_key;
+    uint32_t work_amount = 0;
+    Progress estimation;
+    estimation.enableUnknownMode(true, 1000);
+    estimation.setName("[estimate]");
     while (1) {
-        std::cout << "--------------------------------------" << std::endl;
+        this->fs.enumerateLeaves(start_key, batch_size, leaves, last_key);
+        if (leaves.size() == 0)     // nothing left
+            break;
+        start_key = last_key;
+        work_amount += leaves.size();
+        estimation.update(work_amount);
+    }
+
+    // process leaves and unformatted blocks
+    start_key = Block::zero_key;
+    Progress progress;
+    progress.setMaxValue(work_amount);
+    progress.setName("[treethrough]");
+    progress.update(0);
+    while (1) {
         this->fs.enumerateLeaves(start_key, batch_size, leaves, last_key);
         if (leaves.size() == 0)     // nothing left
             break;
@@ -89,10 +114,11 @@ Defrag::treeThroughDefrag(uint32_t batch_size)
         if (leaves.size() == 0)     // nothing left
             break;
         this->createMovemapFromListOfLeaves(movemap, leaves, free_idx);
-        std::cout << "movemap size = " << movemap.size() << std::endl;
         this->fs.moveBlocks(movemap);
         start_key = last_key;
+        progress.inc(leaves.size());
     }
+    progress.show100();
     std::cout << "data moving complete" << std::endl;
 }
 
