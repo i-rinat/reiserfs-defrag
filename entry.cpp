@@ -7,6 +7,7 @@
 
 const int DEFRAG_TYPE_INCREMENTAL = 0;
 const int DEFRAG_TYPE_TREETHROUGH = 1;
+const int DEFRAG_TYPE_NONE = 2;
 
 static const char *opt_string = "t:h";
 static const struct option long_opts[] = {
@@ -53,6 +54,8 @@ main (int argc, char *argv[])
                 std::string("tree-through") == optarg || std::string("tree") == optarg)
             {
                 params.defrag_type = DEFRAG_TYPE_TREETHROUGH;
+            } else if (std::string("none") == optarg) {
+                params.defrag_type = DEFRAG_TYPE_NONE;
             } else {
                 std::cout << "wrong defrag algorithm: " << optarg << std::endl;
                 return 2;
@@ -91,6 +94,9 @@ main (int argc, char *argv[])
     case DEFRAG_TYPE_TREETHROUGH:
         std::cout << "defrag type: treethrough" << std::endl;
         defrag.treeThroughDefrag(8000);
+        break;
+    case DEFRAG_TYPE_NONE:
+        std::cout << "defrag type: none" << std::endl;
         break;
     }
 
