@@ -721,9 +721,9 @@ int ReiserFs::interrupt_state = 0;
 void
 ReiserFs::interruptSignalHandler(int arg)
 {
-    const char *msg1 = "\n\nInterrupting\n";
-    const char *msg2 = "\n\nI heard you first time! I need some time to wrap things up.\n";
-    const char *msg3 = "\n\nArgh!\n";
+    const char *msg1 = "\nInterrupting\n";
+    const char *msg2 = "\nI heard you first time! I need some time to wrap things up.\n";
+    const char *msg3 = "\nArgh!\n";
 
     // incresing this variable should be enough
     interrupt_state ++;
