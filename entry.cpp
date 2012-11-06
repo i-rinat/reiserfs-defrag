@@ -43,6 +43,9 @@ main (int argc, char *argv[])
     if (0 != clock_gettime(CLOCK_MONOTONIC, &start_time))
         monotonic_clock_available = false;
 
+    // set up default parameter values
+    default_params();
+
     opt = getopt_long(argc, argv, opt_string, long_opts, &long_index);
     while (-1 != opt) {
         switch (opt) {
