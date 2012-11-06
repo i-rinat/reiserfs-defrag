@@ -574,7 +574,19 @@ int writeBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size);
 class Defrag {
 public:
     Defrag (ReiserFs &fs);
+
+    /// performs defragmentation by sorting blocks in tree order
+    ///
+    /// \param batch_size[in]   controls batch granularity
+    /// \return RFSD_OK on success, RFSD_FAIL otherwise
     int treeThroughDefrag(uint32_t batch_size = 16000);
+
+    /// performs incremental defragmentation
+    ///
+    /// \param batch_size[in]               controls batch granularity
+    /// \param use_previous_estimation[in]  use previous estimation instead of doing it again
+    ///                                     have no effect on first use
+    /// \return RFSD_OK on success, RFSD_FAIL otherwise
     int incrementalDefrag(uint32_t batch_size = 8000, bool use_previous_estimation = true);
 
     /// returns how many failed or incomplete defragmentation tasks there was last time
