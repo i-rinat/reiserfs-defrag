@@ -571,6 +571,9 @@ public:
     /// returns how many failed or incomplete defragmentation tasks there was last time
     uint32_t lastDefragImperfectCount();
 
+    /// squeezes all AGs having more than \param threshold free extents
+    int squeezeAllAGsWithThreshold(uint32_t threshold);
+
 private:
     ReiserFs &fs;
     uint32_t desired_extent_length;
@@ -616,9 +619,6 @@ private:
     ///
     /// \return RFSD_OK on success, RFSD_FAIL otherwise
     int freeOneAG();
-
-    /// squeezes all AGs having more than \param threshold free extents
-    int squeezeAllAGsWithThreshold(uint32_t threshold);
 
     /// prints defrag statistics to stdout
     void showDefragStatistics();
