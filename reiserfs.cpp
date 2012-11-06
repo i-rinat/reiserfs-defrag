@@ -155,8 +155,6 @@ ReiserFs::cleanupRegionMoveDataDown(uint32_t from, uint32_t to)
 {
     std::vector<uint32_t> leaves;
     this->getLeavesForBlockRange(leaves, from, to);
-    std::cout << "cleanRegion from " << from << " to " << to << " (";
-    std::cout << leaves.size() << " leaves)" << std::endl;
 
     // move unformatted
     uint32_t free_idx = this->findFreeBlockAfter(to);
