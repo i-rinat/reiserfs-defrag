@@ -10,17 +10,21 @@ const int DEFRAG_TYPE_INCREMENTAL = 0;
 const int DEFRAG_TYPE_TREETHROUGH = 1;
 const int DEFRAG_TYPE_NONE = 2;
 
-static const char *opt_string = "p:t:h";
-static const struct option long_opts[] = {
-    { "help",   no_argument,        NULL, 'h' },
-    { "type",   required_argument,  NULL, 't' },
-    { 0, 0, 0, 0}
-};
-
 struct params_struct {
     int defrag_type;
     int pass_count;
+    bool do_squeeze;
+    int squeeze_threshold;
 } params;
+
+static const char *opt_string = "p:st:h";
+static const struct option long_opts[] = {
+    { "help",               no_argument,        NULL, 'h' },
+    { "squeeze",            no_argument,        NULL, 's' },
+    { "squeeze-threshold",  required_argument,  NULL, 128 },
+    { "type",               required_argument,  NULL, 't' },
+    { 0, 0, 0, 0}
+};
 
 void
 display_usage()
@@ -33,6 +37,8 @@ void default_params()
 {
     params.defrag_type = DEFRAG_TYPE_INCREMENTAL;
     params.pass_count = 3;
+    params.do_squeeze = false;
+    params.squeeze_threshold = 7;
 }
 
 int
@@ -59,7 +65,9 @@ main (int argc, char *argv[])
                 if (params.pass_count < 1) params.pass_count = 1;
             }
             break;
-
+        case 's':   // squeeze blocks
+            params.do_squeeze = true;
+            break;
         case 't':
             if (std::string("incremental") == optarg || std::string("inc") == optarg)
             {
@@ -78,6 +86,14 @@ main (int argc, char *argv[])
         case 'h':
             display_usage();
             return 0;
+            break;
+        case 128:   // squeeze threshold
+            {
+                std::stringstream ss(optarg);
+                ss >> params.squeeze_threshold;
+                if (params.squeeze_threshold < 1) params.squeeze_threshold = 1;
+                params.do_squeeze = true;
+            }
             break;
         }
 
