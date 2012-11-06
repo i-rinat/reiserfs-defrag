@@ -143,6 +143,13 @@ main (int argc, char *argv[])
         break;
     }
 
+    if (params.do_squeeze) {
+        // do squeeze blocks
+        if (RFSD_FAIL == defrag.squeezeAllAGsWithThreshold(params.squeeze_threshold)) {
+            std::cout << "can't squeeze" << std::endl;
+        }
+    }
+
     fs.close();
 
     // print elapsed time
