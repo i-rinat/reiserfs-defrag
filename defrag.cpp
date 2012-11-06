@@ -89,6 +89,10 @@ Defrag::treeThroughDefrag(uint32_t batch_size)
         start_key = last_key;
         work_amount += leaves.size();
         estimation.update(work_amount);
+        if (ReiserFs::userAskedForTermination()) {
+            estimation.abort();
+            return RFSD_FAIL;
+        }
     }
 
     // process leaves and unformatted blocks
@@ -117,6 +121,10 @@ Defrag::treeThroughDefrag(uint32_t batch_size)
         this->fs.moveBlocks(movemap);
         start_key = last_key;
         progress.inc(leaves.size());
+        if (ReiserFs::userAskedForTermination()) {
+            progress.abort();
+            return RFSD_FAIL;
+        }
     }
     progress.show100();
 
