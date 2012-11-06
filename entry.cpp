@@ -4,20 +4,23 @@
 #include <stdio.h>
 #include <time.h>
 #include <iostream>
+#include <sstream>
 
 const int DEFRAG_TYPE_INCREMENTAL = 0;
 const int DEFRAG_TYPE_TREETHROUGH = 1;
 const int DEFRAG_TYPE_NONE = 2;
 
-static const char *opt_string = "t:h";
+static const char *opt_string = "p:t:h";
 static const struct option long_opts[] = {
     { "help",   no_argument,        NULL, 'h' },
+    { NULL,     required_argument,  NULL, 'p' },
     { "type",   required_argument,  NULL, 't' },
     { 0, 0, 0, 0}
 };
 
 struct params_struct {
     int defrag_type;
+    int pass_count;
 } params;
 
 void
@@ -30,6 +33,7 @@ display_usage()
 void default_params()
 {
     params.defrag_type = DEFRAG_TYPE_INCREMENTAL;
+    params.pass_count = 3;
 }
 
 int
@@ -49,6 +53,14 @@ main (int argc, char *argv[])
     opt = getopt_long(argc, argv, opt_string, long_opts, &long_index);
     while (-1 != opt) {
         switch (opt) {
+        case 'p':   // pass count
+            {
+                std::stringstream ss(optarg);
+                if (!(ss >> params.pass_count)) params.pass_count = 1;
+                if (params.pass_count < 1) params.pass_count = 1;
+            }
+            break;
+
         case 't':
             if (std::string("incremental") == optarg || std::string("inc") == optarg)
             {
@@ -88,10 +100,23 @@ main (int argc, char *argv[])
 
     switch (params.defrag_type) {
     case DEFRAG_TYPE_INCREMENTAL:
-        std::cout << "defrag type: incremental" << std::endl;
-        if (RFSD_FAIL == defrag.incrementalDefrag(8000, true)) {
-            std::cout << "can't finish defragmentation. Perhaps free space is too low."
-                << std::endl;
+        {
+            std::cout << "defrag type: incremental" << std::endl;
+            int pass = 0;
+            while (pass < params.pass_count) {
+                std::cout << "pass " << pass+1 << " of " << params.pass_count << std::endl;
+                if (RFSD_FAIL == defrag.incrementalDefrag(8000, true)) {
+                    std::cout << "can't finish defragmentation. Perhaps free space is too low."
+                        << std::endl;
+                    break;
+                }
+                if (0 == defrag.lastDefragImperfectCount()) {
+                    // we are done
+                    std::cout << "defragmentation complete" << std::endl;
+                    break;
+                }
+                pass ++;
+            }
         }
         break;
     case DEFRAG_TYPE_TREETHROUGH:
