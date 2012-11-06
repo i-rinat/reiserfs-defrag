@@ -387,8 +387,11 @@ Defrag::incrementalDefrag(uint32_t batch_size, bool use_previous_estimation)
                 movemap.clear();
                 // we get here if free extent allocation failed. That may mean we have too
                 // fragmented free space. So try to free one of the AG.
-                if (RFSD_FAIL == this->freeOneAG())
+                if (RFSD_FAIL == this->freeOneAG()) {
+                    progress.abort();
+                    this->showDefragStatistics();
                     return RFSD_FAIL;
+                }
                 continue;   // restart with current parameters
             }
 
@@ -411,14 +414,20 @@ Defrag::incrementalDefrag(uint32_t batch_size, bool use_previous_estimation)
         fs.moveBlocks(movemap);
         movemap.clear();
     }
-    progress.show100();
 
+    progress.show100();
+    this->showDefragStatistics();
+
+    return RFSD_OK;
+}
+
+void
+Defrag::showDefragStatistics()
+{
     std::cout << "defrag statistics: ";
     std::cout << this->defrag_statistics.total_count << "/";
     std::cout << this->defrag_statistics.success_count << "/";
     std::cout << this->defrag_statistics.partial_success_count << "/";
     std::cout << this->defrag_statistics.failure_count;
     std::cout << " (total/success/partialsuccess/failure)" << std::endl;
-
-    return RFSD_OK;
 }

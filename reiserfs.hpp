@@ -616,6 +616,9 @@ private:
 
     /// squeezes all AGs having more than \param threshold free extents
     int squeezeAllAGsWithThreshold(uint32_t threshold);
+
+    /// prints defrag statistics to stdout
+    void showDefragStatistics();
 };
 
 class Progress {

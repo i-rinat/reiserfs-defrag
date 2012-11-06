@@ -83,7 +83,10 @@ main (int argc, char *argv[])
     switch (params.defrag_type) {
     case DEFRAG_TYPE_INCREMENTAL:
         std::cout << "defrag type: incremental" << std::endl;
-        defrag.incrementalDefrag(8000, true);
+        if (RFSD_FAIL == defrag.incrementalDefrag(8000, true)) {
+            std::cout << "can't finish defragmentation. Perhaps free space is too low."
+                << std::endl;
+        }
         break;
     case DEFRAG_TYPE_TREETHROUGH:
         std::cout << "defrag type: treethrough" << std::endl;
