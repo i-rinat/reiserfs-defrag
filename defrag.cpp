@@ -28,7 +28,7 @@ Defrag::treeThroughDefrag(uint32_t batch_size)
 
     if (batch_size > max_batch_size)
         batch_size = max_batch_size;
-    std::cout << "batch size = " << batch_size << " blocks" << std::endl;
+
     if (batch_size < 32) {
         std::cout << "batch_size too small" << std::endl;
         return RFSD_FAIL;
