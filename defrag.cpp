@@ -12,7 +12,7 @@ Defrag::Defrag(ReiserFs &fs) : fs(fs)
     this->previous_obj_count = 0;
 }
 
-void
+int
 Defrag::treeThroughDefrag(uint32_t batch_size)
 {
     std::vector<uint32_t> leaves;
@@ -31,7 +31,7 @@ Defrag::treeThroughDefrag(uint32_t batch_size)
     std::cout << "batch size = " << batch_size << " blocks" << std::endl;
     if (batch_size < 32) {
         std::cout << "batch_size too small" << std::endl;
-        return;
+        return RFSD_FAIL;
     }
 
     // pack internal nodes first
@@ -119,7 +119,8 @@ Defrag::treeThroughDefrag(uint32_t batch_size)
         progress.inc(leaves.size());
     }
     progress.show100();
-    std::cout << "data moving complete" << std::endl;
+
+    return RFSD_OK;
 }
 
 void

@@ -574,7 +574,7 @@ int writeBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size);
 class Defrag {
 public:
     Defrag (ReiserFs &fs);
-    void treeThroughDefrag(uint32_t batch_size = 16000);
+    int treeThroughDefrag(uint32_t batch_size = 16000);
     int incrementalDefrag(uint32_t batch_size = 8000, bool use_previous_estimation = true);
 
     /// returns how many failed or incomplete defragmentation tasks there was last time
