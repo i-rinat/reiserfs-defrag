@@ -172,7 +172,9 @@ termination_point:
     if (monotonic_clock_available) {
         clock_gettime(CLOCK_MONOTONIC, &stop_time);
         uint32_t elapsed_seconds = stop_time.tv_sec - start_time.tv_sec;
-        std::cout << "elapsed time: " << elapsed_seconds << " s" << std::endl;
+        if (elapsed_seconds > 1) {
+            std::cout << "elapsed time: " << elapsed_seconds << " s" << std::endl;
+        }
     }
 
     return 0;
