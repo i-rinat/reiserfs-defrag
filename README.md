@@ -7,22 +7,23 @@ Status
 ======
 **Experimental. Do not use it on sensitive data.**
 
-As for now (tag:*tree-through-v2*) it journals meta-data while moving blocks.
-That _should_ prevent data loss, but I did not verify that thoroughly. I think now it
-has quadratic complexity to the partition size. I've sorted out quadratic cpu usage, but
-it still have quadratic time due to move patterns. Now it also lacks
-of wise algorithms and just packs data in tree order. (Here tree is the internal tree that
-stores meta-data, it has no much common with directory tree). And that means almost every
-block will be moved. Insanely slow.
+As for now (version 0.1) it journals meta-data while moving blocks.
+That _should_ prevent data loss, but I did not verify that thoroughly.
 
-Some results:
+There are two available algorithm are tree-through defragmentation and incremental one. First
+packs (with no spaces between) all files in a tree order, interleaving data blocks
+with leaf and internal tree nodes. That will move almost all data blocks, and therefore
+will be very slow. But in the end you'll find all files (and directories) in their
+ideal order and free space consolidated at the end of filesystem.
 
- 1. 3 GiB, with 92162 files and 25050 dirs, 78% full, took 2 minutes to complete.
- 2. 120 GiB, with 3820294 files and 328952 dirs, 80% full, took 350 minutes to complete.
- 3. 120 GiB, with 54 files and 2 dirs, 78% full, took 54 minutes to complete.
-
-All filesystems were 'just created'. 1) debian/non-free amd64 repo unpacked;
-2) debian/main amd64 repo unpacked; 3) bunch of large files, each ~1.5 Gb in size.
+Second one called incremental and selected by default. It makes several passes through
+filesystem internal tree and tries to defragment all that it considers fragmented.
+Currently it check for every 2048-block length chuck to be in one piece. Those 2048 blocks
+contains not only data blocks but metadata blocks too. As the result, file can be splitted
+to several parts which will be distributed through the partition. That's not user usually
+wants to see, but this is current limitation. And 8 MiB chucks are large enough. If you
+have a 15 ms, 100 MiB/sec disk, on every seek you "lose" 1.5 MiB of data which results in
+16% degradation. That's good in my books. I mean, things could be a way worse.
 
 
 Fragmentation
@@ -56,19 +57,23 @@ I declare goals as:
  * (g4) program should be able to do incremental (fast) defragmentation;
  * (g5) program should be able to move selected files to beginning of partition.
 
-g1 and g2 are done. g3 should be considered done, as cpu usage should be almost linear.
-I don't have clear algorithms for g4 and g5 for the moment.
+Goals g1 through g4 are considered done. g5 is on agenda.
 
 Build and install
 =================
 You'll need cmake. Build:
 
 * `mkdir build && cd build`
-* `cmake -DCMAKE_BUILD_TYPE=Release ..`
+* `CXXFLAGS="-Wall -O2" cmake ..`
 * `make`
 
+Note two dots in cmake parameters. They are point to directory with sources
+and those dots are required. And you definitely will want to do a debug build.
+At least until I find a way to do assertions in release builds too.
+
 There is no install as no need of. Executable binary named `rfsd` appears in
-build directory. It expects only one argument: path to device or fs image.
+build directory. It expects path to device or fs image. There is some other
+options available, usage and man page on their way.
 
 Copying
 =======
@@ -76,4 +81,4 @@ GPLv2/GPLv3
 
 Authors
 =======
-Rinat Ibragimov, ibragimovrinat-at-mail.ru, github.com/i-rinat/
+Rinat Ibragimov, ibragimovrinat-at-mail.ru, https://github.com/i-rinat/
