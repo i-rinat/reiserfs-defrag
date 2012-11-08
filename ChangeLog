@@ -1,0 +1,91 @@
+2012-11-09  Rinat Ibragimov  <ibragimovrinat@mail.ru>
+
+	tag:v0.1
+	* Version 0.1
+	* ChangeLog: use change log
+	* rfsd: notion of allocation groups. Each of them maintains list of
+	free extents in sorted order to speedup and amend free blocks
+	allocation. Can have size of 128 MiB, 256 MiB or 512 MiB. Now 128.
+	* rfsd: continuous extent allocator. Either allocated continuous
+	extent of asked size or fails.
+	* rfsd: introduced squeezing of AG. All data blocks in AG moved to its
+	beginning therefore creating large free extent at its end. Maintains
+	data block order.
+	* rfsd: introduced sweeping of AG. Which is effectively first part of
+	squeezing. Moves blocks away from allocation group.
+	* rfsd: add "forbidden AG" parameter to allocateFreeExtent
+	* rfsd: avoid including leaf containing first indirect item of file
+	to its ideal block order
+	* rfsd: implement incremental defrag. Large file will be processed
+	by piecemeal.
+	* rfsd: implement nice progress bars and use them.
+	* rfsd: estimate amount of work beforehand.
+	* rfsd: try to free some continuous space in case of allocation
+	failure. AG selected by score which depend both on its free space
+	fragmentation and some random value. Thus deadlocks avoided.
+	* rfsd: use progress bars in treeThroughDefrag
+	* rfsd: basic command-line processing
+	* rfsd: print usage on --help
+	* rfsd: introduced 'none' type defragmentation that do nothing
+	* misc: drop tuxonizer.
+	* rfsd: dump errors to stdout instead of stderr to ease logging
+	* rfsd: use several passes for incremental defrag. Exit early if
+	no files need defragmentation
+	* rfsd: allow user to interrupt process by gracefully ending current
+	operation.
+	* rfsd: added optional squeeze stage with tunable threshold
+	* rfsd: fix bug in handling filesystems of sizes not multiple of
+	AG size. Stricter checks of movemap inconsistency.
+
+
+2012-10-07  Rinat Ibragimov  <ibragimovrinat@mail.ru>
+
+	tag:tree-through-v2
+	* rfsd: using leaf index to speedup lookup leaf node by block indices
+	it refers.
+	* rfsd: change move block functions to traverse subset of tree
+	* rfsd: split up huge move job into smaller chunks
+	* rfsd: implement treeThroughDefrag -- iterative version of previous
+	attempts.
+	* rfsd: fix bug with sparse files handling which caused rfsd stop
+	in panic.
+
+2012-09-16  Rinat Ibragimov  <ibragimovrinat@mail.ru>
+
+	tag:journaling-merge
+	* rfsd: merge transaction into larger one, significantly improves
+	speed.
+
+2012-09-14  Rinat Ibragimov  <ibragimovrinat@mail.ru>
+
+	tag:journaling
+	* rfsd: journaling support. All writes to filesystem from now performed
+	by transactions.
+	* rfsd: switch from fsync to fdatasync as it's slighly faster.
+
+2012-09-12  Rinat Ibragimov  <ibragimovrinat@mail.ru>
+
+	* rfsd: basic read cache. Block that read remains in memory for some
+	time in hope that they can be read again in nearby future. Add cache
+	statistics.
+
+2012-09-07  Rinat Ibragimov  <ibragimovrinat@mail.ru>
+
+	* rfsd: working defragmentation, but far away from optimal. Creates
+	'ideal' data layout and tries to move all blocks that can be moved
+	to their final position.
+
+2012-09-04  Rinat Ibragimov  <ibragimovrinat@mail.ru>
+
+	tag:blockmover
+	* rfsd: make code actually move blocks with corresponding changes to
+	metadata structures
+	* misc/moveback: moves all blocks to beginning of file system
+	* misc/shuffler: randomly shuffles blocks
+	* misc/tuxonizer: imprint Tux logo on filesystem
+
+
+2012-08-22  Rinat Ibragimov  <ibragimovrinat@mail.ru>
+
+	* rfsd: first line of code
+
