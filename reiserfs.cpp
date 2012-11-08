@@ -326,6 +326,17 @@ ReiserFs::movemapConsistent(const movemap_t &movemap)
             err_string = "some 'from' blocks map to journal";
             return false;
         }
+        // block_idx always greater than zero (unsigned int), no need to check that.
+        // But upper bound should be checked.
+        if (mapiter->first >= this->sb.s_block_count) {
+            err_string = "some 'from' blocks map beyound filesystem limits";
+            return false;
+        }
+        if (mapiter->second >= this->sb.s_block_count) {
+            err_string = "some 'to' blocks map beyound filesystem limits";
+            return false;
+        }
+
         // build inverse transform
         revmap[mapiter->second] = mapiter->first;
     }
