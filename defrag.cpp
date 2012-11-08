@@ -328,17 +328,20 @@ Defrag::mergeMovemap(movemap_t &dest, const movemap_t &src)
 int
 Defrag::freeOneAG()
 {
-    // randomly select AG to sweep out
-    const uint32_t offset = rand() % fs.bitmap->AGCount();
-    for (uint32_t k = 0; k < fs.bitmap->AGCount(); k ++) {
-        uint32_t ag = (k + offset) % fs.bitmap->AGCount();
-        if (fs.bitmap->AGUsedBlockCount(ag) < fs.bitmap->AGSize(ag)/2) {
-            if (RFSD_OK == fs.sweepOutAG(ag))
-                return RFSD_OK;
+    // select most freespace fragmented AG to sweep out.
+    // Additional random which gives a chance to low fragmented AG to be selected.
+    // It should be limited though, in order to heavily fragmented AG to cleared first
+    uint32_t max_score = 0;
+    uint32_t selected_ag = 0;
+    for (uint32_t ag = 0; ag < fs.bitmap->AGCount(); ag ++) {
+        const uint32_t score = 128 * fs.bitmap->AGExtentCount(ag) + rand() % 1024;
+        if (score > max_score) {
+            max_score = score;
+            selected_ag = ag;
         }
     }
-    // reaching this point means we failed to free any AG. Let's forcibly free one.
-    if (RFSD_FAIL == fs.sweepOutAG(offset))
+
+    if (RFSD_FAIL == fs.sweepOutAG(selected_ag))
         return RFSD_FAIL;
     return RFSD_OK;
 }
