@@ -11,9 +11,6 @@ add_library (mrfsu STATIC
 	../progress.cpp
 )
 
-add_executable (tuxonizer tuxonizer.cpp)
-target_link_libraries(tuxonizer mrfsu)
-
 add_executable (moveback moveback.cpp)
 target_link_libraries(moveback mrfsu)
 
