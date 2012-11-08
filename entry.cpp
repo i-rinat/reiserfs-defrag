@@ -29,8 +29,17 @@ static const struct option long_opts[] = {
 void
 display_usage()
 {
-    printf("Usage: reiserfs-defrag [options] <reiserfs partition>\n");
-    printf("\n");
+    printf("Usage: reiserfs-defrag [options] <reiserfs partition>\n"
+    "\n"
+    "    -h, --help                   show usage (this screen)\n"
+    "    -p <passcount>               incremental defrag pass count\n"
+    "    -s, --squeeze                enable squeeze stage\n"
+    "    --squeeze-threshold <value>  enable squeezing all AGs with more than 'value' gaps\n"
+    "    -t, --type <name>            select defrag algorithm. Available algorithms are:\n"
+    "                                   tree/treethrough/tree-through for tree-through\n"
+    "                                   inc/incremental for incremental (selected by default)\n"
+    "                                   none for no defrag at all\n"
+    );
 }
 
 void default_params()
