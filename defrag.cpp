@@ -417,6 +417,12 @@ Defrag::incrementalDefrag(uint32_t batch_size, bool use_previous_estimation)
     this->defrag_statistics.reset();
 
     while (1) {
+        if (ReiserFs::userAskedForTermination()) {
+            progress.abort();
+            this->showDefragStatistics();
+            return RFSD_FAIL;
+        }
+
         fs.getBlocksOfObject(start_key, start_offset, next_key, next_offset, file_blocks, limit);
         progress.inc();
 
@@ -451,12 +457,6 @@ Defrag::incrementalDefrag(uint32_t batch_size, bool use_previous_estimation)
             break;
         start_key = next_key;
         start_offset = next_offset;
-
-        if (ReiserFs::userAskedForTermination()) {
-            progress.abort();
-            this->showDefragStatistics();
-            return RFSD_FAIL;
-        }
     }
 
     if (movemap.size() > 0) {
