@@ -25,6 +25,39 @@ FsBitmap::~FsBitmap()
 {
 }
 
+uint32_t
+FsBitmap::AGSize(uint32_t ag) const
+{
+    assert (0 <= ag && ag < this->AGCount());
+    if (this->AGCount() - 1 == ag) { // last AG
+        const uint32_t rem = this->sb->s_block_count % this->ag_size;
+        if (0 == rem)
+            return this->ag_size;
+        else
+            return rem;
+    } else {    // all other AGs
+        return this->ag_size;
+    }
+}
+
+uint32_t
+FsBitmap::AGBegin(uint32_t ag) const
+{
+    assert (0 <= ag && ag < this->AGCount());
+    return ag * this->ag_size;
+}
+
+uint32_t
+FsBitmap::AGEnd(uint32_t ag) const
+{
+    assert (0 <= ag && ag < this->AGCount());
+    const uint32_t agend = (ag + 1) * this->ag_size - 1;
+    if (agend > this->sb->s_block_count - 1)
+        return this->sb->s_block_count - 1;
+    else
+        return agend;
+}
+
 bool
 FsBitmap::blockIsBitmap(uint32_t block_idx) const
 {
@@ -200,11 +233,11 @@ FsBitmap::allocateFreeExtent(uint32_t &ag, uint32_t required_size,
 void
 FsBitmap::rescanAGForFreeExtents(uint32_t ag)
 {
-    const uint32_t block_start = ag * this->ag_size;
-    const uint32_t block_end = (ag + 1) * this->ag_size - 1;
+    const uint32_t block_start = this->AGBegin(ag);
+    const uint32_t block_end = this->AGEnd(ag);
 
     this->ag_free_extents[ag].clear();
-    this->ag_free_extents[ag].used_blocks = this->AGSize();
+    this->ag_free_extents[ag].used_blocks = this->AGSize(ag);
     // find first empty block
     uint32_t ptr = block_start;
     do {
@@ -234,7 +267,7 @@ FsBitmap::rescanAGForFreeExtents(uint32_t ag)
 uint32_t
 FsBitmap::reservedBlockCount(uint32_t ag) const
 {
-    return this->reservedBlockCount(ag * this->AGSize(), (ag + 1) * this->AGSize() - 1);
+    return this->reservedBlockCount(this->AGBegin(ag), this->AGEnd(ag));
 }
 
 uint32_t

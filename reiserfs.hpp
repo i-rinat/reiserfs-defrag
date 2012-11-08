@@ -386,7 +386,10 @@ public:
     void rescanAGForFreeExtents(uint32_t ag);
     /// returns count of allocation groups
     uint32_t AGCount() const { return this->ag_free_extents.size(); }
-    uint32_t AGSize() const { return this->ag_size; }
+    uint32_t AGOfBlock(uint32_t block_idx) const { return block_idx / this->ag_size; }
+    uint32_t AGSize(uint32_t ag) const;
+    uint32_t AGBegin(uint32_t ag) const;
+    uint32_t AGEnd(uint32_t ag) const;
     uint32_t AGExtentCount(uint32_t ag) const { return this->ag_free_extents[ag].size(); }
     uint32_t AGUsedBlockCount(uint32_t ag) const { return this->ag_free_extents[ag].used_blocks; }
     /// sets size of each allocation group

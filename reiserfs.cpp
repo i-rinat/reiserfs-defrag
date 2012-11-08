@@ -762,8 +762,8 @@ int
 ReiserFs::squeezeDataBlocksInAG(uint32_t ag)
 {
     assert (0 <= ag && ag < this->bitmap->AGCount());
-    const uint32_t block_begin = ag * this->bitmap->AGSize();
-    const uint32_t block_end = (ag + 1) * this->bitmap->AGSize() - 1;
+    const uint32_t block_begin = this->bitmap->AGBegin(ag);
+    const uint32_t block_end = this->bitmap->AGEnd(ag);
     uint32_t packed_ptr = block_begin;  // end of packed area
     uint32_t front_ptr = block_begin;   // frontier
 
@@ -870,7 +870,7 @@ ReiserFs::sweepOutAG(uint32_t ag)
     movemap_t movemap;
     uint32_t qqq = 0;
     std::vector<uint32_t>::const_iterator free_ptr = free_blocks.begin();
-    for (uint32_t k = ag * this->bitmap->AGSize(); k < (ag + 1) * this->bitmap->AGSize(); k ++) {
+    for (uint32_t k = this->bitmap->AGBegin(ag); k <= this->bitmap->AGEnd(ag); k ++) {
         if (this->blockUsed(k) && !this->bitmap->blockReserved(k)) {
             movemap[k] = *free_ptr;
             ++ free_ptr;

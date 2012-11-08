@@ -203,7 +203,7 @@ Defrag::prepareDefragTask(std::vector<uint32_t> &blocks, movemap_t &movemap)
     uint32_t c_begin = 0;
     uint32_t c_end = 0;
 
-    uint32_t ag = blocks[0] / this->fs.bitmap->AGSize();
+    uint32_t ag = this->fs.bitmap->AGOfBlock(blocks[0]);
 
     bool some_extents_failed = false;
     bool some_extents_succeeded = false;
@@ -332,7 +332,7 @@ Defrag::freeOneAG()
     const uint32_t offset = rand() % fs.bitmap->AGCount();
     for (uint32_t k = 0; k < fs.bitmap->AGCount(); k ++) {
         uint32_t ag = (k + offset) % fs.bitmap->AGCount();
-        if (fs.bitmap->AGUsedBlockCount(ag) < fs.bitmap->AGSize()/2) {
+        if (fs.bitmap->AGUsedBlockCount(ag) < fs.bitmap->AGSize(ag)/2) {
             if (RFSD_OK == fs.sweepOutAG(ag))
                 return RFSD_OK;
         }
