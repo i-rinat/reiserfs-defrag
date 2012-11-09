@@ -50,9 +50,9 @@ void
 Progress::displayUnknown(uint32_t value)
 {
     if (0 == (value % this->unknown_interval)) {
-        uint32_t width = this->getWidth();
+        int32_t width = this->getWidth();
         time_t now = time(NULL);
-        uint32_t delta = now - this->start_time;
+        int32_t delta = now - this->start_time;
 
         printf("\r");
         if (this->show_name) {
@@ -64,13 +64,13 @@ Progress::displayUnknown(uint32_t value)
             if (ret > 0) width -= ret;
         }
         if (this->show_progress_bar) {
-            const uint32_t pos = delta % (width - 2 - 3);
-            const uint32_t fill = (width - 2 - 3 - pos);
+            const int32_t pos = delta % (width - 2 - 3);
+            const int32_t fill = (width - 2 - 3 - pos);
 
             printf("[");
-            for (uint32_t k = 0; k < pos; k ++) printf("-");
+            for (int32_t k = 0; k < pos; k ++) printf("-");
             printf("<=>");
-            for (uint32_t k = 0; k < fill; k ++) printf("-");
+            for (int32_t k = 0; k < fill; k ++) printf("-");
             printf("]");
         }
         fflush(stdout);
@@ -80,7 +80,7 @@ Progress::displayUnknown(uint32_t value)
 void
 Progress::displayKnown(uint32_t value)
 {
-    uint32_t width = this->getWidth();
+    int32_t width = this->getWidth();
 
     printf("\r");
     if (this->show_name) {
@@ -96,11 +96,11 @@ Progress::displayKnown(uint32_t value)
         if (ret > 0) width -= ret;
     }
     if (this->show_progress_bar) {
-        uint32_t completed = 1.0*(width-2)*value/this->max_value;
-        uint32_t rest = (width - 2) - completed;
+        int32_t completed = 1.0*(width-2)*value/this->max_value;
+        int32_t rest = (width - 2) - completed;
         printf("[");
-        for (uint32_t k = 0; k < completed; k ++) printf("=");
-        for (uint32_t k = 0; k < rest; k ++) printf("-");
+        for (int32_t k = 0; k < completed; k ++) printf("=");
+        for (int32_t k = 0; k < rest; k ++) printf("-");
         printf("]");
     }
     fflush(stdout);

@@ -1,5 +1,7 @@
 2012-11-09  Rinat Ibragimov  <ibragimovrinat@mail.ru>
 
+	* rfsd: fix progress bar bug on extremely narrow terminals
+
 	tag:v0.1
 	* Version 0.1
 	* ChangeLog: use change log
