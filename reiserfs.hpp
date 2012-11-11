@@ -47,18 +47,20 @@
 
 // they said something about NIH
 #define assert2(msg, expr)   do { \
-    if (!(expr)) assert_failfunc(msg, #expr, __FILE__, __LINE__); \
+    if (!(expr)) assert_failfunc2(msg, #expr, __FILE__, __LINE__); \
 } while (0);
 
 #define assert1(expr)   do { \
-    if (!(expr)) assert_failfunc("", #expr, __FILE__, __LINE__); \
+    if (!(expr)) assert_failfunc1(#expr, __FILE__, __LINE__); \
 } while (0);
 
-__attribute__((noreturn))
-extern
-void
-assert_failfunc(const std::string &msg, const std::string &expr, const std::string &filename,
-                int lineno);
+__attribute__((noreturn)) extern void
+assert_failfunc1(const std::string &expr, const std::string &filename, int lineno);
+
+__attribute__((noreturn)) extern void
+assert_failfunc2(const std::string &msg, const std::string &expr, const std::string &filename,
+                 int lineno);
+
 
 typedef std::vector<uint32_t> blocklist_t;
 typedef std::map<uint32_t, uint32_t> movemap_t;

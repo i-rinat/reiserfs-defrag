@@ -11,8 +11,17 @@
 #include <signal.h>
 
 void
-assert_failfunc(const std::string &msg, const std::string &expr, const std::string &filename,
-                int lineno)
+assert_failfunc1(const std::string &expr, const std::string &filename, int lineno)
+{
+    std::stringstream ss;
+    ss << "assertion failed: (" << expr << ") at " << filename << ":" << lineno;
+    throw std::logic_error(ss.str());
+}
+
+
+void
+assert_failfunc2(const std::string &msg, const std::string &expr, const std::string &filename,
+                 int lineno)
 {
     std::stringstream ss;
     ss << msg << " (" << expr << ") at " << filename << ":" << lineno;
