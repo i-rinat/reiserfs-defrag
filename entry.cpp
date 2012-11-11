@@ -5,6 +5,7 @@
 #include <time.h>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 
 const int DEFRAG_TYPE_INCREMENTAL = 0;
 const int DEFRAG_TYPE_TREETHROUGH = 1;
@@ -25,6 +26,9 @@ static const struct option long_opts[] = {
     { "type",               required_argument,  NULL, 't' },
     { 0, 0, 0, 0}
 };
+
+class user_asked_termination : public std::exception {};
+class no_error : public std::exception {};
 
 void
 display_usage()
@@ -113,68 +117,75 @@ main (int argc, char *argv[])
     Defrag defrag(fs);
 
     fs.setupInterruptSignalHandler();
-    if (argc - optind >= 1) {
-        if (RFSD_OK != fs.open(argv[optind], false)) {
-            // User may ask to terminate while leaf index created
-            if (ReiserFs::userAskedForTermination())
-                goto termination_point;
-            // otherwise there was some error, we should quit now
-            return 1;
+
+    try {
+        if (argc - optind >= 1) {
+            if (RFSD_OK != fs.open(argv[optind], false)) {
+                // User may ask to terminate while leaf index created
+                if (ReiserFs::userAskedForTermination())
+                    throw user_asked_termination();
+                // otherwise there was some error, we should quit now
+                return 1;
+            }
+        } else {
+            display_usage();
+            throw no_error();
         }
-    } else {
-        display_usage();
-        goto termination_point;
-    }
 
-    fs.useDataJournaling(false);
+        fs.useDataJournaling(false);
 
-    switch (params.defrag_type) {
-    case DEFRAG_TYPE_INCREMENTAL:
-        {
-            std::cout << "defrag type: incremental" << std::endl;
-            int pass = 0;
-            while (pass < params.pass_count) {
-                std::cout << "pass " << pass+1 << " of " << params.pass_count << std::endl;
-                if (RFSD_FAIL == defrag.incrementalDefrag(8000, true)) {
-                    if (ReiserFs::userAskedForTermination()) {
-                        goto termination_point;
+        switch (params.defrag_type) {
+        case DEFRAG_TYPE_INCREMENTAL:
+            {
+                std::cout << "defrag type: incremental" << std::endl;
+                int pass = 0;
+                while (pass < params.pass_count) {
+                    std::cout << "pass " << pass+1 << " of " << params.pass_count << std::endl;
+                    if (RFSD_FAIL == defrag.incrementalDefrag(8000, true)) {
+                        if (ReiserFs::userAskedForTermination()) {
+                            throw user_asked_termination();
+                        }
+                        std::cout << "can't finish defragmentation. Perhaps free space is too low."
+                            << std::endl;
+                        break;
                     }
-                    std::cout << "can't finish defragmentation. Perhaps free space is too low."
-                        << std::endl;
-                    break;
+                    if (0 == defrag.lastDefragImperfectCount()) {
+                        // we are done
+                        std::cout << "defragmentation complete" << std::endl;
+                        break;
+                    }
+                    pass ++;
                 }
-                if (0 == defrag.lastDefragImperfectCount()) {
-                    // we are done
-                    std::cout << "defragmentation complete" << std::endl;
-                    break;
+            }
+            break;
+        case DEFRAG_TYPE_TREETHROUGH:
+            std::cout << "defrag type: treethrough" << std::endl;
+            defrag.treeThroughDefrag(8000);
+            break;
+        case DEFRAG_TYPE_NONE:
+            std::cout << "defrag type: none" << std::endl;
+            break;
+        }
+
+        if (params.do_squeeze and not ReiserFs::userAskedForTermination()) {
+            // do squeeze blocks
+            if (RFSD_FAIL == defrag.squeezeAllAGsWithThreshold(params.squeeze_threshold)) {
+                if (ReiserFs::userAskedForTermination()) {
+                    throw user_asked_termination();
+                } else {
+                    std::cout << "can't squeeze" << std::endl;
                 }
-                pass ++;
             }
         }
-        break;
-    case DEFRAG_TYPE_TREETHROUGH:
-        std::cout << "defrag type: treethrough" << std::endl;
-        defrag.treeThroughDefrag(8000);
-        break;
-    case DEFRAG_TYPE_NONE:
-        std::cout << "defrag type: none" << std::endl;
-        break;
-    }
-
-    if (params.do_squeeze and not ReiserFs::userAskedForTermination()) {
-        // do squeeze blocks
-        if (RFSD_FAIL == defrag.squeezeAllAGsWithThreshold(params.squeeze_threshold)) {
-            if (ReiserFs::userAskedForTermination()) {
-                goto termination_point;
-            } else {
-                std::cout << "can't squeeze" << std::endl;
-            }
-        }
-    }
-
-termination_point:
-    if (ReiserFs::userAskedForTermination())
+    } catch (user_asked_termination &uat) {
         std::cout << "user asked for termination" << std::endl;
+    } catch (std::logic_error &le) {
+        std::cout << std::endl << "something bad happened. All I know is:" << std::endl;
+        std::cout << le.what() << std::endl;
+        return 2;
+    } catch (no_error &e) {
+        // nothing
+    }
 
     fs.close();
 
