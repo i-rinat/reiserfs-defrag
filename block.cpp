@@ -16,7 +16,7 @@ Block::Block()
 
 Block::~Block()
 {
-    assert (not dirty);
+    assert1 (not dirty);
 }
 
 void

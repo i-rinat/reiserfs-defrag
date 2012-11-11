@@ -50,7 +50,9 @@
     if (!(expr)) assert_failfunc(msg, #expr, __FILE__, __LINE__); \
 } while (0);
 
-#define assert(expr) assert2("", expr)
+#define assert1(expr)   do { \
+    if (!(expr)) assert_failfunc("", #expr, __FILE__, __LINE__); \
+} while (0);
 
 extern
 void
@@ -178,7 +180,8 @@ public:
             if (offset_v1() < b.offset_v1()) return true;
             if (offset_v1() > b.offset_v1()) return false;
             // offset_v1() == b.offset_v1()
-            assert (type_v1() == b.type_v1()); // should reach here only when keys are equal
+            // should reach here only when keys are equal
+            assert2 ("key types should be equal", type_v1() == b.type_v1());
             if (type_v1() < b.type_v1()) return true;
             return false;
         }
@@ -192,7 +195,8 @@ public:
             if (offset_v1() > b.offset_v1()) return true;
             if (offset_v1() < b.offset_v1()) return false;
             // offset_v1() == b.offset_v1()
-            assert (type_v1() == b.type_v1()); // should reach here only when keys are equal
+            // should reach here only when keys are equal
+            assert2 ("key types should be equal", type_v1() == b.type_v1());
             if (type_v1() > b.type_v1()) return true;
             return false;
         }
@@ -215,7 +219,7 @@ public:
             switch (key_version) {
             case KEY_V0: return this->offset_v0(); break;
             case KEY_V1: return this->offset_v1(); break;
-            default: assert("key_t::offset(): wrong key type" && false);
+            default: assert2 ("key_t::offset(): wrong key type", false);
             }
         }
         uint32_t type_v0() const { return offset_type_2; }
@@ -234,7 +238,7 @@ public:
             switch (key_version) {
             case KEY_V0: this->dump_v0(stream, need_endl); break;
             case KEY_V1: this->dump_v1(stream, need_endl); break;
-            default: assert("key_t::dump(): wrong key type" && false);
+            default: assert2 ("key_t::dump(): wrong key type", false);
             }
         }
         static const char *type_name(int type) {

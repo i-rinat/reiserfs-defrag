@@ -168,7 +168,7 @@ ReiserFs::cleanupRegionMoveDataDown(uint32_t from, uint32_t to)
 
     // move unformatted
     uint32_t free_idx = this->findFreeBlockAfter(to);
-    assert (free_idx != 0);
+    assert1 (free_idx != 0);
     movemap_t movemap;
     std::set<Block::key_t> key_list;
     for (uint32_t k = 0; k < leaves.size(); k ++) {
@@ -188,7 +188,7 @@ ReiserFs::cleanupRegionMoveDataDown(uint32_t from, uint32_t to)
                 if (from <= child_idx && child_idx <= to) {
                     movemap[child_idx] = free_idx;
                     free_idx = this->findFreeBlockAfter(free_idx);
-                    assert (free_idx != 0);
+                    assert1 (free_idx != 0);
                     use_key = true;
                 }
             }
@@ -198,7 +198,7 @@ ReiserFs::cleanupRegionMoveDataDown(uint32_t from, uint32_t to)
         }
         this->journal->releaseBlock(block_obj);
         this->leafContentMoveUnformatted(leaf_idx, movemap, key_list);
-        assert (movemap.size() == 0);
+        assert2 ("something left in movemap", movemap.size() == 0);
     }
 
     // now, when unformatted blocks moved, time to move tree nodes
@@ -209,7 +209,7 @@ ReiserFs::cleanupRegionMoveDataDown(uint32_t from, uint32_t to)
         if (not this->bitmap->blockUsed(c_idx)) continue;
         movemap[c_idx] = free_idx;
         free_idx = this->findFreeBlockAfter(free_idx);
-        assert (free_idx != 0);
+        assert1 (free_idx != 0);
     }
     this->moveBlocks(movemap); // will move only tree nodes, should be fast
     this->journal->flushTransactionCache();
@@ -406,7 +406,7 @@ ReiserFs::moveBlocks(movemap_t &movemap)
         this->journal->commitTransaction();
         movemap.erase(old_root_block_idx);
     }
-    assert (movemap.size() == 0);
+    assert2 ("movemap should be empty after moveBlocks()", movemap.size() == 0);
 
     // make cached transaction to flush on disk
     this->journal->flushTransactionCache();
@@ -421,14 +421,14 @@ ReiserFs::moveBlocks(movemap_t &movemap)
 Block*
 ReiserFs::readBlock(uint32_t block) const
 {
-    assert(this->journal != NULL);
+    assert1 (this->journal != NULL);
     return this->journal->readBlock(block);
 }
 
 void
 ReiserFs::releaseBlock(Block *block) const
 {
-    assert(this->journal != NULL);
+    assert1 (this->journal != NULL);
     journal->releaseBlock(block);
 }
 
@@ -465,7 +465,7 @@ ReiserFs::recursivelyMoveInternalNodes(uint32_t block_idx, movemap_t &movemap,
         }
         this->journal->releaseBlock(block_obj);
     } else {
-        assert (level == target_level); // we reached target_level
+        assert1 (level == target_level); // we reached target_level
         this->journal->beginTransaction();
         for (uint32_t k = 0; k < block_obj->ptrCount(); k ++ ) {
             uint32_t child_idx = block_obj->ptr(k).block;
@@ -771,7 +771,7 @@ ReiserFs::userAskedForTermination()
 int
 ReiserFs::squeezeDataBlocksInAG(uint32_t ag)
 {
-    assert (0 <= ag && ag < this->bitmap->AGCount());
+    assert1 (0 <= ag && ag < this->bitmap->AGCount());
     const uint32_t block_begin = this->bitmap->AGBegin(ag);
     const uint32_t block_end = this->bitmap->AGEnd(ag);
     uint32_t packed_ptr = block_begin;  // end of packed area
@@ -837,7 +837,7 @@ ReiserFs::squeezeDataBlocksInAG(uint32_t ag)
             ++ free_ptr;
         }
     }
-    assert (free_ptr == free_blocks.end());
+    assert1 (free_ptr == free_blocks.end());
 
     // do actual moves
     this->moveBlocks(movemap);
@@ -850,7 +850,7 @@ ReiserFs::squeezeDataBlocksInAG(uint32_t ag)
 int
 ReiserFs::sweepOutAG(uint32_t ag)
 {
-    assert (0 <= ag && ag < this->bitmap->AGCount());
+    assert1 (0 <= ag && ag < this->bitmap->AGCount());
 
     uint32_t blocks_needed = this->bitmap->AGUsedBlockCount(ag);
     if (0 == blocks_needed) // no need to do anything
@@ -887,7 +887,7 @@ ReiserFs::sweepOutAG(uint32_t ag)
             qqq ++;
         }
     }
-    assert (free_ptr == free_blocks.end());
+    assert1 (free_ptr == free_blocks.end());
 
     // perform move
     this->moveBlocks(movemap);
@@ -901,7 +901,7 @@ ReiserFs::recursivelyEnumerateNodes(uint32_t block_idx, std::vector<ReiserFs::tr
 {
     Block *block_obj = this->journal->readBlock(block_idx);
     uint32_t level = block_obj->level();
-    assert (level > TREE_LEVEL_LEAF);
+    assert1 (level > TREE_LEVEL_LEAF);
     tree_element te;
     te.idx = block_idx;
     te.type = BLOCKTYPE_INTERNAL;

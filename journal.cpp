@@ -43,8 +43,7 @@ FsJournal::~FsJournal()
         this->deleteFromCache(dit->first);
     }
     if (this->block_cache.size() > 0) {
-        std::cout << "error: FsJournal::block_cache is not empty" << std::endl;
-        assert (false);
+        assert2 ("block cache still contains elements on FsJournal destruction", false);
     }
 
     std::cout << "blockcache statistics: " << this->cache_hits << "/" << this->cache_misses;
@@ -57,13 +56,11 @@ FsJournal::beginTransaction()
     if (not this->use_journaling) return;
 
     if (this->transaction.running) {
-        std::cout << "error: nested transaction" << std::endl;
-        return; // TODO: error handling
+        assert2 ("nested transaction", false);
     }
 
     if (this->transaction.blocks.size() != 0 && not this->transaction.batch_running) {
-        std::cout << "error: there was writes outside transaction" << std::endl;
-        return; // TODO: error handling
+        assert2 ("writes outside of transaction", false);
     }
 
     this->transaction.running = true;
@@ -129,11 +126,11 @@ FsJournal::writeJournalEntry()
     uint32_t transaction_offset = this->journal_header.unflushed_offset;
 
     // check for proper alignment, just to be sure
-    assert (sizeof(commit_block) == BLOCKSIZE);
-    assert (sizeof(description_block) == BLOCKSIZE);
+    assert1 (sizeof(commit_block) == BLOCKSIZE);
+    assert1 (sizeof(description_block) == BLOCKSIZE);
 
     // ensure transaction fits structures
-    assert (this->transaction.blocks.size() + 2 <= 2*(BLOCKSIZE-24)/4);
+    assert1 (this->transaction.blocks.size() + 2 <= 2*(BLOCKSIZE-24)/4);
 
     // fill description and commit blocks
     description_block.transaction_id = transaction_id;
@@ -154,8 +151,7 @@ FsJournal::writeJournalEntry()
         } else if (k < 2*first_half) {
             commit_block.real_blocks[k - first_half] = block_idx;
         } else {
-            // TODO: add error handling
-            assert (false);
+            assert2 ("too many blocks in transaction", false);
         }
         k ++;
     }
@@ -333,11 +329,11 @@ FsJournal::moveRawBlock(uint32_t from, uint32_t to, bool factor_into_trasaction)
     Block *block_obj = this->readBlock(from, false);
     this->deleteFromCache(block_obj->block);
     // ref_count must be 1 or 2. 2 in case block was in transaction batch, 1 otherwise
-    assert (block_obj->ref_count == 1 || block_obj->ref_count == 2);
+    assert1 (block_obj->ref_count == 1 || block_obj->ref_count == 2);
     block_obj->block = to;
     block_obj->markDirty();
     // as we moving to free position, there can be no block
-    assert (this->block_cache.count(block_obj->block) == 0);
+    assert1 (this->block_cache.count(block_obj->block) == 0);
     this->pushToCache(block_obj);
 
     if (factor_into_trasaction) {
@@ -356,7 +352,7 @@ FsJournal::releaseBlock(Block *block_obj, bool factor_into_transaction)
         this->writeBlock(block_obj, factor_into_transaction);
 
     block_obj->ref_count --;
-    assert (block_obj->ref_count >= 0);
+    assert1 (block_obj->ref_count >= 0);
     if (block_obj->ref_count == 0)
         delete block_obj;
 }

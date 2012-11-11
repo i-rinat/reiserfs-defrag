@@ -19,7 +19,7 @@ Defrag::treeThroughDefrag(uint32_t batch_size)
     Block::key_t last_key;
     Block::key_t start_key;
     uint32_t free_idx = this->nextTargetBlock(0);
-    assert (free_idx != 0);
+    assert1 (free_idx != 0);
 
     // compute max batch size. Should reserve leaf block, with largest indirect item
     // (1012 pointers), plus leaf block itself, plus one block (prevent free_idx becoming zero)
@@ -51,7 +51,7 @@ Defrag::treeThroughDefrag(uint32_t batch_size)
             if (int_node_idx !=  free_idx)
                 movemap[int_node_idx] = free_idx;
             free_idx = this->nextTargetBlock(free_idx);
-            assert (free_idx != 0);
+            assert1 (free_idx != 0);
         }
         if (movemap.size() == 0)    // don't need to cleanup if all internal nodes in their places
             break;                  // already
@@ -69,7 +69,7 @@ Defrag::treeThroughDefrag(uint32_t batch_size)
             if (int_node_idx !=  free_idx)
                 movemap[int_node_idx] = free_idx;
             free_idx = this->nextTargetBlock(free_idx);
-            assert (free_idx != 0);
+            assert1 (free_idx != 0);
         }
         this->fs.moveBlocks(movemap);
         progress_internal_nodes.show100();
@@ -140,7 +140,7 @@ Defrag::createMovemapFromListOfLeaves(movemap_t &movemap, const std::vector<uint
         if (leaf_idx != free_idx)
             movemap[leaf_idx] = free_idx;
         free_idx = this->nextTargetBlock(free_idx);
-        assert (free_idx != 0);
+        assert1 (free_idx != 0);
         Block *block_obj = this->fs.readBlock(leaf_idx);
         for (uint32_t item_idx = 0; item_idx < block_obj->itemCount(); item_idx ++) {
             const Block::item_header &ih = block_obj->itemHeader(item_idx);
@@ -153,7 +153,7 @@ Defrag::createMovemapFromListOfLeaves(movemap_t &movemap, const std::vector<uint
                 if (child_idx != free_idx)
                     movemap[child_idx] = free_idx;
                 free_idx = this->nextTargetBlock(free_idx);
-                assert (free_idx != 0);
+                assert1 (free_idx != 0);
             }
         }
         this->fs.releaseBlock(block_obj);

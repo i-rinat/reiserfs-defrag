@@ -28,7 +28,7 @@ FsBitmap::~FsBitmap()
 uint32_t
 FsBitmap::AGSize(uint32_t ag) const
 {
-    assert (0 <= ag && ag < this->AGCount());
+    assert1 (0 <= ag && ag < this->AGCount());
     if (this->AGCount() - 1 == ag) { // last AG
         const uint32_t rem = this->sb->s_block_count % this->ag_size;
         if (0 == rem)
@@ -43,14 +43,14 @@ FsBitmap::AGSize(uint32_t ag) const
 uint32_t
 FsBitmap::AGBegin(uint32_t ag) const
 {
-    assert (0 <= ag && ag < this->AGCount());
+    assert1 (0 <= ag && ag < this->AGCount());
     return ag * this->ag_size;
 }
 
 uint32_t
 FsBitmap::AGEnd(uint32_t ag) const
 {
-    assert (0 <= ag && ag < this->AGCount());
+    assert1 (0 <= ag && ag < this->AGCount());
     const uint32_t agend = (ag + 1) * this->ag_size - 1;
     if (agend > this->sb->s_block_count - 1)
         return this->sb->s_block_count - 1;
@@ -166,7 +166,7 @@ FsBitmap::writeChangedBitmapBlocks()
 void
 FsBitmap::setAGSize(uint32_t size)
 {
-    assert (size == AG_SIZE_128M || size == AG_SIZE_256M || size == AG_SIZE_512M);
+    assert1 (size == AG_SIZE_128M || size == AG_SIZE_256M || size == AG_SIZE_512M);
     this->ag_size = size;
     uint32_t ag_count = (this->sizeInBlocks() - 1) / size + 1;
     this->ag_free_extents.clear();
@@ -204,8 +204,8 @@ FsBitmap::allocateFreeExtent(uint32_t &ag, uint32_t required_size,
         while (k < fe.size() && fe[k].len >= required_size) k ++;
         if (k > 0) {    // there was least one appropriate extent:
             k --;       // previous, use it
-            assert (0 <= k && k < fe.size());   // k mus point to some element in vector
-            assert (fe[k].len >= required_size); // ensure extent is large enough
+            assert1 (0 <= k && k < fe.size());   // k must point to some element in vector
+            assert2 ("extent should be large enough", fe[k].len >= required_size);
             blocks.clear();
             // fill blocks vector, decreasing extent
             while (required_size > 0) {
@@ -214,7 +214,7 @@ FsBitmap::allocateFreeExtent(uint32_t &ag, uint32_t required_size,
                 fe[k].len --;
                 required_size --;
             }
-            assert (fe[k].len >= 0);    // length must stay non-negative
+            assert1 (fe[k].len >= 0);    // length must stay non-negative
             // if we used whole extent, its length is zero, and it should be removed
             if (0 == fe[k].len) {
                 fe.list.erase(fe.list.begin() + k);
