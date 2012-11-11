@@ -54,6 +54,7 @@
     if (!(expr)) assert_failfunc("", #expr, __FILE__, __LINE__); \
 } while (0);
 
+__attribute__((noreturn))
 extern
 void
 assert_failfunc(const std::string &msg, const std::string &expr, const std::string &filename,
