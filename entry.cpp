@@ -31,14 +31,14 @@ display_usage()
 {
     printf("Usage: reiserfs-defrag [options] <reiserfs partition>\n"
     "\n"
-    "    -h, --help                   show usage (this screen)\n"
-    "    -p <passcount>               incremental defrag pass count\n"
-    "    -s, --squeeze                enable squeeze stage\n"
-    "    --squeeze-threshold <value>  enable squeezing all AGs with more than 'value' gaps\n"
-    "    -t, --type <name>            select defrag algorithm. Available algorithms are:\n"
-    "                                   tree/treethrough/tree-through for tree-through\n"
-    "                                   inc/incremental for incremental (selected by default)\n"
-    "                                   none for no defrag at all\n"
+    "  -h, --help                   show usage (this screen)\n"
+    "  -p <passcount>               incremental defrag pass count\n"
+    "  -s, --squeeze                squeeze AGs\n"
+    "  --squeeze-threshold <value>  squeeze AGs with more than 'value' gaps\n"
+    "  -t, --type <name>            select defragmentation algorithm:\n"
+    "                                 * tree/treethrough/tree-through\n"
+    "                                 * inc/incremental (default)\n"
+    "                                 * none\n"
     );
 }
 
