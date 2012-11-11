@@ -6,7 +6,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <cstdlib>
-#include <assert.h>
 
 FsJournal::FsJournal(int fd_, FsSuperblock *sb)
 {

@@ -9,7 +9,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <assert.h>
 #include <time.h>
 
 #define RFSD_OK     0
@@ -45,6 +44,18 @@
 #define AG_SIZE_128M        (128*1024*1024/BLOCKSIZE)
 #define AG_SIZE_256M        (256*1024*1024/BLOCKSIZE)
 #define AG_SIZE_512M        (512*1024*1024/BLOCKSIZE)
+
+// they said something about NIH
+#define assert2(msg, expr)   do { \
+    if (!(expr)) assert_failfunc(msg, #expr, __FILE__, __LINE__); \
+} while (0);
+
+#define assert(expr) assert2("", expr)
+
+extern
+void
+assert_failfunc(const std::string &msg, const std::string &expr, const std::string &filename,
+                int lineno);
 
 typedef std::vector<uint32_t> blocklist_t;
 typedef std::map<uint32_t, uint32_t> movemap_t;

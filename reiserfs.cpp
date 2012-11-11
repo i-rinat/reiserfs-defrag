@@ -3,11 +3,21 @@
 #include <map>
 #include <vector>
 #include <algorithm>
+#include <sstream>
+#include <stdexcept>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#include <assert.h>
 #include <signal.h>
+
+void
+assert_failfunc(const std::string &msg, const std::string &expr, const std::string &filename,
+                int lineno)
+{
+    std::stringstream ss;
+    ss << msg << " (" << expr << ") at " << filename << ":" << lineno;
+    throw std::logic_error(ss.str());
+}
 
 ReiserFs::ReiserFs()
 {
