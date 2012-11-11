@@ -22,9 +22,7 @@ FsJournal::FsJournal(int fd_, FsSuperblock *sb)
     int res = readBufAt (this->fd, this->sb->jp_journal_1st_block + this->sb->jp_journal_size,
                                 &journal_header, sizeof(journal_header));
     if (RFSD_OK != res) {
-        std::cout << "error: can't read journal header" << std::endl;
-        std::cout << "It's better now to immediately exit." << std::endl;
-        _exit(1);
+        assert2 ("can't read journal header", false);
     }
 
     // determine max transaction batch size
@@ -73,13 +71,11 @@ writeBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size)
     off_t ofs = static_cast<off_t>(block_idx) * BLOCKSIZE;
     off_t new_ofs = ::lseek (fd, ofs, SEEK_SET);
     if (static_cast<off_t>(-1) == new_ofs || new_ofs != ofs) {
-        std::cout << "error: can't seek to " << ofs << "." << std::endl;
-        return RFSD_FAIL;
+        assert2 ("seek failed (write)", false);
     }
     ssize_t bytes_written = ::write (fd, buf, size);
     if (size != bytes_written) {
-        std::cout << "error: can't write data at block " << block_idx << "." << std::endl;
-        return RFSD_FAIL;
+        assert2 ("write failed", false);
     }
     return RFSD_OK;
 }
@@ -90,13 +86,11 @@ readBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size)
     off_t ofs = static_cast<off_t>(block_idx) * BLOCKSIZE;
     off_t new_ofs = ::lseek (fd, ofs, SEEK_SET);
     if (static_cast<off_t>(-1) == new_ofs || new_ofs != ofs) {
-        std::cout << "error: can't seek to " << ofs << "." << std::endl;
-        return RFSD_FAIL;
+        assert2 ("seek failed (write)", false);
     }
     ssize_t bytes_read = ::read (fd, buf, size);
     if (size != bytes_read) {
-        std::cout << "error: can't read data at block " << block_idx << "." << std::endl;
-        return RFSD_FAIL;
+        assert2 ("read failed", false);
     }
     return RFSD_OK;
 }
