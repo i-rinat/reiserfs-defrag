@@ -68,6 +68,12 @@ FsJournal::beginTransaction()
 int
 writeBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size)
 {
+#ifdef RFSD_DEBUG_READWRITE_TIMESTAMPS
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    fprintf (stderr, "%d.%09d ? %d\n", (int)ts.tv_sec, (int)ts.tv_nsec, block_idx);
+#endif
+
     off_t ofs = static_cast<off_t>(block_idx) * BLOCKSIZE;
     off_t new_ofs = ::lseek (fd, ofs, SEEK_SET);
     if (static_cast<off_t>(-1) == new_ofs || new_ofs != ofs) {
@@ -83,6 +89,12 @@ writeBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size)
 int
 readBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size)
 {
+#ifdef RFSD_DEBUG_READWRITE_TIMESTAMPS
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    fprintf (stderr, "%d.%09d %d ?\n", (int)ts.tv_sec, (int)ts.tv_nsec, block_idx);
+#endif
+
     off_t ofs = static_cast<off_t>(block_idx) * BLOCKSIZE;
     off_t new_ofs = ::lseek (fd, ofs, SEEK_SET);
     if (static_cast<off_t>(-1) == new_ofs || new_ofs != ofs) {
