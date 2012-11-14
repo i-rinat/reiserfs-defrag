@@ -253,6 +253,9 @@ FsJournal::commitTransaction()
             std::cout << "warning: transaction max size exceeded" << std::endl;
             this->flag_transaction_max_size_exceeded = true;
         }
+
+        this->flushRawMoves();
+
         if (RFSD_OK != this->doCommitTransaction())
             return RFSD_FAIL;
         this->transaction.batch_running = false;
@@ -262,10 +265,38 @@ FsJournal::commitTransaction()
     return RFSD_OK;
 }
 
+void
+FsJournal::flushRawMoves()
+{
+    std::map<uint32_t, Block *> write_map;
+    for (movemap_t::const_iterator it = this->raw_moves.begin(); it != this->raw_moves.end();
+         ++ it)
+    {
+        // movemap is a std::map and therefore iterates in sorted manner,
+        // and reads performed in sorted order. That reduces disk seeks, so reads
+        // become a bit faster
+        Block *block_obj = this->readBlock(it->first, false);
+        this->deleteFromCache(it->first);
+        block_obj->block = it->second;
+        block_obj->markDirty();
+        write_map[it->second] = block_obj;
+    }
+
+    for (std::map<uint32_t, Block *>::const_iterator it = write_map.begin();
+        it != write_map.end(); ++ it)
+    {
+        // write order is sorted too
+        this->releaseBlock(it->second, false);
+    }
+
+    this->raw_moves.clear();
+}
+
 int
 FsJournal::flushTransactionCache()
 {
     if (this->transaction.batch_running) {
+        this->flushRawMoves();
         if (RFSD_OK != this->doCommitTransaction())
             return RFSD_FAIL;
         this->transaction.batch_running = false;
@@ -332,23 +363,28 @@ FsJournal::writeBlock(Block *block_obj, bool factor_into_trasaction)
 void
 FsJournal::moveRawBlock(uint32_t from, uint32_t to, bool factor_into_trasaction)
 {
-    Block *block_obj = this->readBlock(from, false);
-    this->deleteFromCache(block_obj->block);
-    // ref_count must be 1 or 2. 2 in case block was in transaction batch, 1 otherwise
-    assert1 (block_obj->ref_count == 1 || block_obj->ref_count == 2);
-    block_obj->block = to;
-    block_obj->markDirty();
-    // as we moving to free position, there can be no block
-    assert1 (this->block_cache.count(block_obj->block) == 0);
-    this->pushToCache(block_obj);
-
     if (factor_into_trasaction) {
+        Block *block_obj = this->readBlock(from, false);
+        this->deleteFromCache(block_obj->block);
+        // ref_count must be 1 or 2. 2 in case block was in transaction batch, 1 otherwise
+        assert1 (block_obj->ref_count == 1 || block_obj->ref_count == 2);
+        block_obj->block = to;
+        block_obj->markDirty();
+        // as we moving to free position, there can be no block
+        assert1 (this->block_cache.count(block_obj->block) == 0);
+        this->pushToCache(block_obj);
+
         if (this->transaction.blocks.count(block_obj) == 0) {
             this->transaction.blocks.insert(block_obj);
             block_obj->ref_count ++;
         }
+        this->releaseBlock(block_obj, true);
+    } else {    // collect raw moves
+        this->raw_moves[from] = to;
+        if (this->blockInCache(from)) {
+            assert2("unformatted blocks should not be cached", false);
+        }
     }
-    this->releaseBlock(block_obj, factor_into_trasaction);
 }
 
 void

@@ -359,6 +359,7 @@ private:
         bool running;
         bool batch_running;
     } transaction;
+    movemap_t raw_moves;
 
     bool blockInCache(uint32_t block_idx) { return this->block_cache.count(block_idx) > 0; }
     void pushToCache(Block *block_obj, int priority = CACHE_PRIORITY_NORMAL);
@@ -367,6 +368,7 @@ private:
     void eraseOldestCacheEntry();
     int writeJournalEntry();
     int doCommitTransaction();
+    void flushRawMoves();
 };
 
 class FsBitmap {
