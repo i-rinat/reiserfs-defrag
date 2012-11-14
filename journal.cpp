@@ -405,7 +405,7 @@ FsJournal::deleteFromCache(uint32_t block_idx)
 {
     if (this->block_cache.count(block_idx) > 0) {
         Block *block_obj = this->block_cache[block_idx].block_obj;
-        this->releaseBlock(block_obj);
+        this->releaseBlock(block_obj, false);
         this->block_cache.erase(block_idx);
     }
 }
