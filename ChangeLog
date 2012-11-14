@@ -1,3 +1,13 @@
+2012-11-15  Rinat Ibragimov  <ibragimovrinat@mail.ru>
+
+	* rfsd: use own assertion macroses (assert{1,2}) both in release
+	and in debug versions
+	* rfsd: stop operation if read or write error occured
+	* rfsd: print read/write positions with timestamps (disabled by default)
+	* rfsd: fix recursive caching bug
+	* rfsd: combine read/writes for unformatted blocks thus improving
+	speed a bit
+
 2012-11-09  Rinat Ibragimov  <ibragimovrinat@mail.ru>
 
 	* rfsd: fix progress bar bug on extremely narrow terminals
