@@ -1,3 +1,8 @@
+2012-11-19  Rinat Ibragimov  <ibragimovrinat@mail.ru>
+
+	* rfsd: add command-line switch controlling data journaling. Specify
+	--journal-data to enable journaling not only meta-data but data also.
+
 2012-11-15  Rinat Ibragimov  <ibragimovrinat@mail.ru>
 
 	* rfsd: use own assertion macroses (assert{1,2}) both in release

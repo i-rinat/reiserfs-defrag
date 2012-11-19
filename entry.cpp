@@ -16,6 +16,7 @@ struct params_struct {
     int pass_count;
     bool do_squeeze;
     int squeeze_threshold;
+    bool journal_data;
 } params;
 
 static const char *opt_string = "p:st:h";
@@ -24,6 +25,7 @@ static const struct option long_opts[] = {
     { "squeeze",            no_argument,        NULL, 's' },
     { "squeeze-threshold",  required_argument,  NULL, 128 },
     { "type",               required_argument,  NULL, 't' },
+    { "journal-data",       no_argument,        NULL, 129 },
     { 0, 0, 0, 0}
 };
 
@@ -36,6 +38,7 @@ display_usage()
     printf("Usage: reiserfs-defrag [options] <reiserfs partition>\n"
     "\n"
     "  -h, --help                   show usage (this screen)\n"
+    "  --journal-data               journal data in unformatted blocks\n"
     "  -p <passcount>               incremental defrag pass count\n"
     "  -s, --squeeze                squeeze AGs\n"
     "  --squeeze-threshold <value>  squeeze AGs with more than 'value' gaps\n"
@@ -52,6 +55,7 @@ void default_params()
     params.pass_count = 3;
     params.do_squeeze = false;
     params.squeeze_threshold = 7;
+    params.journal_data = false;
 }
 
 int
@@ -108,6 +112,9 @@ main (int argc, char *argv[])
                 params.do_squeeze = true;
             }
             break;
+        case 129:   // journal-data
+            params.journal_data = true;
+            break;
         }
 
         opt = getopt_long(argc, argv, opt_string, long_opts, &long_index);
@@ -132,7 +139,11 @@ main (int argc, char *argv[])
             throw no_error();
         }
 
-        fs.useDataJournaling(false);
+        fs.useDataJournaling(params.journal_data);
+        if (params.journal_data)
+            std::cout << "journaling mode: data" << std::endl;
+        else
+            std::cout << "journaling mode: metadata only" << std::endl;
 
         switch (params.defrag_type) {
         case DEFRAG_TYPE_INCREMENTAL:
