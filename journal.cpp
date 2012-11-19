@@ -80,7 +80,7 @@ writeBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size)
         assert2 ("seek failed (write)", false);
     }
     ssize_t bytes_written = ::write (fd, buf, size);
-    if (size != bytes_written) {
+    if (-1 == bytes_written || static_cast<ssize_t>(size) != bytes_written) {
         assert2 ("write failed", false);
     }
     return RFSD_OK;
@@ -101,7 +101,7 @@ readBufAt(int fd, uint32_t block_idx, void *buf, uint32_t size)
         assert2 ("seek failed (write)", false);
     }
     ssize_t bytes_read = ::read (fd, buf, size);
-    if (size != bytes_read) {
+    if (-1 == bytes_read || static_cast<ssize_t>(size) != bytes_read) {
         assert2 ("read failed", false);
     }
     return RFSD_OK;
