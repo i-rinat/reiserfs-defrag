@@ -226,7 +226,11 @@ FsJournal::doCommitTransaction()
     }
     this->transaction.blocks.clear();
 
-    // sync journal header, thus closing transaction
+    // ensure actual data written to the disk
+    if (0 != ::fdatasync(this->fd))
+        return RFSD_FAIL;
+
+    // update journal header, thus closing transaction
     int res = writeBufAt (this->fd, this->sb->jp_journal_1st_block + this->sb->jp_journal_size,
         &journal_header, sizeof(journal_header));
     if (RFSD_OK != res)
