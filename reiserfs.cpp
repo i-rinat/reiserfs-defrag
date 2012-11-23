@@ -49,6 +49,78 @@ ReiserFs::useDataJournaling(bool use)
 int
 ReiserFs::validateSuperblock()
 {
+    char buf_for_last_block[BLOCKSIZE];
+
+    // check magic string
+    if (0 != memcmp("ReIsEr2Fs", this->sb.s_magic, 10)) {
+        std::cout << "error (sb): wrong superblock magic string" << std::endl;
+        return RFSD_FAIL;
+    }
+
+    // check if last block can be read. readBuf
+    try {
+        readBufAt(this->fd, this->sb.s_block_count - 1, buf_for_last_block, BLOCKSIZE);
+    } catch (std::logic_error &le) {
+        std::cout << "error (sb): can't read last block of partition" << std::endl;
+        return RFSD_FAIL;
+    }
+
+    // free block count can't be larger than total block count
+    // TODO: take into account journal size, bitmap blocks, superblock and first 64k
+    if (this->sb.s_free_blocks >= this->sb.s_block_count) {
+        std::cout << "error (sb): too many free blocks in sb" << std::endl;
+        return RFSD_FAIL;
+    }
+
+    // root block must reside somewhere inside partition
+    if (this->sb.s_root_block >= this->sb.s_block_count) {
+        std::cout << "error (sb): root block points outside partition" << std::endl;
+        return RFSD_FAIL;
+    }
+
+    // journal position
+    if (this->sb.jp_journal_1st_block + this->sb.jp_journal_size + 1 >= this->sb.s_block_count) {
+        std::cout << "error (sb): journal doesn't fit into partition" << std::endl;
+        return RFSD_FAIL;
+    }
+
+    // max transaction
+    if (this->sb.jp_journal_trans_max + 2 > this->sb.jp_journal_size) {
+        std::cout << "error (sb): max transaction size exceeds journal size" << std::endl;
+        return RFSD_FAIL;
+    }
+
+    // check block size
+    if (this->sb.s_blocksize != BLOCKSIZE) {
+        std::cout << "error (sb): blocksize of " << this->sb.s_blocksize <<
+            " not supported" << std::endl;
+        return RFSD_FAIL;
+    }
+
+    // TODO: check oid cur and max sizes
+
+    // umount state flag
+    if (UMOUNT_STATE_CLEAN != this->sb.s_umount_state &&
+        UMOUNT_STATE_DIRTY != this->sb.s_umount_state)
+    {
+        std::cout << "error (sb): umount state flag has wrong value" << std::endl;
+        return RFSD_FAIL;
+    }
+
+    // TODO: check s_hash_function_code
+
+    // tree height must be in [1,7]
+    if (0 == this->sb.s_tree_height || this->sb.s_tree_height > 7) {
+        std::cout << "error (sb): wrong tree height (" << this->sb.s_tree_height << ")" << std::endl;
+        return RFSD_FAIL;
+    }
+
+    // check bitmap block count
+    if (this->sb.s_bmap_nr != (this->sb.s_block_count-1)/BLOCKS_PER_BITMAP + 1) {
+        std::cout << "error (sb): wrong bitmap block count" << std::endl;
+        return RFSD_FAIL;
+    }
+
     return RFSD_OK;
 }
 
