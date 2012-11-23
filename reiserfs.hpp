@@ -543,7 +543,7 @@ private:
     uint32_t leaf_index_granularity;    //< size of each basket for leaf index
     static int interrupt_state;
 
-    void readSuperblock();
+    int readSuperblock();
     void writeSuperblock();
     bool movemapConsistent(const movemap_t &movemap);
     void collectLeafNodeIndices(uint32_t block_idx, std::vector<uint32_t> &lni);

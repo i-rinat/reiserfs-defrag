@@ -61,7 +61,11 @@ ReiserFs::open(const std::string &name, bool o_sync)
         return RFSD_FAIL;
     }
 
-    this->readSuperblock();
+    if (RFSD_OK != this->readSuperblock()) {
+        std::cout << "error: can't read superblock" << std::endl;
+        return RFSD_FAIL;
+    }
+
     if (this->sb.s_umount_state != UMOUNT_STATE_CLEAN) {
         std::cout << "error: fs dirty, run fsck." << std::endl;
         return RFSD_FAIL;
@@ -83,10 +87,11 @@ ReiserFs::open(const std::string &name, bool o_sync)
     return RFSD_OK;
 }
 
-void
+int
 ReiserFs::readSuperblock()
 {
-    readBufAt(this->fd, SUPERBLOCK_BLOCK, &this->sb, sizeof(this->sb));
+    int res = readBufAt(this->fd, SUPERBLOCK_BLOCK, &this->sb, sizeof(this->sb));
+    return res;
 }
 
 void
