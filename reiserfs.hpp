@@ -157,6 +157,9 @@ public:
         ci[0] = value;
         this->dirty = true;
     }
+    void checkLeafBlock() const;
+    void checkInternalBlock() const;
+
 
     uint32_t block;
     int type;

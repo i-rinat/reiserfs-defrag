@@ -82,3 +82,15 @@ Block::dumpLeafNodeBlock() const
 {
     std::cout << "Block::dumpLeafNodeBlock() stub" << std::endl;
 }
+
+void
+Block::checkLeafBlock() const
+{
+
+}
+
+void
+Block::checkInternalBlock() const
+{
+
+}
