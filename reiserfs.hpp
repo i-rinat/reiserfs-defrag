@@ -54,12 +54,19 @@
     if (!(expr)) assert_failfunc1(#expr, __FILE__, __LINE__); \
 } while (0);
 
+#define fatal(msg)  do { \
+    assert_failfunc_s(msg, __FILE__, __LINE__); \
+} while (0)
+
 __attribute__((noreturn)) extern void
 assert_failfunc1(const std::string &expr, const std::string &filename, int lineno);
 
 __attribute__((noreturn)) extern void
 assert_failfunc2(const std::string &msg, const std::string &expr, const std::string &filename,
                  int lineno);
+
+__attribute__((noreturn)) extern void
+assert_failfunc_s(const std::string &msg, const std::string &filename, int lineno);
 
 
 typedef std::vector<uint32_t> blocklist_t;
