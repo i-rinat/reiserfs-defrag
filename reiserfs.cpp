@@ -47,6 +47,12 @@ ReiserFs::useDataJournaling(bool use)
 }
 
 int
+ReiserFs::validateSuperblock()
+{
+    return RFSD_OK;
+}
+
+int
 ReiserFs::open(const std::string &name, bool o_sync)
 {
     this->fname = name;
@@ -65,6 +71,9 @@ ReiserFs::open(const std::string &name, bool o_sync)
         std::cout << "error: can't read superblock" << std::endl;
         return RFSD_FAIL;
     }
+
+    if (RFSD_OK != this->validateSuperblock())
+        return RFSD_FAIL;
 
     if (this->sb.s_umount_state != UMOUNT_STATE_CLEAN) {
         std::cout << "error: fs dirty, run fsck." << std::endl;

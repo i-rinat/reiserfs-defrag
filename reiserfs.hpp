@@ -544,6 +544,7 @@ private:
     static int interrupt_state;
 
     int readSuperblock();
+    int validateSuperblock();
     void writeSuperblock();
     bool movemapConsistent(const movemap_t &movemap);
     void collectLeafNodeIndices(uint32_t block_idx, std::vector<uint32_t> &lni);
