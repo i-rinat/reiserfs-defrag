@@ -20,6 +20,7 @@
 #define BLOCKTYPE_UNFORMATTED 3
 
 #define TREE_LEVEL_LEAF 1
+#define TREE_LEVEL_MAX  7
 
 #define KEY_V0      0
 #define KEY_V1      1

@@ -86,11 +86,58 @@ Block::dumpLeafNodeBlock() const
 void
 Block::checkLeafBlock() const
 {
+    // check level
+    if (this->level() != TREE_LEVEL_LEAF) {
+        std::cout << "leaf node #" << this->block << " has wrong level (" <<
+            this->level() << ")" << std::endl;
+        fatal("fs inconsistent");
+    }
 
+    // check keys ordering
+    for (uint32_t k = 0; k < this->itemCount() - 1; k ++) {
+        if (this->itemHeader(k).key >= this->itemHeader(k + 1).key) {
+            std::cout << "leaf node #" << this->block << " has wrong key ordering" << std::endl;
+            fatal("fs inconsistent");
+        }
+    }
+    // item must entirely reside inside a block
+    for (uint32_t k = 0; k < this->itemCount(); k ++) {
+        const uint32_t end_pos = static_cast<uint32_t>(this->itemHeader(k).offset) +
+                                                       this->itemHeader(k).length;
+        if (end_pos > BLOCKSIZE) {
+            std::cout << "leaf node #" << this->block << " has wrong items" << std::endl;
+            fatal("fs inconsistent");
+        }
+    }
+
+    // TODO: check that items do not overlap
 }
 
 void
 Block::checkInternalBlock() const
 {
+    // check level
+    if (this->level() <= TREE_LEVEL_LEAF || this->level() > TREE_LEVEL_MAX) {
+        std::cout << "internal node #" << this->block << " has wrong level (" <<
+            this->level() << ")" << std::endl;
+        fatal("fs inconsistent");
+    }
 
+    // check item_nr and free_space consistency. Each block has 24-byte header and consists of
+    // 16-byte keys, 8-byte pointers and free space. Check if all this sum up to block size
+    if (BLOCKSIZE != 24 + 16 * this->keyCount() + 8 * this->ptrCount() + this->freeSpace()) {
+        std::cout << "internal node #" << this->block <<
+            " has wrong item_nr and free_space combination" << std::endl;
+        fatal("fs inconsistent");
+    }
+
+    // check key ordering
+    for (uint32_t k = 0; k < this->keyCount() - 1; k ++) {
+        if (this->itemHeader(k).key >= this->itemHeader(k + 1).key) {
+            std::cout << "intenal node #" << this->block << " has wrong key ordering" << std::endl;
+            fatal("fs inconsistent");
+        }
+    }
+
+    // TODO: check that all pointers refer blocks inside fs
 }
