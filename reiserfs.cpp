@@ -276,6 +276,7 @@ ReiserFs::cleanupRegionMoveDataDown(uint32_t from, uint32_t to)
     for (uint32_t k = 0; k < leaves.size(); k ++) {
         uint32_t leaf_idx = leaves[k];
         Block *block_obj = this->journal->readBlock(leaf_idx);
+        block_obj->checkLeafNode();
         movemap.clear();
         key_list.clear();
         for (uint32_t item_idx = 0; item_idx < block_obj->itemCount(); item_idx ++) {
@@ -336,6 +337,7 @@ ReiserFs::createLeafIndex()
         if (it->type != BLOCKTYPE_LEAF)
             continue;
         Block *block_obj = this->journal->readBlock(it->idx, false);
+        block_obj->checkLeafNode();
         for (uint32_t k = 0; k < block_obj->itemCount(); k ++) {
             const struct Block::item_header &ih = block_obj->itemHeader(k);
             // indirect items contain links to unformatted (data) blocks
@@ -371,6 +373,7 @@ ReiserFs::updateLeafIndex()
         while (leaf_iter != basket.leaves.end()) {
             uint32_t block_idx = *leaf_iter;
             Block *block_obj = this->journal->readBlock(block_idx, false);
+            block_obj->checkLeafNode();
             bool leaf_has_link = false;
             for (uint32_t item_id = 0; item_id < block_obj->itemCount(); item_id ++) {
                 const struct Block::item_header &ih = block_obj->itemHeader(item_id);
@@ -539,6 +542,9 @@ ReiserFs::estimateTreeHeight()
 {
     Block *block_obj = this->journal->readBlock(this->sb.s_root_block);
     uint32_t root_block_level = block_obj->level();
+    if (TREE_LEVEL_LEAF == root_block_level) block_obj->checkLeafNode();
+    else block_obj->checkInternalNode();
+
     this->journal->releaseBlock(block_obj);
     return root_block_level;
 }
@@ -557,6 +563,7 @@ ReiserFs::recursivelyMoveInternalNodes(uint32_t block_idx, movemap_t &movemap,
     342 blocks, which is smaller than default 1024-block max transaction size.
     */
     Block *block_obj = this->journal->readBlock(block_idx);
+    block_obj->checkInternalNode();
     uint32_t level = block_obj->level();
 
     if (level > target_level) {
@@ -618,6 +625,7 @@ ReiserFs::recursivelyMoveUnformatted(uint32_t block_idx, movemap_t &movemap)
     Block *block_obj = this->journal->readBlock(block_idx);
     uint32_t level = block_obj->level();
     if (level > TREE_LEVEL_LEAF) {
+        block_obj->checkInternalNode();
         for (uint32_t k = 0; k < block_obj->ptrCount(); k ++) {
             uint32_t child_idx = block_obj->ptr(k).block;
             this->recursivelyMoveUnformatted(child_idx, movemap);
@@ -625,6 +633,7 @@ ReiserFs::recursivelyMoveUnformatted(uint32_t block_idx, movemap_t &movemap)
         this->journal->releaseBlock(block_obj);
     } else {
         // leaf level
+        block_obj->checkLeafNode();
         this->journal->beginTransaction();
         for (uint32_t k = 0; k < block_obj->itemCount(); k ++) {
             const struct Block::item_header &ih = block_obj->itemHeader(k);
@@ -672,6 +681,7 @@ ReiserFs::leafContentMoveUnformatted(uint32_t block_idx, movemap_t &movemap,
                                      const std::set<Block::key_t> &key_list, bool all_keys)
 {
     Block *block_obj = this->journal->readBlock(block_idx);
+    block_obj->checkLeafNode();
     this->journal->beginTransaction();
     for (uint32_t k = 0; k < block_obj->itemCount(); k ++) {
         const struct Block::item_header &ih = block_obj->itemHeader(k);
@@ -721,6 +731,7 @@ void
 ReiserFs::collectLeafNodeIndices(uint32_t block_idx, std::vector<uint32_t> &lni)
 {
     Block *block_obj = this->journal->readBlock(block_idx);
+    block_obj->checkInternalNode();
     if (block_obj->level() == TREE_LEVEL_LEAF + 1) {
         // this is pre-leaves layer, collect pointers
         for (uint32_t k = 0; k < block_obj->ptrCount(); k ++)
@@ -743,6 +754,7 @@ ReiserFs::looseWalkTree()
         iter != leaf_nodes.end(); ++ iter)
     {
         Block *block_obj = this->journal->readBlock(*iter);
+        block_obj->checkLeafNode();
         this->journal->releaseBlock(block_obj);
     }
 }
@@ -1003,7 +1015,7 @@ ReiserFs::recursivelyEnumerateNodes(uint32_t block_idx, std::vector<ReiserFs::tr
 {
     Block *block_obj = this->journal->readBlock(block_idx);
     uint32_t level = block_obj->level();
-    assert1 (level > TREE_LEVEL_LEAF);
+    block_obj->checkInternalNode();
     tree_element te;
     te.idx = block_idx;
     te.type = BLOCKTYPE_INTERNAL;
@@ -1050,6 +1062,7 @@ ReiserFs::recursivelyEnumerateLeaves(uint32_t block_idx, const Block::key_t &sta
     uint32_t level = block_obj->level();
     if (level > TREE_LEVEL_LEAF) {
         // internal node
+        block_obj->checkInternalNode();
         for (uint32_t k = 0; k < block_obj->ptrCount(); k ++) {
             const Block::key_t new_left = (k > 0) ? block_obj->key(k-1) : left;
             const Block::key_t new_right = (k < block_obj->keyCount()) ? block_obj->key(k) : right;
@@ -1062,6 +1075,7 @@ ReiserFs::recursivelyEnumerateLeaves(uint32_t block_idx, const Block::key_t &sta
         }
     } else {
         // leaf node
+        block_obj->checkLeafNode();
         // every run will touch last leaf from previous scan. To prevent adding leaf twice
         // we check each item key and skip those less than start_key
         bool touch_leaf = false;
@@ -1112,6 +1126,7 @@ ReiserFs::recursivelyGetBlocksOfObject(uint32_t leaf_idx, const Block::key_t &st
     uint32_t level = block_obj->level();
     if (level > TREE_LEVEL_LEAF) {
         // internal node
+        block_obj->checkInternalNode();
         for (uint32_t k = 0; k < block_obj->ptrCount(); k ++) {
             const Block::key_t new_left = (k > 0) ? block_obj->key(k-1) : left;
             const Block::key_t new_right = (k < block_obj->keyCount()) ? block_obj->key(k) : right;
@@ -1127,6 +1142,7 @@ ReiserFs::recursivelyGetBlocksOfObject(uint32_t leaf_idx, const Block::key_t &st
         }
     } else {
         // leaf node
+        block_obj->checkLeafNode();
         uint32_t indirect_idx = 0;   //< indirect item index. 1-based
         for (uint32_t item_idx = 0; item_idx < block_obj->itemCount(); item_idx ++) {
             const Block::item_header &ih = block_obj->itemHeader(item_idx);

@@ -1,3 +1,11 @@
+2012-11-26  Rinat Ibragimov  <ibragimovrinat@mail.ru>
+
+	* rfsd: add additional checks for all tree nodes read.
+
+2012-11-24  Rinat Ibragimov  <ibragimovrinat@mail.ru>
+
+	* rfsd: add superblock sanity checks
+
 2012-11-19  Rinat Ibragimov  <ibragimovrinat@mail.ru>
 
 	* rfsd: add command-line switch controlling data journaling. Specify

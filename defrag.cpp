@@ -142,6 +142,7 @@ Defrag::createMovemapFromListOfLeaves(movemap_t &movemap, const std::vector<uint
         free_idx = this->nextTargetBlock(free_idx);
         assert1 (free_idx != 0);
         Block *block_obj = this->fs.readBlock(leaf_idx);
+        block_obj->checkLeafNode();
         for (uint32_t item_idx = 0; item_idx < block_obj->itemCount(); item_idx ++) {
             const Block::item_header &ih = block_obj->itemHeader(item_idx);
             if (KEY_TYPE_INDIRECT != ih.type())
