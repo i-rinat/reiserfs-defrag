@@ -84,7 +84,7 @@ Block::dumpLeafNodeBlock() const
 }
 
 void
-Block::checkLeafBlock() const
+Block::checkLeafNode() const
 {
     // check level
     if (this->level() != TREE_LEVEL_LEAF) {
@@ -114,7 +114,7 @@ Block::checkLeafBlock() const
 }
 
 void
-Block::checkInternalBlock() const
+Block::checkInternalNode() const
 {
     // check level
     if (this->level() <= TREE_LEVEL_LEAF || this->level() > TREE_LEVEL_MAX) {

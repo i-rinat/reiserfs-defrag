@@ -158,8 +158,8 @@ public:
         ci[0] = value;
         this->dirty = true;
     }
-    void checkLeafBlock() const;
-    void checkInternalBlock() const;
+    void checkLeafNode() const;
+    void checkInternalNode() const;
 
 
     uint32_t block;
