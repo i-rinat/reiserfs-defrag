@@ -133,7 +133,7 @@ Block::checkInternalNode() const
 
     // check key ordering
     for (uint32_t k = 0; k < this->keyCount() - 1; k ++) {
-        if (this->itemHeader(k).key >= this->itemHeader(k + 1).key) {
+        if (this->key(k) >= this->key(k+1)) {
             std::cout << "intenal node #" << this->block << " has wrong key ordering" << std::endl;
             fatal("fs inconsistent");
         }
