@@ -24,6 +24,7 @@
 
 #define KEY_V0      0
 #define KEY_V1      1
+const int KEY_VGUESS = 254;
 
 #define KEY_TYPE_STAT       0
 #define KEY_TYPE_INDIRECT   1
@@ -259,6 +260,7 @@ public:
         uint32_t offset_v0() const { return v0.offset; }
         uint64_t offset_v1() const { return v1.offset; }
         uint64_t offset(int key_version) const {
+            if (KEY_VGUESS == key_version) key_version = this->guessType();
             switch (key_version) {
             case KEY_V0: return this->offset_v0(); break;
             case KEY_V1: return this->offset_v1(); break;
@@ -295,6 +297,7 @@ public:
             }
         }
         int type(int key_version) const {
+            if (KEY_VGUESS == key_version) key_version = this->guessType();
             switch (key_version) {
             case KEY_V0: {
                 switch (this->type_v0()) {
