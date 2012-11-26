@@ -210,6 +210,11 @@ public:
             }
         }
 
+        int guessType() const {
+            if (0 == v1.type || 15 == v1.type) return KEY_V0;
+            else return KEY_V1;
+        }
+
         bool operator < (const struct key_struct& b) const {
             if (dir_id < b.dir_id) return true;
             if (dir_id > b.dir_id) return false;
