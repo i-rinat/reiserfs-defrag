@@ -3,8 +3,8 @@
 #include <string.h>
 #include <stdio.h>
 
-const Block::key_t Block::zero_key = {0u, 0u, 0u, 0u};
-const Block::key_t Block::largest_key = {~0u, ~0u, ~0u, ~0u};
+const Block::key_t Block::zero_key(KEY_V0, 0u, 0u, 0u, 0u);
+const Block::key_t Block::largest_key(KEY_V0, ~0u, ~0u, ~0u, ~0u);
 
 Block::Block()
 {

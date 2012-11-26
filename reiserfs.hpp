@@ -181,8 +181,38 @@ public:
     struct key_struct {
         uint32_t dir_id;
         uint32_t obj_id;
-        uint32_t offset_type_1;
-        uint32_t offset_type_2;
+        union {
+            struct {
+                uint32_t offset_type_1;
+                uint32_t offset_type_2;
+            } vraw;
+            struct {
+                uint32_t offset;
+                uint32_t type;
+            } v0;
+            struct {
+                uint64_t offset : 60;
+                uint64_t type : 4;
+            } v1;
+        };
+
+        key_struct() {};
+        key_struct(int version, uint32_t _dir, uint32_t _obj, uint64_t _ofs, uint32_t _t) {
+            this->dir_id = _dir;
+            this->obj_id = _obj;
+            switch (version) {
+            case KEY_V0:
+                this->v0.offset = _ofs;
+                this->v0.type = _t;
+                break;
+            case KEY_V1:
+                this->v1.offset = _ofs;
+                this->v1.type = _t;
+                break;
+            default:
+                fatal("wrong key version");
+            }
+        }
 
         bool operator < (const struct key_struct& b) const {
             if (dir_id < b.dir_id) return true;
@@ -215,19 +245,19 @@ public:
             return false;
         }
         bool operator == (const struct key_struct& b) const {
-            return dir_id == b.dir_id && obj_id == b.obj_id && offset_type_1 == b.offset_type_1
-                && offset_type_2 == b.offset_type_2;
+            return dir_id == b.dir_id && obj_id == b.obj_id && vraw.offset_type_1 == b.vraw.offset_type_1
+                && vraw.offset_type_2 == b.vraw.offset_type_2;
         }
         bool operator != (const struct key_struct& b) const {
-            return dir_id != b.dir_id || obj_id != b.obj_id || offset_type_1 != b.offset_type_1
-                || offset_type_2 != b.offset_type_2;
+            return dir_id != b.dir_id || obj_id != b.obj_id || vraw.offset_type_1 != b.vraw.offset_type_1
+                || vraw.offset_type_2 != b.vraw.offset_type_2;
         }
         bool operator >= (const struct key_struct& b) const { return (*this > b) || (*this == b); }
         bool operator <= (const struct key_struct& b) const { return (*this < b) || (*this == b); }
 
-        uint32_t offset_v0() const { return offset_type_1; }
+        uint32_t offset_v0() const { return vraw.offset_type_1; }
         uint64_t offset_v1() const {
-            return (static_cast<uint64_t>(offset_type_2 & 0x0FFFFFFF) << 32) + offset_type_1;
+            return (static_cast<uint64_t>(vraw.offset_type_2 & 0x0FFFFFFF) << 32) + vraw.offset_type_1;
         }
         uint64_t offset(int key_version) const {
             switch (key_version) {
@@ -236,8 +266,8 @@ public:
             default: assert2 ("key_t::offset(): wrong key type", false);
             }
         }
-        uint32_t type_v0() const { return offset_type_2; }
-        uint32_t type_v1() const { return (offset_type_2 & 0xF0000000) >> 28; }
+        uint32_t type_v0() const { return vraw.offset_type_2; }
+        uint32_t type_v1() const { return (vraw.offset_type_2 & 0xF0000000) >> 28; }
         void dump_v0(std::ostream &stream, bool need_endl = false) const {
             stream << "{" << this->dir_id << ", " << this->obj_id << ", ";
             stream << this->offset_v0() << ", " << this->type_v0() << "}";
