@@ -223,12 +223,11 @@ public:
             if (obj_id < b.obj_id) return true;
             if (obj_id > b.obj_id) return false;
             // obj_id == b.obj_id
-            if (offset_v1() < b.offset_v1()) return true;
-            if (offset_v1() > b.offset_v1()) return false;
-            // offset_v1() == b.offset_v1()
+            if (this->offset(KEY_VGUESS) < b.offset(KEY_VGUESS)) return true;
+            if (this->offset(KEY_VGUESS) > b.offset(KEY_VGUESS)) return false;
             // should reach here only when keys are equal
-            assert2 ("key types should be equal", type_v1() == b.type_v1());
-            if (type_v1() < b.type_v1()) return true;
+            assert2 ("key types should be equal", this->type(KEY_VGUESS) == b.type(KEY_VGUESS));
+            if (this->type(KEY_VGUESS) < b.type(KEY_VGUESS)) return true;
             return false;
         }
         bool operator > (const struct key_struct& b) const {
@@ -238,12 +237,11 @@ public:
             if (obj_id > b.obj_id) return true;
             if (obj_id < b.obj_id) return false;
             // obj_id == b.obj_id
-            if (offset_v1() > b.offset_v1()) return true;
-            if (offset_v1() < b.offset_v1()) return false;
-            // offset_v1() == b.offset_v1()
+            if (this->offset(KEY_VGUESS) > b.offset(KEY_VGUESS)) return true;
+            if (this->offset(KEY_VGUESS) < b.offset(KEY_VGUESS)) return false;
             // should reach here only when keys are equal
-            assert2 ("key types should be equal", type_v1() == b.type_v1());
-            if (type_v1() > b.type_v1()) return true;
+            assert2 ("key types should be equal", this->type(KEY_VGUESS) == b.type(KEY_VGUESS));
+            if (this->type(KEY_VGUESS) > b.type(KEY_VGUESS)) return true;
             return false;
         }
         bool operator == (const struct key_struct& b) const {
