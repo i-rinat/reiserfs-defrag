@@ -214,7 +214,8 @@ FsBitmap::allocateFreeExtent(uint32_t &ag, uint32_t required_size,
                 fe[k].len --;
                 required_size --;
             }
-            assert1 (fe[k].len >= 0);    // length must stay non-negative
+            // length must stay non-negative
+            assert1 ((fe[k].len & 0x80000000) == 0);  // catch overflow, as .len unsigned
             // if we used whole extent, its length is zero, and it should be removed
             if (0 == fe[k].len) {
                 fe.list.erase(fe.list.begin() + k);
