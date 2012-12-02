@@ -4,7 +4,7 @@ import os
 def configureAndMake(cppc, opts, buildtype):
     cxx = "CXX=" + cppc;
     dirname = cppc + '_' + ''.join(opts) + '_' + buildtype
-    params = "CXXFLAGS='-Wall -Werror {}'".format(' '.join(opts));
+    params = "CXXFLAGS='-Wall -Wextra -Werror {}'".format(' '.join(opts));
     try:
         os.mkdir(dirname);
     except OSError:
