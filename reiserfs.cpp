@@ -887,7 +887,7 @@ ReiserFs::userAskedForTermination()
 int
 ReiserFs::squeezeDataBlocksInAG(uint32_t ag)
 {
-    assert1 (0 <= ag && ag < this->bitmap->AGCount());
+    assert1 (ag < this->bitmap->AGCount());
     const uint32_t block_begin = this->bitmap->AGBegin(ag);
     const uint32_t block_end = this->bitmap->AGEnd(ag);
     uint32_t packed_ptr = block_begin;  // end of packed area
@@ -966,7 +966,7 @@ ReiserFs::squeezeDataBlocksInAG(uint32_t ag)
 int
 ReiserFs::sweepOutAG(uint32_t ag)
 {
-    assert1 (0 <= ag && ag < this->bitmap->AGCount());
+    assert1 (ag < this->bitmap->AGCount());
 
     uint32_t blocks_needed = this->bitmap->AGUsedBlockCount(ag);
     if (0 == blocks_needed) // no need to do anything

@@ -28,7 +28,7 @@ FsBitmap::~FsBitmap()
 uint32_t
 FsBitmap::AGSize(uint32_t ag) const
 {
-    assert1 (0 <= ag && ag < this->AGCount());
+    assert1 (ag < this->AGCount());
     if (this->AGCount() - 1 == ag) { // last AG
         const uint32_t rem = this->sb->s_block_count % this->ag_size;
         if (0 == rem)
@@ -43,14 +43,14 @@ FsBitmap::AGSize(uint32_t ag) const
 uint32_t
 FsBitmap::AGBegin(uint32_t ag) const
 {
-    assert1 (0 <= ag && ag < this->AGCount());
+    assert1 (ag < this->AGCount());
     return ag * this->ag_size;
 }
 
 uint32_t
 FsBitmap::AGEnd(uint32_t ag) const
 {
-    assert1 (0 <= ag && ag < this->AGCount());
+    assert1 (ag < this->AGCount());
     const uint32_t agend = (ag + 1) * this->ag_size - 1;
     if (agend > this->sb->s_block_count - 1)
         return this->sb->s_block_count - 1;
@@ -204,7 +204,7 @@ FsBitmap::allocateFreeExtent(uint32_t &ag, uint32_t required_size,
         while (k < fe.size() && fe[k].len >= required_size) k ++;
         if (k > 0) {    // there was least one appropriate extent:
             k --;       // previous, use it
-            assert1 (0 <= k && k < fe.size());   // k must point to some element in vector
+            assert1 (k < fe.size());   // k must point to some element in vector
             assert2 ("extent should be large enough", fe[k].len >= required_size);
             blocks.clear();
             // fill blocks vector, decreasing extent
