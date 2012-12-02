@@ -861,6 +861,8 @@ int ReiserFs::interrupt_state = 0;
 void
 ReiserFs::interruptSignalHandler(int arg)
 {
+    (void)arg;	// not used
+
     const char *msg1 = "\nInterrupting\n";
     const char *msg2 = "\nI heard you first time! I need some time to wrap things up.\n";
     const char *msg3 = "\nArgh!\n";

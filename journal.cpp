@@ -422,7 +422,7 @@ FsJournal::pushToCache(Block *block_obj, int priority)
 void
 FsJournal::touchCacheEntry(uint32_t block_idx)
 {
-
+    (void)block_idx; // not used
 }
 
 void
