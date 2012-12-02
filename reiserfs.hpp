@@ -11,41 +11,41 @@
 #include <fcntl.h>
 #include <time.h>
 
-#define RFSD_OK     0
-#define RFSD_FAIL   -1
+const int RFSD_OK    = 0;
+const int RFSD_FAIL  = -1;
 
-#define BLOCKTYPE_UNKNOWN 0
-#define BLOCKTYPE_INTERNAL 1
-#define BLOCKTYPE_LEAF 2
-#define BLOCKTYPE_UNFORMATTED 3
+const uint32_t BLOCKTYPE_UNKNOWN = 0;
+const uint32_t BLOCKTYPE_INTERNAL = 1;
+const uint32_t BLOCKTYPE_LEAF = 2;
+const uint32_t BLOCKTYPE_UNFORMATTED = 3;
 
-#define TREE_LEVEL_LEAF 1
-#define TREE_LEVEL_MAX  7
+const uint32_t TREE_LEVEL_LEAF = 1;
+const uint32_t TREE_LEVEL_MAX = 7;
 
-#define KEY_V0      0
-#define KEY_V1      1
+const int KEY_V0 = 0;
+const int KEY_V1 = 1;
 const int KEY_VGUESS = 254;
 
-#define KEY_TYPE_STAT       0
-#define KEY_TYPE_INDIRECT   1
-#define KEY_TYPE_DIRECT     2
-#define KEY_TYPE_DIRECTORY  3
-#define KEY_TYPE_ANY        15
+const uint32_t KEY_TYPE_STAT       = 0;
+const uint32_t KEY_TYPE_INDIRECT   = 1;
+const uint32_t KEY_TYPE_DIRECT     = 2;
+const uint32_t KEY_TYPE_DIRECTORY  = 3;
+const uint32_t KEY_TYPE_ANY        = 15;
 
-#define BLOCKSIZE   4096
-#define BLOCKS_PER_BITMAP   (BLOCKSIZE*8)
-#define SUPERBLOCK_BLOCK    (65536/BLOCKSIZE)
-#define FIRST_BITMAP_BLOCK  (65536/BLOCKSIZE + 1)
+const uint32_t BLOCKSIZE = 4096;
+const uint32_t BLOCKS_PER_BITMAP = BLOCKSIZE * 8;
+const uint32_t SUPERBLOCK_BLOCK = 65536 / BLOCKSIZE;
+const uint32_t FIRST_BITMAP_BLOCK = 65536 / BLOCKSIZE + 1;
 
-#define CACHE_PRIORITY_NORMAL   0
-#define CACHE_PRIORITY_HIGH     1
+const int CACHE_PRIORITY_NORMAL = 0;
+const int CACHE_PRIORITY_HIGH   = 1;
 
-#define UMOUNT_STATE_CLEAN  1
-#define UMOUNT_STATE_DIRTY  2
+const uint32_t UMOUNT_STATE_CLEAN = 1;
+const uint32_t UMOUNT_STATE_DIRTY = 2;
 
-#define AG_SIZE_128M        (128*1024*1024/BLOCKSIZE)
-#define AG_SIZE_256M        (256*1024*1024/BLOCKSIZE)
-#define AG_SIZE_512M        (512*1024*1024/BLOCKSIZE)
+const uint32_t AG_SIZE_128M = 128*1024*1024/BLOCKSIZE;
+const uint32_t AG_SIZE_256M = 256*1024*1024/BLOCKSIZE;
+const uint32_t AG_SIZE_512M = 512*1024*1024/BLOCKSIZE;
 
 // they said something about NIH
 #define assert2(msg, expr)   do { \
@@ -296,7 +296,7 @@ public:
             default: return "wrong item";
             }
         }
-        int type(int key_version) const {
+        uint32_t type(int key_version) const {
             if (KEY_VGUESS == key_version) key_version = this->guessVersion();
             switch (key_version) {
             case KEY_V0: {
@@ -333,7 +333,7 @@ public:
         uint16_t length;
         uint16_t offset;
         uint16_t version;
-        int type() const { return this->key.type(this->version); }
+        uint32_t type() const { return this->key.type(this->version); }
     } __attribute__ ((__packed__));
 
     const key_t &key(uint32_t index) const {

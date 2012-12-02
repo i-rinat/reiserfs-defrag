@@ -22,7 +22,7 @@ Block::~Block()
 void
 Block::rawDump() const
 {
-    for (int row = 0; row < BLOCKSIZE/16; row ++) {
+    for (unsigned int row = 0; row < BLOCKSIZE/16; row ++) {
         printf ("%08X  ", row*16 + this->block*BLOCKSIZE);
 
         int k;
