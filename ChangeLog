@@ -1,3 +1,9 @@
+2012-12-02  Rinat Ibragimov  <ibragimovrinat@mail.ru>
+
+	* rfsd: add method that guesses key type and uses it for key
+	comparison. The same method used in reiserfs driver itself.
+	* rfsd: use unions in key_t struct to extract key parts.
+
 2012-11-26  Rinat Ibragimov  <ibragimovrinat@mail.ru>
 
 	* rfsd: add additional checks for all tree nodes read.
