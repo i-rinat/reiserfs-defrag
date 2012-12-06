@@ -527,6 +527,8 @@ public:
     void enumerateTree(std::vector<tree_element> &tree) const;
     void enumerateInternalNodes(std::vector<tree_element> &tree) const;
 
+    uint32_t getStringHashR5(const std::string &s) const;
+
     /// walk tree, collecting leaves
     ///
     /// traverse tree from \p start_key, stop walking after getting \p soft_threshold blocks

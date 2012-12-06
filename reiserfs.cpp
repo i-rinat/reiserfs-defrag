@@ -1191,3 +1191,14 @@ ReiserFs::getBlocksOfObject(const Block::key_t &start_key, uint32_t start_offset
                                        Block::zero_key, Block::largest_key, blocks,
                                        next_key, next_offset, limit);
 }
+
+uint32_t
+ReiserFs::getStringHashR5(const std::string &s) const
+{
+    uint32_t hash = 0;
+    for (std::string::const_iterator it = s.begin(); it != s.end(); ++ it) {
+        signed char c = *it;
+        hash = (hash + (c << 4) + (c >> 4)) * 11;
+    }
+    return hash & 0x7fffff80;
+}
