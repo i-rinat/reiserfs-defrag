@@ -1182,9 +1182,9 @@ ReiserFs::recursivelyGetBlocksOfObject(const uint32_t leaf_idx, const Block::key
 }
 
 void
-ReiserFs::getBlocksOfObject(const Block::key_t &start_key, uint32_t start_offset,
-                            Block::key_t &next_key, uint32_t &next_offset,
-                            blocklist_t &blocks, uint32_t limit) const
+ReiserFs::getIndirectBlocksOfObject(const Block::key_t &start_key, uint32_t start_offset,
+                                    Block::key_t &next_key, uint32_t &next_offset,
+                                    blocklist_t &blocks, uint32_t limit) const
 {
     next_key = start_key;
     next_offset = 0;

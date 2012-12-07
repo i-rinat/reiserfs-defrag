@@ -549,9 +549,9 @@ public:
     /// \param next_offset[out] receives saved position to restart easing
     /// \param blocks[out]      receives vector of blocks
     /// \param limit            hard limits on block count
-    void getBlocksOfObject(const Block::key_t &start_key, uint32_t start_offset,
-                           Block::key_t &next_key, uint32_t &next_offset,
-                           blocklist_t &blocks, uint32_t limit) const;
+    void getIndirectBlocksOfObject(const Block::key_t &start_key, uint32_t start_offset,
+                                   Block::key_t &next_key, uint32_t &next_offset,
+                                   blocklist_t &blocks, uint32_t limit) const;
 
     /// move movable blocks of range [ @from, @to] (borders included) below @to
     void cleanupRegionMoveDataDown(uint32_t from, uint32_t to);

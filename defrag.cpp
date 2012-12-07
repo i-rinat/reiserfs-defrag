@@ -397,7 +397,8 @@ Defrag::incrementalDefrag(uint32_t batch_size, bool use_previous_estimation)
 
         start_offset = 0;
         while (1) {
-            fs.getBlocksOfObject(start_key, start_offset, next_key, next_offset, file_blocks, limit);
+            fs.getIndirectBlocksOfObject(start_key, start_offset, next_key, next_offset,
+                                         file_blocks, limit);
             if (next_key.sameObjectAs(start_key) && (next_offset == 0)) break;
             obj_count ++;
             start_key = next_key;
@@ -426,7 +427,8 @@ Defrag::incrementalDefrag(uint32_t batch_size, bool use_previous_estimation)
             return RFSD_FAIL;
         }
 
-        fs.getBlocksOfObject(start_key, start_offset, next_key, next_offset, file_blocks, limit);
+        fs.getIndirectBlocksOfObject(start_key, start_offset, next_key, next_offset,
+                                     file_blocks, limit);
         progress.inc();
 
         this->filterOutSparseBlocks(file_blocks);
