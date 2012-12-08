@@ -552,6 +552,8 @@ public:
     void enumerateTree(std::vector<tree_element> &tree) const;
     void enumerateInternalNodes(std::vector<tree_element> &tree) const;
 
+    Block::key_t findObject(const std::string &fname) const;
+    Block::key_t findObjectAt(const std::string &fname, const Block::key_t &at) const;
     uint32_t getStringHashR5(const std::string &s) const;
 
     /// walk tree, collecting leaves

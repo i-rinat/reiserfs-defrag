@@ -1194,6 +1194,69 @@ ReiserFs::getIndirectBlocksOfObject(const Block::key_t &start_key, uint32_t star
                                        next_key, next_offset, limit);
 }
 
+Block::key_t
+ReiserFs::findObject(const std::string &fname) const
+{
+    std::string fullpath(fname), tmps;
+    size_t pos;
+    Block::key_t cur_dir(KEY_V1, 1, 2, 0, 0);   // initialize cur_dir to root directory
+
+    // remove leading slashes
+    fullpath = fullpath.substr(fullpath.find_first_not_of('/'));
+
+    while (std::string::npos != (pos = fullpath.find('/'))) {
+        tmps = fullpath.substr(0, pos);
+        cur_dir = this->findObjectAt(tmps, cur_dir);
+        if (cur_dir.sameObjectAs(Block::zero_key))
+            break;
+        fullpath = fullpath.substr(pos + 1);
+    }
+
+    if (cur_dir.sameObjectAs(Block::zero_key))
+        return Block::zero_key;
+
+    return this->findObjectAt(fullpath, cur_dir);
+}
+
+Block::key_t
+ReiserFs::findObjectAt(const std::string &fname, const Block::key_t &at) const
+{
+    Block::key_t dir_key(KEY_V1, at.dir_id, at.obj_id, 0, 0);
+    const uint32_t fname_hash = this->getStringHashR5(fname);
+
+    uint32_t start_offset = 0, next_offset = 0; // dummy
+    uint32_t limit = 10; // should be greater than 1 to prevent early exit. Kind of dummy var too.
+    Block::key_t next_key;
+    blocklist_t dir_leaves;
+    this->recursivelyGetBlocksOfObject(this->sb.s_root_block, dir_key, KEY_TYPE_DIRECTORY,
+                                       Block::zero_key, Block::largest_key, start_offset,
+                                       dir_leaves, next_key, next_offset, limit);
+
+    for (blocklist_t::iterator it = dir_leaves.begin(); it != dir_leaves.end(); ++ it) {
+        const uint32_t leaf_idx = *it;
+        Block *block_obj = this->journal->readBlock(leaf_idx);
+
+        for (uint32_t item_idx = 0; item_idx < block_obj->itemCount(); item_idx ++) {
+            const Block::item_header &ih = block_obj->itemHeader(item_idx);
+            if (!ih.key.sameObjectAs(dir_key)) continue;
+            if (KEY_TYPE_DIRECTORY == ih.type()) {
+                for (uint32_t k = 0; k < ih.count; k ++) {
+                    const struct Block::de_header &deh = block_obj->dirHeader(k, ih.offset);
+                    if (fname_hash == (deh.hash_gen & 0x7fffff80)
+                        && fname == block_obj->dirEntryName(k, ih.offset))
+                    {
+                        this->journal->releaseBlock(block_obj);
+                        return Block::key_t(KEY_V1, deh.dir_id, deh.obj_id, 0, 0);
+                    }
+                }
+            }
+        }
+        this->journal->releaseBlock(block_obj);
+    }
+
+    return Block::key_t(KEY_V1, 0, 0, 0, 0);
+}
+
 uint32_t
 ReiserFs::getStringHashR5(const std::string &s) const
 {
