@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <stdexcept>
 
@@ -17,10 +18,13 @@ struct params_struct {
     bool do_squeeze;
     int squeeze_threshold;
     bool journal_data;
+    std::vector<std::string> firstfiles;
+    std::vector<Block::key_t> firstobjs;
 } params;
 
-static const char *opt_string = "p:st:h";
+static const char *opt_string = "f:p:st:h";
 static const struct option long_opts[] = {
+    { "file-list",          required_argument,  NULL, 'f' },
     { "help",               no_argument,        NULL, 'h' },
     { "squeeze",            no_argument,        NULL, 's' },
     { "squeeze-threshold",  required_argument,  NULL, 128 },
@@ -37,6 +41,8 @@ display_usage()
 {
     printf("Usage: reiserfs-defrag [options] <reiserfs partition>\n"
     "\n"
+    "  -f, --file-list <filename>   move files from list in <filename> to\n"
+    "                               beginning of the fs\n"
     "  -h, --help                   show usage (this screen)\n"
     "  --journal-data               journal data in unformatted blocks\n"
     "  -p <passcount>               incremental defrag pass count\n"
@@ -58,6 +64,20 @@ void default_params()
     params.journal_data = false;
 }
 
+void fill_file_list_from_file(const std::string &fname)
+{
+    std::ifstream fp(fname.c_str());
+    if (fp.is_open()) {
+        std::string s;
+        while (fp.good()) {
+            std::getline(fp, s);
+            if (0 != s.length())
+                params.firstfiles.push_back(s);
+        }
+    }
+    fp.close();
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -75,6 +95,9 @@ main (int argc, char *argv[])
     opt = getopt_long(argc, argv, opt_string, long_opts, &long_index);
     while (-1 != opt) {
         switch (opt) {
+        case 'f':
+            fill_file_list_from_file(optarg);
+            break;
         case 'p':   // pass count
             {
                 std::stringstream ss(optarg);
@@ -137,6 +160,15 @@ main (int argc, char *argv[])
         } else {
             display_usage();
             throw no_error();
+        }
+
+        // get dir_id and obj_id of files in param.firstfiles
+        for (std::vector<std::string>::const_iterator it = params.firstfiles.begin();
+             it != params.firstfiles.end(); ++ it)
+        {
+            Block::key_t k = fs.findObject(*it);
+            if (!k.sameObjectAs(Block::zero_key))
+                params.firstobjs.push_back(k);
         }
 
         fs.useDataJournaling(params.journal_data);
