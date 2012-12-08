@@ -325,6 +325,14 @@ public:
         uint16_t reserved;
     } __attribute__ ((__packed__));
 
+    struct de_header {
+        uint32_t hash_gen;  //< hash [30:7] and generation [0:6]
+        uint32_t dir_id;    //< dir_id \___ points to
+        uint32_t obj_id;    //< obj_id /      object
+        uint16_t location;  //< offset of name (inside item)
+        uint16_t state;     //< 4 means visible
+    } __attribute__ ((__packed__));
+
     struct item_header {
         key_t key;
         uint16_t count;
@@ -357,6 +365,23 @@ public:
         const struct item_header &ihpr = ihp[0];
         return ihpr;
     }
+    const struct de_header &dirHeader(uint32_t index, uint32_t offset) const {
+        const struct de_header *dehp =
+            reinterpret_cast<const struct de_header*>(&buf[0] + offset + 16 * index);
+        const struct de_header &dehpr = dehp[0];
+        return dehpr;
+    }
+
+    /// retrieve object name
+    std::string dirEntryName(uint32_t index, uint32_t offset) const {
+        std::string name;
+        const struct de_header deh = this->dirHeader(index, offset);
+        uint32_t k = deh.location + offset;
+        while (k < BLOCKSIZE && buf[k] != 0)
+            name += buf[k++];
+        return name;
+    };
+
     static const key_t zero_key;
     static const key_t largest_key;
 };
