@@ -11,6 +11,10 @@
 #include <fcntl.h>
 #include <time.h>
 
+#if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
+    #error "Sorry, can't build for big endian machine"
+#endif
+
 const int RFSD_OK    = 0;
 const int RFSD_FAIL  = -1;
 
