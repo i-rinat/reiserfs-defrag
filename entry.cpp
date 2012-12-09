@@ -149,6 +149,10 @@ main (int argc, char *argv[])
     fs.setupInterruptSignalHandler();
 
     try {
+        // set up fs parameters
+        fs.useDataJournaling(params.journal_data);
+        std::cout << "journaling mode: ";
+        std::cout << (params.journal_data ? "data" : "metadata only") << std::endl;
         if (argc - optind >= 1) {
             if (RFSD_OK != fs.open(argv[optind], false)) {
                 // User may ask to terminate while leaf index created
@@ -162,20 +166,16 @@ main (int argc, char *argv[])
             throw no_error();
         }
 
-        // get dir_id and obj_id of files in param.firstfiles
-        for (std::vector<std::string>::const_iterator it = params.firstfiles.begin();
-             it != params.firstfiles.end(); ++ it)
-        {
-            Block::key_t k = fs.findObject(*it);
-            if (!k.sameObjectAs(Block::zero_key))
-                params.firstobjs.push_back(k);
+        // determine object key for every entry in params.firstfiles
+        if (params.firstfiles.size() > 0) {
+            for (std::vector<std::string>::const_iterator it = params.firstfiles.begin();
+                 it != params.firstfiles.end(); ++ it)
+            {
+                Block::key_t k = fs.findObject(*it);
+                if (!k.sameObjectAs(Block::zero_key))
+                    params.firstobjs.push_back(k);
+            }
         }
-
-        fs.useDataJournaling(params.journal_data);
-        if (params.journal_data)
-            std::cout << "journaling mode: data" << std::endl;
-        else
-            std::cout << "journaling mode: metadata only" << std::endl;
 
         switch (params.defrag_type) {
         case DEFRAG_TYPE_INCREMENTAL:
