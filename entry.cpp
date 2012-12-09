@@ -23,8 +23,9 @@ struct params_struct {
     std::vector<Block::key_t> firstobjs;
 } params;
 
-static const char *opt_string = "f:p:st:h";
+static const char *opt_string = "c:f:p:st:h";
 static const struct option long_opts[] = {
+    { "cache-size",         required_argument,  NULL, 'c' },
     { "file-list",          required_argument,  NULL, 'f' },
     { "help",               no_argument,        NULL, 'h' },
     { "squeeze",            no_argument,        NULL, 's' },
@@ -42,6 +43,7 @@ display_usage()
 {
     printf("Usage: reiserfs-defrag [options] <reiserfs partition>\n"
     "\n"
+    "  -c, --cache-size <size>      specify block cache size in MiB (200 by default)\n"
     "  -f, --file-list <filename>   move files from list in <filename> to\n"
     "                               beginning of the fs\n"
     "  -h, --help                   show usage (this screen)\n"
@@ -97,6 +99,12 @@ main (int argc, char *argv[])
     opt = getopt_long(argc, argv, opt_string, long_opts, &long_index);
     while (-1 != opt) {
         switch (opt) {
+        case 'c':   // cache size
+            {
+                std::stringstream ss(optarg);
+                ss >> params.cache_size;
+            }
+            break;
         case 'f':
             fill_file_list_from_file(optarg);
             break;
@@ -156,7 +164,7 @@ main (int argc, char *argv[])
         std::cout << "journaling mode: ";
         std::cout << (params.journal_data ? "data" : "metadata only") << std::endl;
         fs.setCacheSize(params.cache_size);
-        std::cout << "blockcache size: " << fs.cacheSize() << " MiB" << std::endl;
+        std::cout << "max block cache size: " << fs.cacheSize() << " MiB" << std::endl;
 
         if (argc - optind >= 1) {
             if (RFSD_OK != fs.open(argv[optind], false)) {
