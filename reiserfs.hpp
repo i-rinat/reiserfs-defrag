@@ -38,6 +38,7 @@ const uint32_t KEY_TYPE_ANY        = 15;
 
 const uint32_t BLOCKSIZE = 4096;
 const uint32_t BLOCKS_PER_BITMAP = BLOCKSIZE * 8;
+const uint32_t BLOCKS_IN_ONE_MB = 1024*1024/BLOCKSIZE;
 const uint32_t SUPERBLOCK_BLOCK = 65536 / BLOCKSIZE;
 const uint32_t FIRST_BITMAP_BLOCK = 65536 / BLOCKSIZE + 1;
 
@@ -403,6 +404,8 @@ public:
     int commitTransaction();
     int flushTransactionCache();
     uint32_t estimateTransactionSize();
+    void setCacheSize(uint32_t mib) { this->max_cache_size = mib * BLOCKS_IN_ONE_MB; }
+    uint32_t cacheSize() const { return this->max_cache_size / BLOCKS_IN_ONE_MB; }
 
 private:
     struct cache_entry {
@@ -542,6 +545,8 @@ public:
     void dumpSuperblock();
     void useDataJournaling(bool use);
     uint32_t freeBlockCount() const;
+    void setCacheSize(uint32_t mib) { this->cache_size = mib; }
+    uint32_t cacheSize() const { return this->cache_size; }
 
     // proxies for FsJournal methods
     Block* readBlock(uint32_t block) const;
@@ -616,6 +621,7 @@ private:
     std::vector<leaf_index_entry> leaf_index;
     uint32_t leaf_index_granularity;    //< size of each basket for leaf index
     static int interrupt_state;
+    uint32_t cache_size;
 
     int readSuperblock();
     int validateSuperblock();

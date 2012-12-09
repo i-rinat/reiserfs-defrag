@@ -40,6 +40,7 @@ ReiserFs::ReiserFs()
     this->closed = true;
     this->use_data_journaling = false;
     this->leaf_index_granularity = 2000;
+    this->cache_size = 200;
 }
 
 ReiserFs::~ReiserFs()
@@ -159,6 +160,7 @@ ReiserFs::open(const std::string &name, bool o_sync)
         return RFSD_FAIL;
     }
     this->journal = new FsJournal(this->fd, &this->sb);
+    this->journal->setCacheSize(this->cache_size);
     this->bitmap = new FsBitmap(this->journal, &this->sb);
     this->closed = false;
     this->bitmap->setAGSize(AG_SIZE_128M);

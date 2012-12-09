@@ -18,6 +18,7 @@ struct params_struct {
     bool do_squeeze;
     int squeeze_threshold;
     bool journal_data;
+    uint32_t cache_size;
     std::vector<std::string> firstfiles;
     std::vector<Block::key_t> firstobjs;
 } params;
@@ -62,6 +63,7 @@ void default_params()
     params.do_squeeze = false;
     params.squeeze_threshold = 7;
     params.journal_data = false;
+    params.cache_size = 200;
 }
 
 void fill_file_list_from_file(const std::string &fname)
@@ -153,6 +155,9 @@ main (int argc, char *argv[])
         fs.useDataJournaling(params.journal_data);
         std::cout << "journaling mode: ";
         std::cout << (params.journal_data ? "data" : "metadata only") << std::endl;
+        fs.setCacheSize(params.cache_size);
+        std::cout << "blockcache size: " << fs.cacheSize() << " MiB" << std::endl;
+
         if (argc - optind >= 1) {
             if (RFSD_OK != fs.open(argv[optind], false)) {
                 // User may ask to terminate while leaf index created
