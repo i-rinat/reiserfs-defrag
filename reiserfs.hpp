@@ -370,20 +370,20 @@ public:
         const struct item_header &ihpr = ihp[0];
         return ihpr;
     }
-    const struct de_header &dirHeader(uint32_t index, uint32_t offset) const {
+    const struct de_header &dirHeader(const struct item_header &ih, uint32_t index) const {
         const struct de_header *dehp =
-            reinterpret_cast<const struct de_header*>(&buf[0] + offset + 16 * index);
+            reinterpret_cast<const struct de_header*>(&buf[0] + ih.offset + 16 * index);
         const struct de_header &dehpr = dehp[0];
         return dehpr;
     }
 
     /// retrieve object name
-    std::string dirEntryName(uint32_t index, const struct item_header &ih) const {
+    std::string dirEntryName(const struct item_header &ih, uint32_t index) const {
         std::string name;
-        const struct de_header &deh = this->dirHeader(index, ih.offset);
+        const struct de_header &deh = this->dirHeader(ih, index);
         uint32_t end_pos = ih.offset;
         if (index > 0)
-            end_pos += this->dirHeader(index - 1, ih.offset).location;
+            end_pos += this->dirHeader(ih, index - 1).location;
         else
             end_pos += ih.length;
         uint32_t k = deh.location + ih.offset;
