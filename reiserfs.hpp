@@ -458,6 +458,7 @@ public:
             need_update = true;
         }
         extent_t & operator [] (uint32_t k) { return this->list[k]; }
+        const extent_t & operator [] (uint32_t k) const { return this->list[k]; }
         void push_back(const extent_t &ex) { this->list.push_back(ex); }
         void clear() { this->list.clear(); }
         std::vector<extent_t>::size_type size() const { return this->list.size(); }
