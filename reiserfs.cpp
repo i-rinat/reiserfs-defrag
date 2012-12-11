@@ -1245,7 +1245,7 @@ ReiserFs::findObjectAt(const std::string &fname, const Block::key_t &at) const
                 for (uint32_t k = 0; k < ih.count; k ++) {
                     const struct Block::de_header &deh = block_obj->dirHeader(k, ih.offset);
                     if (fname_hash == (deh.hash_gen & 0x7fffff80)
-                        && fname == block_obj->dirEntryName(k, ih.offset))
+                        && fname == block_obj->dirEntryName(k, ih))
                     {
                         this->journal->releaseBlock(block_obj);
                         return Block::key_t(KEY_V1, deh.dir_id, deh.obj_id, 0, 0);

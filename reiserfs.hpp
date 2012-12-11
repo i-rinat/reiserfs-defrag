@@ -378,11 +378,16 @@ public:
     }
 
     /// retrieve object name
-    std::string dirEntryName(uint32_t index, uint32_t offset) const {
+    std::string dirEntryName(uint32_t index, const struct item_header &ih) const {
         std::string name;
-        const struct de_header deh = this->dirHeader(index, offset);
-        uint32_t k = deh.location + offset;
-        while (k < BLOCKSIZE && buf[k] != 0)
+        const struct de_header &deh = this->dirHeader(index, ih.offset);
+        uint32_t end_pos = ih.offset;
+        if (index > 0)
+            end_pos += this->dirHeader(index - 1, ih.offset).location;
+        else
+            end_pos += ih.length;
+        uint32_t k = deh.location + ih.offset;
+        while (k < end_pos && buf[k] != 0)
             name += buf[k++];
         return name;
     };
