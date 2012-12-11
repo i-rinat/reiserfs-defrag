@@ -702,6 +702,9 @@ public:
     /// squeezes all AGs having more than \param threshold free extents
     int squeezeAllAGsWithThreshold(uint32_t threshold);
 
+    /// moves files to beginning of the fs
+    void moveObjectsUp(const std::vector<Block::key_t> &objs);
+
 private:
     ReiserFs &fs;
     uint32_t desired_extent_length;

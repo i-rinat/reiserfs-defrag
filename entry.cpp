@@ -188,6 +188,8 @@ main (int argc, char *argv[])
                 if (!k.sameObjectAs(Block::zero_key))
                     params.firstobjs.push_back(k);
             }
+
+            defrag.moveObjectsUp(params.firstobjs);
         }
 
         switch (params.defrag_type) {

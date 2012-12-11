@@ -325,6 +325,55 @@ Defrag::mergeMovemap(movemap_t &dest, const movemap_t &src)
         return RFSD_FAIL;   // Otherwise they was. And it's bad.
 }
 
+void
+Defrag::moveObjectsUp(const std::vector<Block::key_t> &objs)
+{
+    uint32_t next_ag = 0;
+    uint32_t free_blocks_count = 0;
+    uint32_t blocks_moved = 0;
+    uint32_t files_moved = 0;
+    uint32_t free_idx = 0;
+    movemap_t movemap;
+
+    std::cout << "moving " << objs.size() << " file(s) up ... " << std::flush;
+    for (std::vector<Block::key_t>::const_iterator it = objs.begin(); it != objs.end(); ++ it) {
+        uint32_t start_offset = 0;
+        uint32_t next_offset;
+        uint32_t limit = 15*2048;
+        Block::key_t next_key;
+        Block::key_t start_key = *it;
+        blocklist_t file_blocks;
+
+        do {
+            fs.getIndirectBlocksOfObject(*it, start_offset, next_key, next_offset,
+                                         file_blocks, limit);
+            start_key = next_key;
+            start_offset = next_offset;
+            if (file_blocks.size() > free_blocks_count) {
+                fs.sweepOutAG(next_ag);
+                // fs.sealAG(next_ag); // not yet implemented
+                free_blocks_count += fs.bitmap->AGFreeBlockCount(next_ag);
+                next_ag ++;
+                // need get blocks again as sweep could change their positions
+                fs.getIndirectBlocksOfObject(*it, start_offset, next_key, next_offset,
+                                              file_blocks, limit);
+            }
+
+            movemap.clear();
+            for (uint32_t k = 0; k < file_blocks.size(); k ++) {
+                free_idx = fs.findFreeBlockAfter(free_idx);
+                assert1(free_idx != 0);
+                movemap[file_blocks[k]] = free_idx;
+            }
+            blocks_moved += movemap.size();
+            fs.moveBlocks(movemap);
+        } while (it->sameObjectAs(next_key));
+
+        if (file_blocks.size() > 0) files_moved ++;
+    }
+    std::cout << blocks_moved << " block(s) of " << files_moved << " file(s) moved" << std::endl;
+}
+
 int
 Defrag::freeOneAG()
 {
