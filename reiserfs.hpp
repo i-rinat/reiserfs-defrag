@@ -485,6 +485,7 @@ public:
     uint32_t AGEnd(uint32_t ag) const;
     uint32_t AGExtentCount(uint32_t ag) const { return this->ag_free_extents[ag].size(); }
     uint32_t AGUsedBlockCount(uint32_t ag) const { return this->ag_free_extents[ag].used_blocks; }
+    uint32_t AGFreeBlockCount(uint32_t ag) const;
     /// sets size of each allocation group
     void setAGSize(uint32_t size);
 

@@ -283,3 +283,14 @@ FsBitmap::reservedBlockCount(uint32_t from, uint32_t to) const
 
     return rc;
 }
+
+uint32_t
+FsBitmap::AGFreeBlockCount(uint32_t ag) const
+{
+    assert1 (ag < this->AGCount());
+    uint32_t free_count = 0;
+    for (uint32_t k = 0; k < this->ag_free_extents[ag].size(); k ++)
+        free_count += this->ag_free_extents[ag][k].len;
+
+    return free_count;
+}
