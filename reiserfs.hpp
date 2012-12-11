@@ -154,16 +154,6 @@ public:
     }
     void dumpInternalNodeBlock() const;
     void dumpLeafNodeBlock() const;
-    const uint32_t &indirectItemRef(uint16_t offset, uint32_t idx) const {
-        const uint32_t *ci = reinterpret_cast<uint32_t const *>(&buf[0] + offset + 4*idx);
-        const uint32_t &ref = ci[0];
-        return ref;
-    }
-    void setIndirectItemRef(uint16_t offset, uint32_t idx, uint32_t value) {
-        uint32_t *ci = reinterpret_cast<uint32_t *>(&buf[0] + offset + 4*idx);
-        ci[0] = value;
-        this->dirty = true;
-    }
     void checkLeafNode() const;
     void checkInternalNode() const;
 
@@ -391,6 +381,17 @@ public:
             name += buf[k++];
         return name;
     };
+
+    const uint32_t &indirectItemRef(const struct item_header &ih, uint32_t idx) const {
+        const uint32_t *ci = reinterpret_cast<uint32_t const *>(&buf[0] + ih.offset + 4*idx);
+        const uint32_t &ref = ci[0];
+        return ref;
+    }
+    void setIndirectItemRef(const struct item_header &ih, uint32_t idx, uint32_t value) {
+        uint32_t *ci = reinterpret_cast<uint32_t *>(&buf[0] + ih.offset + 4*idx);
+        ci[0] = value;
+        this->dirty = true;
+    }
 
     static const key_t zero_key;
     static const key_t largest_key;

@@ -287,7 +287,7 @@ ReiserFs::cleanupRegionMoveDataDown(uint32_t from, uint32_t to)
                 continue;
             bool use_key = false;
             for (uint32_t idx = 0; idx < ih.length/4; idx ++) {
-                uint32_t child_idx = block_obj->indirectItemRef(ih.offset, idx);
+                uint32_t child_idx = block_obj->indirectItemRef(ih, idx);
                 if (0 == child_idx)     // sparse file
                     continue;
                 if (from <= child_idx && child_idx <= to) {
@@ -346,7 +346,7 @@ ReiserFs::createLeafIndex()
             if (KEY_TYPE_INDIRECT != ih.type())
                 continue;
             for (int idx = 0; idx < ih.length/4; idx ++) {
-                uint32_t child_idx = block_obj->indirectItemRef(ih.offset, idx);
+                uint32_t child_idx = block_obj->indirectItemRef(ih, idx);
                 if (0 == child_idx)     // sparse file
                     continue;
                 uint32_t basket_id = child_idx / this->leaf_index_granularity;
@@ -382,7 +382,7 @@ ReiserFs::updateLeafIndex()
                 if (KEY_TYPE_INDIRECT != ih.type())
                     continue;
                 for (int idx = 0; idx < ih.length/4; idx ++) {
-                    uint32_t target_idx = block_obj->indirectItemRef(ih.offset, idx);
+                    uint32_t target_idx = block_obj->indirectItemRef(ih, idx);
                     if (0 == target_idx)        // sparse file
                         continue;
                     uint32_t target_basket = target_idx / this->leaf_index_granularity;
@@ -643,12 +643,12 @@ ReiserFs::recursivelyMoveUnformatted(uint32_t block_idx, movemap_t &movemap)
             if (KEY_TYPE_INDIRECT != ih.type())
                 continue;
             for (int idx = 0; idx < ih.length/4; idx ++) {
-                uint32_t child_idx = block_obj->indirectItemRef(ih.offset, idx);
+                uint32_t child_idx = block_obj->indirectItemRef(ih, idx);
                 if (0 == child_idx)     // sparse file
                     continue;
                 if (movemap.count(child_idx) == 0) continue;
                 // update pointers in indirect item
-                block_obj->setIndirectItemRef(ih.offset, idx, movemap[child_idx]);
+                block_obj->setIndirectItemRef(ih, idx, movemap[child_idx]);
                 // actually move block
                 bool should_journal_data = this->use_data_journaling;
                 this->journal->moveRawBlock(child_idx, movemap[child_idx], should_journal_data);
@@ -693,13 +693,13 @@ ReiserFs::leafContentMoveUnformatted(uint32_t block_idx, movemap_t &movemap,
         if (not all_keys && (key_list.count(ih.key) == 0))
             continue;
         for (int idx = 0; idx < ih.length/4; idx ++) {
-            uint32_t child_idx = block_obj->indirectItemRef(ih.offset, idx);
+            uint32_t child_idx = block_obj->indirectItemRef(ih, idx);
             if (0 == child_idx)     // sparse file
                 continue;
             if (movemap.count(child_idx) == 0) continue;
             uint32_t target_idx = movemap.find(child_idx)->second;
             // update pointers in indirect item
-            block_obj->setIndirectItemRef(ih.offset, idx, target_idx);
+            block_obj->setIndirectItemRef(ih, idx, target_idx);
             // actually move block
             bool should_journal_data = this->use_data_journaling;
             this->journal->moveRawBlock(child_idx, target_idx, should_journal_data);
@@ -1168,7 +1168,7 @@ ReiserFs::recursivelyGetBlocksOfObject(const uint32_t leaf_idx, const Block::key
                 uint32_t cnt = ih.length/4;
                 if (limit < cnt) cnt = limit;
                 for (uint32_t idx = start_offset; idx < cnt; idx ++) {
-                    blocks.push_back(block_obj->indirectItemRef(ih.offset, idx));
+                    blocks.push_back(block_obj->indirectItemRef(ih, idx));
                 }
                 start_offset = 0;
                 limit -= cnt;
