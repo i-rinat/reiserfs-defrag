@@ -1114,7 +1114,7 @@ ReiserFs::enumerateLeaves(const Block::key_t &start_key, int soft_threshold,
                                      Block::zero_key, Block::largest_key, leaves, last_key);
 }
 
-void
+bool
 ReiserFs::recursivelyGetBlocksOfObject(const uint32_t leaf_idx, const Block::key_t &start_key,
                                        const uint32_t object_type, const Block::key_t left,
                                        const Block::key_t right, uint32_t &start_offset,
@@ -1126,6 +1126,7 @@ ReiserFs::recursivelyGetBlocksOfObject(const uint32_t leaf_idx, const Block::key
     // and we'll end up moving that block twice. Moreover, that move will result in one-block hole.
     // So we compare `limit' to 1, not to 0.
 
+    bool should_continue = true;
     Block *block_obj = this->journal->readBlock(leaf_idx);
     uint32_t level = block_obj->level();
     if (level > TREE_LEVEL_LEAF) {
@@ -1135,14 +1136,14 @@ ReiserFs::recursivelyGetBlocksOfObject(const uint32_t leaf_idx, const Block::key
             const Block::key_t new_left = (k > 0) ? block_obj->key(k-1) : left;
             const Block::key_t new_right = (k < block_obj->keyCount()) ? block_obj->key(k) : right;
             if (new_right > start_key) {
-                this->recursivelyGetBlocksOfObject(block_obj->ptr(k).block, start_key, object_type,
-                                                   new_left, new_right, start_offset, blocks,
-                                                   next_key, next_offset, limit);
+                should_continue = this->recursivelyGetBlocksOfObject(block_obj->ptr(k).block,
+                                    start_key, object_type, new_left, new_right, start_offset,
+                                    blocks, next_key, next_offset, limit);
                 if (! start_key.sameObjectAs(next_key))
                     break;
+                if (! should_continue)
+                    break;
             }
-            if (limit <= 1)
-                break;
         }
     } else {
         // leaf node
@@ -1152,27 +1153,40 @@ ReiserFs::recursivelyGetBlocksOfObject(const uint32_t leaf_idx, const Block::key
             const Block::item_header &ih = block_obj->itemHeader(item_idx);
             if (ih.key < start_key)     // skip items with inappropriate keys
                 continue;
-            next_key = ih.key;          // update next_key
-            if (limit <= 1)
+            if (limit <= 1) {
+                // start_offset equal to zero means we finished previous indirect item
+                // and should advance next_key pointer to next one. Otherwise next_key
+                // should be kept the same
+                if (0 == start_offset)
+                    next_key = ih.key;
+                should_continue = false;
                 break;
-            // exit if current item belongs to another another object
+            }
+            next_key = ih.key;          // update next_key
+            // exit if current item belongs to another object
             if (! start_key.sameObjectAs(next_key))
                 break;
             if (KEY_TYPE_INDIRECT == ih.type() && KEY_TYPE_INDIRECT == object_type) {
                 indirect_idx ++;
                 if (1 == indirect_idx && 0 == start_offset && limit > 1
-                    && (ih.key.offset(ih.version) != 1)) {
+                    && (ih.key.offset(ih.version) != 1))
+                {
                     blocks.push_back(leaf_idx);
                     limit --;
+                    assert1((limit & 0x80000000) == 0); // catch negative
                 }
-                uint32_t cnt = ih.length/4;
-                if (limit < cnt) cnt = limit;
-                for (uint32_t idx = start_offset; idx < cnt; idx ++) {
+                uint32_t end_pos = ih.length/4;
+                if (start_offset + limit < end_pos)
+                    end_pos = start_offset + limit;
+                for (uint32_t idx = start_offset; idx < end_pos; idx ++) {
                     blocks.push_back(block_obj->indirectItemRef(ih, idx));
+                    limit --;
+                    assert1((limit & 0x80000000) == 0); // catch negative
                 }
-                start_offset = 0;
-                limit -= cnt;
-                if (cnt < ih.length/4) next_offset = cnt;
+                start_offset = end_pos;
+                if (end_pos == ih.length/4)
+                    start_offset = 0;
+                next_offset = start_offset;
             }
             if (KEY_TYPE_DIRECTORY == ih.type() && KEY_TYPE_DIRECTORY == object_type) {
                 blocks.push_back(leaf_idx);
@@ -1181,6 +1195,7 @@ ReiserFs::recursivelyGetBlocksOfObject(const uint32_t leaf_idx, const Block::key
     }
 
     this->journal->releaseBlock(block_obj);
+    return should_continue;
 }
 
 void

@@ -672,7 +672,7 @@ private:
     void getLeavesForMovemap(std::vector<uint32_t> &leaves, const movemap_t &movemap);
 
     /// inner worker function for getLeavesOfObject
-    void recursivelyGetBlocksOfObject(const uint32_t leaf_idx, const Block::key_t &start_key,
+    bool recursivelyGetBlocksOfObject(const uint32_t leaf_idx, const Block::key_t &start_key,
                                       const uint32_t object_type, const Block::key_t left,
                                       const Block::key_t right, uint32_t &start_offset,
                                       blocklist_t &blocks, Block::key_t &next_key,
