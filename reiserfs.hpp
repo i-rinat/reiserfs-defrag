@@ -721,10 +721,14 @@ public:
     /// \return RFSD_OK on success, RFSD_FAIL otherwise
     int moveObjectsUp(const std::vector<Block::key_t> &objs);
 
+    /// prevent object in \param objs from moving
+    void sealObjects(const std::vector<Block::key_t> &objs);
+
 private:
     ReiserFs &fs;
     uint32_t desired_extent_length;
     uint32_t previous_obj_count;
+    std::set<Block::key_t> sealed_objs;
 
     struct defrag_statistics_struct {
         uint32_t success_count;
@@ -769,6 +773,9 @@ private:
 
     /// prints defrag statistics to stdout
     void showDefragStatistics();
+
+    /// determine if \param k refers sealed fs object
+    bool objectIsSealed(const Block::key_t &k) const;
 };
 
 class Progress {

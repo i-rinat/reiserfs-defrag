@@ -192,6 +192,8 @@ main (int argc, char *argv[])
             defrag.moveObjectsUp(params.firstobjs);
         }
 
+        defrag.sealObjects(params.firstobjs);
+
         switch (params.defrag_type) {
         case DEFRAG_TYPE_INCREMENTAL:
             {

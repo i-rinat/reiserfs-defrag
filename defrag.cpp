@@ -171,6 +171,13 @@ Defrag::nextTargetBlock(uint32_t previous)
     else return 0; // no one found
 }
 
+bool
+Defrag::objectIsSealed(const Block::key_t &k) const
+{
+    const Block::key_t k_z(KEY_V0, k.dir_id, k.obj_id, 0, 0);
+    return (this->sealed_objs.count(k) > 0);
+}
+
 int
 Defrag::prepareDefragTask(std::vector<uint32_t> &blocks, movemap_t &movemap)
 {
@@ -551,7 +558,7 @@ Defrag::incrementalDefrag(uint32_t batch_size, bool use_previous_estimation)
         progress.inc();
 
         this->filterOutSparseBlocks(file_blocks);
-        if (0 != file_blocks.size()) {
+        if (0 != file_blocks.size() && not this->objectIsSealed(start_key)) {
             movemap_t partial_movemap;
             if (RFSD_FAIL == this->prepareDefragTask(file_blocks, partial_movemap)) {
                 // Before we do anything, we must process all pending moves as further moves may
@@ -592,6 +599,15 @@ Defrag::incrementalDefrag(uint32_t batch_size, bool use_previous_estimation)
     this->showDefragStatistics();
 
     return RFSD_OK;
+}
+
+void
+Defrag::sealObjects(const std::vector<Block::key_t> &objs)
+{
+    this->sealed_objs.clear();
+    for (std::vector<Block::key_t>::const_iterator it = objs.begin(); it != objs.end(); ++ it) {
+        this->sealed_objs.insert(*it);
+    }
 }
 
 void
