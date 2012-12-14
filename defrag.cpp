@@ -380,6 +380,10 @@ Defrag::moveObjectsUp(const std::vector<Block::key_t> &objs)
                 // But before we must flush movemap
                 fs.moveBlocks(movemap);
                 movemap.clear();
+                if (ReiserFs::userAskedForTermination()) {
+                    moveup_progress.abort();
+                    return;
+                }
 
                 fs.sweepOutAG(next_ag);
                 // fs.sealAG(next_ag); // not yet implemented
@@ -409,6 +413,10 @@ Defrag::moveObjectsUp(const std::vector<Block::key_t> &objs)
             if (movemap.size() > 8000) {
                 fs.moveBlocks(movemap);
                 movemap.clear();
+                if (ReiserFs::userAskedForTermination()) {
+                    moveup_progress.abort();
+                    return;
+                }
             }
         } while (it->sameObjectAs(next_key));
 
