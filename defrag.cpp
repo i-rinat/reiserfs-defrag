@@ -345,32 +345,50 @@ Defrag::moveObjectsUp(const std::vector<Block::key_t> &objs)
         blocklist_t file_blocks;
 
         do {
-            fs.getIndirectBlocksOfObject(*it, start_offset, next_key, next_offset,
+            fs.getIndirectBlocksOfObject(start_key, start_offset, next_key, next_offset,
                                          file_blocks, limit);
-            start_key = next_key;
-            start_offset = next_offset;
             if (file_blocks.size() > free_blocks_count) {
+                // no space for current file, let's free some.
+                // But before we must flush movemap
+                fs.moveBlocks(movemap);
+                movemap.clear();
+
                 fs.sweepOutAG(next_ag);
                 // fs.sealAG(next_ag); // not yet implemented
                 free_blocks_count += fs.bitmap->AGFreeBlockCount(next_ag);
                 next_ag ++;
+                if (next_ag >= fs.bitmap->AGCount()) {
+                    std::cout << "warning: insufficient free space for file packing" << std::endl;
+                    return;
+                }
                 // need get blocks again as sweep could change their positions
-                fs.getIndirectBlocksOfObject(*it, start_offset, next_key, next_offset,
+                fs.getIndirectBlocksOfObject(start_key, start_offset, next_key, next_offset,
                                               file_blocks, limit);
             }
 
-            movemap.clear();
+            start_key = next_key;
+            start_offset = next_offset;
+
             for (uint32_t k = 0; k < file_blocks.size(); k ++) {
                 free_idx = fs.findFreeBlockAfter(free_idx);
                 assert1(free_idx != 0);
                 movemap[file_blocks[k]] = free_idx;
+                blocks_moved ++;
+                free_blocks_count --;
             }
-            blocks_moved += movemap.size();
-            fs.moveBlocks(movemap);
+
+            if (movemap.size() > 8000) {
+                fs.moveBlocks(movemap);
+                movemap.clear();
+            }
         } while (it->sameObjectAs(next_key));
 
         if (file_blocks.size() > 0) files_moved ++;
     }
+
+    // move remaining
+    fs.moveBlocks(movemap);
+    movemap.clear();
     std::cout << blocks_moved << " block(s) of " << files_moved << " file(s) moved" << std::endl;
 }
 
