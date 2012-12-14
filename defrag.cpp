@@ -333,13 +333,41 @@ Defrag::moveObjectsUp(const std::vector<Block::key_t> &objs)
     uint32_t blocks_moved = 0;
     uint32_t files_moved = 0;
     uint32_t free_idx = 0;
+    uint32_t work_amount = 0;
+    uint32_t limit = 15*2048;   // limit block count for getIndirectBlocksOfObject
     movemap_t movemap;
 
-    std::cout << "moving " << objs.size() << " file(s) up ... " << std::flush;
+    std::cout << "moving " << objs.size() << " file(s) up" << std::endl;
+    Progress estimation;
+    estimation.setName("[estimate]");
+    estimation.enableUnknownMode(true, 100);
+    for (std::vector<Block::key_t>::const_iterator it = objs.begin(); it != objs.end(); ++ it) {
+        uint32_t next_offset, start_offset = 0;
+        Block::key_t next_key, start_key = *it;
+        blocklist_t file_blocks;
+
+        do {
+            fs.getIndirectBlocksOfObject(start_key, start_offset, next_key, next_offset,
+                                         file_blocks, limit);
+            work_amount += file_blocks.size();
+            start_key = next_key;
+            start_offset = next_offset;
+        } while (it->sameObjectAs(next_key));
+
+        estimation.update(work_amount);
+        if (ReiserFs::userAskedForTermination()) {
+            estimation.abort();
+            return;
+        }
+    }
+
+    Progress moveup_progress(work_amount);
+    moveup_progress.setName("[moving files up]");
+    moveup_progress.update(0);
     for (std::vector<Block::key_t>::const_iterator it = objs.begin(); it != objs.end(); ++ it) {
         uint32_t start_offset = 0;
         uint32_t next_offset;
-        uint32_t limit = 15*2048;
+
         Block::key_t next_key;
         Block::key_t start_key = *it;
         blocklist_t file_blocks;
@@ -376,6 +404,7 @@ Defrag::moveObjectsUp(const std::vector<Block::key_t> &objs)
                 blocks_moved ++;
                 free_blocks_count --;
             }
+            moveup_progress.inc(file_blocks.size());
 
             if (movemap.size() > 8000) {
                 fs.moveBlocks(movemap);
@@ -389,7 +418,8 @@ Defrag::moveObjectsUp(const std::vector<Block::key_t> &objs)
     // move remaining
     fs.moveBlocks(movemap);
     movemap.clear();
-    std::cout << blocks_moved << " block(s) of " << files_moved << " file(s) moved" << std::endl;
+    moveup_progress.show100();
+    std::cout << blocks_moved << " block(s) of " << files_moved << " file(s) moved up" << std::endl;
 }
 
 int
