@@ -386,7 +386,7 @@ Defrag::moveObjectsUp(const std::vector<Block::key_t> &objs)
                 }
 
                 fs.sweepOutAG(next_ag);
-                // fs.sealAG(next_ag); // not yet implemented
+                fs.sealAG(next_ag);
                 free_blocks_count += fs.bitmap->AGFreeBlockCount(next_ag);
                 next_ag ++;
                 if (next_ag >= fs.bitmap->AGCount()) {
