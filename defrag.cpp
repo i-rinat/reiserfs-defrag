@@ -325,7 +325,7 @@ Defrag::mergeMovemap(movemap_t &dest, const movemap_t &src)
         return RFSD_FAIL;   // Otherwise they was. And it's bad.
 }
 
-void
+int
 Defrag::moveObjectsUp(const std::vector<Block::key_t> &objs)
 {
     uint32_t next_ag = 0;
@@ -357,7 +357,7 @@ Defrag::moveObjectsUp(const std::vector<Block::key_t> &objs)
         estimation.update(work_amount);
         if (ReiserFs::userAskedForTermination()) {
             estimation.abort();
-            return;
+            return RFSD_FAIL;
         }
     }
 
@@ -382,7 +382,7 @@ Defrag::moveObjectsUp(const std::vector<Block::key_t> &objs)
                 movemap.clear();
                 if (ReiserFs::userAskedForTermination()) {
                     moveup_progress.abort();
-                    return;
+                    return RFSD_FAIL;
                 }
 
                 fs.sweepOutAG(next_ag);
@@ -391,7 +391,7 @@ Defrag::moveObjectsUp(const std::vector<Block::key_t> &objs)
                 next_ag ++;
                 if (next_ag >= fs.bitmap->AGCount()) {
                     std::cout << "warning: insufficient free space for file packing" << std::endl;
-                    return;
+                    return RFSD_FAIL;
                 }
                 // need get blocks again as sweep could change their positions
                 fs.getIndirectBlocksOfObject(start_key, start_offset, next_key, next_offset,
@@ -415,7 +415,7 @@ Defrag::moveObjectsUp(const std::vector<Block::key_t> &objs)
                 movemap.clear();
                 if (ReiserFs::userAskedForTermination()) {
                     moveup_progress.abort();
-                    return;
+                    return RFSD_FAIL;
                 }
             }
         } while (it->sameObjectAs(next_key));
@@ -428,6 +428,7 @@ Defrag::moveObjectsUp(const std::vector<Block::key_t> &objs)
     movemap.clear();
     moveup_progress.show100();
     std::cout << blocks_moved << " block(s) of " << files_moved << " file(s) moved up" << std::endl;
+    return RFSD_OK;
 }
 
 int

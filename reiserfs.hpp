@@ -709,7 +709,10 @@ public:
     int squeezeAllAGsWithThreshold(uint32_t threshold);
 
     /// moves files to beginning of the fs
-    void moveObjectsUp(const std::vector<Block::key_t> &objs);
+    ///
+    /// \param obj[in]          list of keys with (dir_id,obj_id) denoting a file to move
+    /// \return RFSD_OK on success, RFSD_FAIL otherwise
+    int moveObjectsUp(const std::vector<Block::key_t> &objs);
 
 private:
     ReiserFs &fs;
