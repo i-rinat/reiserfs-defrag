@@ -607,6 +607,12 @@ public:
     /// moves all movable blocks outside AG
     int sweepOutAG(uint32_t ag);
 
+    /// marks AG # \param ag as unavailable for sweeping
+    void sealAG(uint32_t ag);
+
+    /// figures out if AG # \param ag available for sweeping or not
+    bool AGSealed(uint32_t ag);
+
     /// \return true if \param block_idx points to reserved block
     bool blockReserved(uint32_t block_idx) const { return this->bitmap->blockReserved(block_idx); }
 
@@ -630,6 +636,7 @@ private:
     uint32_t leaf_index_granularity;    //< size of each basket for leaf index
     static int interrupt_state;
     uint32_t cache_size;
+    std::vector<bool> sealed_ags;
 
     int readSuperblock();
     int validateSuperblock();

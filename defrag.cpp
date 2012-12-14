@@ -438,8 +438,21 @@ Defrag::freeOneAG()
     // Additional random which gives a chance to low fragmented AG to be selected.
     // It should be limited though, in order to heavily fragmented AG to cleared first
     uint32_t max_score = 0;
-    uint32_t selected_ag = 0;
+    uint32_t selected_ag = -1;
+
     for (uint32_t ag = 0; ag < fs.bitmap->AGCount(); ag ++) {
+        if (!fs.AGSealed(ag)) {
+            selected_ag = ag;
+            break;
+        }
+    }
+
+    if (-1 == selected_ag)      // every AG sealed, can not do anything with it. Give up.
+        return RFSD_FAIL;
+
+    for (uint32_t ag = 0; ag < fs.bitmap->AGCount(); ag ++) {
+        if (fs.AGSealed(ag))    // skip sealed AGs
+            continue;
         const uint32_t score = 128 * fs.bitmap->AGExtentCount(ag) + rand() % 1024;
         if (score > max_score) {
             max_score = score;

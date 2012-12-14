@@ -165,6 +165,10 @@ ReiserFs::open(const std::string &name, bool o_sync)
     this->closed = false;
     this->bitmap->setAGSize(AG_SIZE_128M);
 
+    // initialize sealed AG list
+    this->sealed_ags.clear();
+    this->sealed_ags.resize(this->bitmap->AGCount(), false);
+
     // mark fs dirty
     this->sb.s_umount_state = UMOUNT_STATE_DIRTY;
     this->journal->beginTransaction();
@@ -886,6 +890,20 @@ ReiserFs::userAskedForTermination()
     return ReiserFs::interrupt_state > 0;
 }
 
+bool
+ReiserFs::AGSealed(uint32_t ag)
+{
+    assert1 (ag < this->bitmap->AGCount());
+    return this->sealed_ags[ag];
+}
+
+void
+ReiserFs::sealAG(uint32_t ag)
+{
+    assert1 (ag < this->bitmap->AGCount());
+    this->sealed_ags[ag] = true;
+}
+
 int
 ReiserFs::squeezeDataBlocksInAG(uint32_t ag)
 {
@@ -969,6 +987,9 @@ int
 ReiserFs::sweepOutAG(uint32_t ag)
 {
     assert1 (ag < this->bitmap->AGCount());
+
+    if (this->sealed_ags[ag])   // don't try to sweep if this AG sealed
+        return RFSD_FAIL;
 
     uint32_t blocks_needed = this->bitmap->AGUsedBlockCount(ag);
     if (0 == blocks_needed) // no need to do anything
