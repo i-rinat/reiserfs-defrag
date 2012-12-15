@@ -1,29 +1,33 @@
 About
 =====
-`reiserfs-defrag` is a software that will (try to) rearrange data on your **reiserfs**
-partition to make it less fragmented. Offline. You need to unmount fs first.
+`reiserfs-defrag` is a software that will rearrange data on your **reiserfs**
+partition to make it less fragmented. **Offline**. You must unmount fs first.
 
 Status
 ======
-**Experimental. Do not use it on sensitive data.**
+Still considered experimental, although it will do its best to protect data from
+corruption. I do run consistency check often in the development process, but
+obviously that can't guarantee anything. Do not use it on sensitive data,
+or backup them at least.
 
-As for now (version 0.1) it journals meta-data while moving blocks.
-That _should_ prevent data loss, but I did not verify that thoroughly.
+As for now (v0.2.1) it journals meta-data while moving blocks and runs some consistency
+checks on metadata. That should prevent data loss even for partially damaged filesystem.
+Anyway, running fsck before defragmentation is a good idea.
 
-There are two available algorithm are tree-through defragmentation and incremental one. First
-packs (with no spaces between) all files in a tree order, interleaving data blocks
+There are two available algorithms: _tree-through_ defragmentation and _incremental_ one.
+First packs (with no spaces between) all files in a tree order, interleaving data blocks
 with leaf and internal tree nodes. That will move almost all data blocks, and therefore
 will be very slow. But in the end you'll find all files (and directories) in their
-ideal order and free space consolidated at the end of filesystem.
+ideal order and free space consolidated at the end of the filesystem.
 
-Second one called incremental and selected by default. It makes several passes through
-filesystem internal tree and tries to defragment all that it considers fragmented.
+Second one called _incremental_ and selected by default. It makes several passes through
+filesystem's internal tree and tries to defragment all that it considers fragmented.
 Currently it check for every 2048-block length chuck to be in one piece. Those 2048 blocks
-contains not only data blocks but metadata blocks too. As the result, file can be splitted
+contains not only data blocks but metadata blocks too. As a result, file can be splitted
 to several parts which will be distributed through the partition. That's not user usually
-wants to see, but this is current limitation. And 8 MiB chucks are large enough. If you
-have a 15 ms, 100 MiB/sec disk, on every seek you "lose" 1.5 MiB of data which results in
-16% degradation. That's good in my books. I mean, things could be a way worse.
+wants to see, but this is current limitation. 8 MiB chucks are large enough. If you
+have a 15 ms, 100 MiB/sec disk, every seek takes same time as reading 1.5 MiB, so it's
+about 16% performance penalty. That is acceptable in multitask environment.
 
 
 Fragmentation
@@ -33,7 +37,7 @@ In a couple of words, sometimes fragmentation of filesystem can decrease its per
 
 There is one issue about reiserfs specifically. Due to internal structure, even
 the only file on fs will be cut into fragments of size about four megabytes. Data
-interleaved with so-called indirect blocks, that used by filesystem to map inode
+interleaved with so-called indirect blocks, used by filesystem to map inode
 to actual partition blocks. One such block is 4 kiB length so it doesn't introduce
 hard-drive head movement and therefore have almost no impact on read speed
 performance. But fragmentation measurements tools, such as `filefrag` from
@@ -57,23 +61,25 @@ I declare goals as:
  * (g4) program should be able to do incremental (fast) defragmentation;
  * (g5) program should be able to move selected files to beginning of partition.
 
-Goals g1 through g4 are considered done. g5 is on agenda.
+Goals g1 through g5 are now (v0.2.1) considered done.
 
 Build and install
 =================
-You'll need cmake. Build:
+(You'll need cmake.) To build:
 
 * `mkdir build && cd build`
-* `CXXFLAGS="-Wall -O2" cmake ..`
+* `cmake -DCMAKE_BUILD_TYPE=Release ..`
 * `make`
 
 Note two dots in cmake parameters. They are point to directory with sources
-and those dots are required. And you definitely will want to do a debug build.
-At least until I find a way to do assertions in release builds too.
+and those dots are required.
 
-There is no install as no need of. Executable binary named `rfsd` appears in
-build directory. It expects path to device or fs image. There is some other
-options available, usage and man page on their way.
+To install, run as root:
+
+* `make install`
+
+That will place `reiserfs-defrag` binary to ${PREFIX}/sbin. It expects path to device or
+filesystem image. There are some other options available, see usage (--help) for details.
 
 Copying
 =======
