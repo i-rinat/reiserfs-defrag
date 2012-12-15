@@ -1,3 +1,10 @@
+/*
+ *  reiserfs-defrag, offline defragmentation utility for reiserfs
+ *  Copyright (C) 2012  Rinat Ibragimov
+ *
+ *  Licensed under terms of GPL version 3. See COPYING.GPLv3 for full text.
+ */
+
 #pragma once
 #define _FILE_OFFSET_BITS 64
 #include <stdint.h>

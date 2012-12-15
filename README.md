@@ -83,7 +83,7 @@ filesystem image. There are some other options available, see usage (--help) for
 
 Copying
 =======
-GPLv2/GPLv3
+This piece of software distributed under terms of GPLv3, see COPYING.GPLv3 for full text.
 
 Authors
 =======
