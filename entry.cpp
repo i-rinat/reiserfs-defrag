@@ -20,7 +20,6 @@ struct params_struct {
     bool journal_data;
     uint32_t cache_size;
     std::vector<std::string> firstfiles;
-    std::vector<Block::key_t> firstobjs;
 } params;
 
 static const char *opt_string = "c:f:p:st:h";
@@ -181,18 +180,18 @@ main (int argc, char *argv[])
 
         // determine object key for every entry in params.firstfiles
         if (params.firstfiles.size() > 0) {
+            std::vector<Block::key_t> firstobjs;
             for (std::vector<std::string>::const_iterator it = params.firstfiles.begin();
                  it != params.firstfiles.end(); ++ it)
             {
                 Block::key_t k = fs.findObject(*it);
                 if (!k.sameObjectAs(Block::zero_key))
-                    params.firstobjs.push_back(k);
+                    firstobjs.push_back(k);
             }
 
-            defrag.moveObjectsUp(params.firstobjs);
+            defrag.moveObjectsUp(firstobjs);
+            defrag.sealObjects(firstobjs);
         }
-
-        defrag.sealObjects(params.firstobjs);
 
         switch (params.defrag_type) {
         case DEFRAG_TYPE_INCREMENTAL:
