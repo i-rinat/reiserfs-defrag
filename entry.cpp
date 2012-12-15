@@ -180,13 +180,16 @@ main (int argc, char *argv[])
 
         // determine object key for every entry in params.firstfiles
         if (params.firstfiles.size() > 0) {
+            std::set<Block::key_t> unique_objs;
             std::vector<Block::key_t> firstobjs;
             for (std::vector<std::string>::const_iterator it = params.firstfiles.begin();
                  it != params.firstfiles.end(); ++ it)
             {
                 Block::key_t k = fs.findObject(*it);
-                if (!k.sameObjectAs(Block::zero_key))
+                if (!k.sameObjectAs(Block::zero_key) && unique_objs.count(k) == 0) {
                     firstobjs.push_back(k);
+                    unique_objs.insert(k);
+                }
             }
 
             defrag.moveObjectsUp(firstobjs);
