@@ -2,7 +2,7 @@ project (reiserfs-toys)
 
 cmake_minimum_required (VERSION 2.6)
 
-add_executable (rfsd
+add_executable (reiserfs-defrag
 	defrag.cpp
 	reiserfs.cpp
 	journal.cpp
@@ -12,6 +12,8 @@ add_executable (rfsd
 	entry.cpp
 )
 
-target_link_libraries(rfsd
+target_link_libraries(reiserfs-defrag
 	rt
 )
+
+install(TARGETS reiserfs-defrag DESTINATION sbin)
