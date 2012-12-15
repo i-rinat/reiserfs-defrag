@@ -405,6 +405,9 @@ Defrag::moveObjectsUp(const std::vector<Block::key_t> &objs)
                                               file_blocks, limit);
             }
 
+            const uint32_t progress_update = file_blocks.size();
+            this->filterOutSparseBlocks(file_blocks);
+
             start_key = next_key;
             start_offset = next_offset;
 
@@ -415,7 +418,7 @@ Defrag::moveObjectsUp(const std::vector<Block::key_t> &objs)
                 blocks_moved ++;
                 free_blocks_count --;
             }
-            moveup_progress.inc(file_blocks.size());
+            moveup_progress.inc(progress_update);
 
             if (movemap.size() > 8000) {
                 fs.moveBlocks(movemap);
