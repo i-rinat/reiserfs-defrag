@@ -17,3 +17,4 @@ target_link_libraries(reiserfs-defrag
 )
 
 install(TARGETS reiserfs-defrag DESTINATION sbin)
+install(FILES doc/reiserfs-defrag.8 DESTINATION "share/man/man8")
