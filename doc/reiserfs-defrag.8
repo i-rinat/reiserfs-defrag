@@ -1,0 +1,89 @@
+.\"
+.\" Copyright 2013  Rinat Ibragimov
+.TH reiserfs-defrag 8 "January 2013" ""
+.SH NAME
+reiserfs-defrag \- offline defragmenting utility for reiserfs v3.6
+.SH SYNOPSIS
+.B reiserfs-defrag
+[ options ]
+.I partition
+.SH DESCRIPTION
+\fBreiserfs-defrag\fR is utility that rearranges data on reiserfs partition to
+increase its read/write performace.
+While beeing offline, it uses filesystem journal to ensure sudden interruption
+not to damage fs. By default it journals only metadata but writes them only
+after actual data update, (similar to data=ordered option of ext3/4). Full
+data journaling can be forced as well.
+
+You can safely interrupt \fBreiserfs-defrag\fR by pressing ^C or sending SIGINT signal.
+It will finish current operation and exit. May take couple of minutes.
+.TP
+\fIpartition
+is either special device or file containing reiserfs filesystem.
+.SH OPTIONS
+.TP
+\fB-c\fR | \fB--cache-size\fR \fIsize\fR
+Specify size of cache size in MiBs. All read blocks are placed in cache to avoid
+reading them twice. Default value of 200 MiB is trade-off between read performance
+and memory consuption. If you have more RAM available, increase this. Note, however,
+that memory usage is sligtly more than cache size itself usually.
+.TP
+\fB-f\fR | \fB--file-list\fR \fI file-list\fR
+Move files listed in \fIfile-list\fR to beginning of the partition, while preserving
+their order. This can be used to speedup \fBreadahead(8)\fR by placing files together
+in fastest disk area.
+.TP
+\fB-h\fR | \fB--help\fR
+Display usage and exit.
+.TP
+\fB--journal-data\fR
+Enable full data journaling, not only journaling metadata. Usually this is overkill
+due to non-destructive operation. Significantly decreases performance.
+.TP
+\fB-p\fR \fIpass-count\fR
+Specify pass count for incremental defragmentation algorithm. Usually one or two passes
+will suffice, three are by default. You can increase it, but \fBreiserfs-defrag\fR will
+exit if no further passes needed.
+.TP
+\fB-s\fR | \fB--squeeze\fR
+Compact allocation blocks to increase free extent sizes. This is done on per allocation
+group basis. Allocation group will be treated if its free extent count exceeds threshold
+(7 by default).
+.TP
+\fB--squeeze-threshold\fR \fIvalue\fR
+Specify threshold of allocation group free extent count. Note: you must specify one of
+\fB-s\fR or \fB--squeeze\fR to actually enable squeezing.
+.TP
+\fB-t\fR | \fB--type\fR \fItype\fR
+Select defragmentation algorithm. There are three of them:
+.IP \  8
+* \fInone\fR perform no defragmentation. Useful, if you want just squeeze;
+.IP \  8
+* \fItree-through\fR, \fItreethrough\fR or \fItree\fR pack whole tree contents.
+First it packs all internal nodes, then leaf nodes interleaved with data blocks.
+This algorithm will move most of filesystem contents (almost twice) and therefore
+will be slow. At the end you will have all your data packed tightly, without gaps
+between them, and all your free space consolidated at the end of partition. Note that
+you can't get continous free space larger than 128 MiB because of bitmap blocks
+scattered across partition.
+.IP \  8
+* \fIinc\fR or \fIincremental\fR (selected by default) performs incremental
+defragmentation. It scans all files and moves only their fragmented parts. During operation
+it will make some room as needed. Such cleaning can move continuous files away from
+their positions. This potentially can lead to increasing fragmentation, but algorithm
+takes care of that by doing multiple passes.
+.SH AUTHOR
+Rinat Ibragimov <ibragimovrinat@mail.ru>
+.SH BUGS
+Please report bugs to \fIhttps://github.com/i-rinat/reiserfs-defrag/issues\fR
+
+To simplify debugging you can provide output of \fIdebugreiserfs -p /dev/your-partition\fR.
+Binary stream will contain file names, their sizes and positions but not their content,
+i.e. enough information to recreate structure of your partition.
+.SH KNOWN ISSUES
+Little-endian only.
+
+Old copies of data are not cleared. That can interfere with emergency rebuild-tree
+operation of \fBreiserfsck(8)\fR, although it is not verified.
+.SH SEE ALSO
+reiserfsck(8), debugreiserfs(8), readahead(8)
