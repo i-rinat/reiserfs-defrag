@@ -16,5 +16,7 @@ target_link_libraries(reiserfs-defrag
 	rt
 )
 
-install(TARGETS reiserfs-defrag DESTINATION sbin)
+set(SBINDIR "${CMAKE_INSTALL_PREFIX}/sbin" CACHE PATH "installation path for binaries (sbin)")
+
+install(TARGETS reiserfs-defrag DESTINATION ${SBINDIR})
 install(FILES doc/reiserfs-defrag.8 DESTINATION "share/man/man8")
