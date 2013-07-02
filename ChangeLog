@@ -1,3 +1,11 @@
+2013-07-02  Rinat Ibragimov  <ibragimovrinat@mail.ru>
+
+	* tag: v0.2.2
+	* doc: add man page
+	* doc: add inside.md documenting some internals of reiserfs-defrag
+	* rfsd: add configurable binary installation path. Use SBINDIR
+	cmake variable to specify it.
+
 2012-12-15  Rinat Ibragimov  <ibragimovrinat@mail.ru>
 
 	* tag: v0.2.1
