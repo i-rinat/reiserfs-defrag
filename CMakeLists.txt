@@ -1,4 +1,4 @@
-project (reiserfs-toys)
+project (reiserfs-defrag)
 
 cmake_minimum_required (VERSION 2.6)
 
