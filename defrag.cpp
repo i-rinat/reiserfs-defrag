@@ -19,7 +19,7 @@ Defrag::Defrag(ReiserFs &fs) : fs(fs)
 }
 
 int
-Defrag::treeThroughDefrag(uint32_t batch_size)
+Defrag::DefragTreeThrough(uint32_t batch_size)
 {
     std::vector<uint32_t> leaves;
     movemap_t movemap;
@@ -133,6 +133,73 @@ Defrag::treeThroughDefrag(uint32_t batch_size)
         progress.inc(leaves.size());
     }
     progress.show100();
+
+    return RFSD_OK;
+}
+
+int
+Defrag::DefragPath(uint32_t batch_size)
+{
+    std::vector<uint32_t> leaves;
+    movemap_t movemap;
+    Block::key_t last_key;
+    Block::key_t start_key;
+    uint32_t free_idx = this->nextTargetBlock(0);
+    assert1 (free_idx != 0);
+
+    // compute max batch size. Should reserve leaf block, with largest indirect item
+    // (1012 pointers), plus leaf block itself, plus one block (prevent free_idx becoming zero)
+    uint32_t max_batch_size = this->fs.freeBlockCount() - 1012 - 1 - 1;
+
+    if (batch_size > max_batch_size)
+        batch_size = max_batch_size;
+
+    if (batch_size < 32) {
+        std::cout << "batch_size too small" << std::endl;
+        return RFSD_FAIL;
+    }
+
+    // pack internal nodes first
+    do {
+        Progress progress_internal_nodes;
+        progress_internal_nodes.setMaxValue(4);
+        progress_internal_nodes.setName("[packing internal nodes]");
+        uint32_t old_free_idx = free_idx;
+        std::vector<ReiserFs::tree_element> internal_nodes;
+
+        this->fs.enumerateInternalNodes(internal_nodes);
+        movemap.clear();
+        progress_internal_nodes.inc();
+        for (std::vector<ReiserFs::tree_element>::iterator it = internal_nodes.begin();
+            it != internal_nodes.end(); ++ it)
+        {
+            uint32_t int_node_idx = it->idx;
+            if (int_node_idx !=  free_idx)
+                movemap[int_node_idx] = free_idx;
+            free_idx = this->nextTargetBlock(free_idx);
+            assert1 (free_idx != 0);
+        }
+        if (movemap.size() == 0)    // don't need to cleanup if all internal nodes in their places
+            break;                  // already
+        this->fs.cleanupRegionMoveDataDown(old_free_idx, free_idx - 1);
+        progress_internal_nodes.inc();
+        free_idx = old_free_idx;
+
+        this->fs.enumerateInternalNodes(internal_nodes);
+        progress_internal_nodes.inc();
+        movemap.clear();
+        for (std::vector<ReiserFs::tree_element>::iterator it = internal_nodes.begin();
+            it != internal_nodes.end(); ++ it)
+        {
+            uint32_t int_node_idx = it->idx;
+            if (int_node_idx !=  free_idx)
+                movemap[int_node_idx] = free_idx;
+            free_idx = this->nextTargetBlock(free_idx);
+            assert1 (free_idx != 0);
+        }
+        this->fs.moveBlocks(movemap);
+        progress_internal_nodes.show100();
+    } while (0);
 
     return RFSD_OK;
 }
@@ -511,7 +578,7 @@ Defrag::squeezeAllAGsWithThreshold(uint32_t threshold)
 }
 
 int
-Defrag::incrementalDefrag(uint32_t batch_size, bool use_previous_estimation)
+Defrag::DefragIncremental(uint32_t batch_size, bool use_previous_estimation)
 {
     Block::key_t start_key = Block::zero_key;
     Block::key_t next_key;

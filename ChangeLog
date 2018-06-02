@@ -1,3 +1,8 @@
+2018-06-02  zvezdochiot  <mykaralw@yandex.ru>
+
+	* tag: v0.2.3
+	* rfsd: implement path defrag.
+
 2013-07-02  Rinat Ibragimov  <ibragimovrinat@mail.ru>
 
 	* tag: v0.2.2
