@@ -17,7 +17,8 @@
 
 const int DEFRAG_TYPE_INCREMENTAL = 0;
 const int DEFRAG_TYPE_TREETHROUGH = 1;
-const int DEFRAG_TYPE_NONE = 2;
+const int DEFRAG_TYPE_PATH = 2;
+const int DEFRAG_TYPE_NONE = 3;
 
 struct params_struct {
     int defrag_type;
@@ -60,6 +61,7 @@ display_usage()
     "  -t, --type <name>            select defragmentation algorithm:\n"
     "                                 * tree/treethrough/tree-through\n"
     "                                 * inc/incremental (default)\n"
+    "                                 * path\n"
     "                                 * none\n"
     );
 }
@@ -132,6 +134,8 @@ main (int argc, char *argv[])
                 std::string("tree-through") == optarg || std::string("tree") == optarg)
             {
                 params.defrag_type = DEFRAG_TYPE_TREETHROUGH;
+            } else if (std::string("path") == optarg) {
+                params.defrag_type = DEFRAG_TYPE_PATH;
             } else if (std::string("none") == optarg) {
                 params.defrag_type = DEFRAG_TYPE_NONE;
             } else {
@@ -210,7 +214,7 @@ main (int argc, char *argv[])
                 int pass = 0;
                 while (pass < params.pass_count) {
                     std::cout << "pass " << pass+1 << " of " << params.pass_count << std::endl;
-                    if (RFSD_FAIL == defrag.incrementalDefrag(8000, true)) {
+                    if (RFSD_FAIL == defrag.DefragIncremental(8000, true)) {
                         if (ReiserFs::userAskedForTermination()) {
                             throw user_asked_termination();
                         }
@@ -229,7 +233,11 @@ main (int argc, char *argv[])
             break;
         case DEFRAG_TYPE_TREETHROUGH:
             std::cout << "defrag type: treethrough" << std::endl;
-            defrag.treeThroughDefrag(8000);
+            defrag.DefragTreeThrough(8000);
+            break;
+        case DEFRAG_TYPE_PATH:
+            std::cout << "defrag type: path" << std::endl;
+            defrag.DefragPath(8000);
             break;
         case DEFRAG_TYPE_NONE:
             std::cout << "defrag type: none" << std::endl;
