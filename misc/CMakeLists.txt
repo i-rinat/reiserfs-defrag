@@ -1,6 +1,6 @@
-project (reiserfs-toys)
+cmake_minimum_required (VERSION 2.6...4.1)
 
-cmake_minimum_required (VERSION 2.6)
+project (reiserfs-toys)
 
 add_library (mrfsu STATIC
 	../reiserfs.cpp
