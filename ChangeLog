@@ -1,3 +1,8 @@
+2025-12-07  Rinat Ibragimov  <ibragimovrinat@mail.ru>
+
+	* tag: v0.2.3
+	* misc: update CMakeLists for CMake 4 compatibility
+
 2013-07-02  Rinat Ibragimov  <ibragimovrinat@mail.ru>
 
 	* tag: v0.2.2
