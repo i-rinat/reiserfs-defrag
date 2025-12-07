@@ -1,6 +1,6 @@
-project (reiserfs-defrag)
+cmake_minimum_required (VERSION 2.6...4.1)
 
-cmake_minimum_required (VERSION 2.6)
+project (reiserfs-defrag)
 
 add_executable (reiserfs-defrag
 	defrag.cpp
